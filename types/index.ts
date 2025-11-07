@@ -71,6 +71,14 @@ export interface Event {
   isPrivate: boolean;
 }
 
+export type ThemeMode = 'light' | 'dark' | 'auto';
+export type ColorScheme = 'default' | 'warm' | 'cool' | 'vibrant' | 'minimal';
+
+export interface ThemeSettings {
+  mode: ThemeMode;
+  colorScheme: ColorScheme;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -83,4 +91,5 @@ export interface UserProfile {
   profileImage?: string;
   notifications: AppNotification[];
   rsvpEvents: string[];
+  themeSettings?: ThemeSettings;
 }

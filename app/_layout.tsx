@@ -8,9 +8,56 @@ import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import "react-native-reanimated";
 import { AppProvider } from "@/contexts/AppContext";
-import { colors } from "@/styles/commonStyles";
 
 SplashScreen.preventAutoHideAsync();
+
+function RootLayoutContent() {
+  const { currentColors } = require("@/contexts/AppContext").useApp();
+
+  return (
+    <>
+      <StatusBar 
+        style={currentColors.text === '#FFFFFF' ? 'light' : 'dark'} 
+        backgroundColor={currentColors.background} 
+      />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: currentColors.background },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="item-detail" 
+          options={{ 
+            presentation: 'modal',
+            headerShown: true,
+            headerTitle: 'Item Details',
+            headerStyle: { backgroundColor: currentColors.background },
+            headerTintColor: currentColors.primary,
+          }} 
+        />
+        <Stack.Screen 
+          name="checkout" 
+          options={{ 
+            presentation: 'modal',
+            headerShown: true,
+            headerTitle: 'Checkout',
+            headerStyle: { backgroundColor: currentColors.background },
+            headerTintColor: currentColors.primary,
+          }} 
+        />
+        <Stack.Screen 
+          name="theme-settings" 
+          options={{ 
+            presentation: 'modal',
+            headerShown: false,
+          }} 
+        />
+      </Stack>
+    </>
+  );
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -31,35 +78,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppProvider>
-        <StatusBar style="dark" backgroundColor={colors.background} />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen 
-            name="item-detail" 
-            options={{ 
-              presentation: 'modal',
-              headerShown: true,
-              headerTitle: 'Item Details',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.primary,
-            }} 
-          />
-          <Stack.Screen 
-            name="checkout" 
-            options={{ 
-              presentation: 'modal',
-              headerShown: true,
-              headerTitle: 'Checkout',
-              headerStyle: { backgroundColor: colors.background },
-              headerTintColor: colors.primary,
-            }} 
-          />
-        </Stack>
+        <RootLayoutContent />
       </AppProvider>
     </GestureHandlerRootView>
   );
