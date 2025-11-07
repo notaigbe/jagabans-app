@@ -41,8 +41,11 @@ export default function HomeScreen() {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.headerTitle}>Jagabans LA</Text>
+          <View style={styles.headerContent}>
+            <Image 
+              source={require('@/assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png')}
+              style={styles.logo}
+            />
             <Text style={styles.headerSubtitle}>Authentic West African Cuisine</Text>
           </View>
           <IconSymbol name="bell.fill" size={24} color={colors.primary} />
@@ -133,10 +136,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.text,
+  headerContent: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  logo: {
+    width: 140,
+    height: 50,
+    resizeMode: 'contain',
+    marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,

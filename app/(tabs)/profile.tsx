@@ -123,16 +123,6 @@ export default function ProfileScreen() {
       paddingHorizontal: 20,
       paddingVertical: 16,
     },
-    headerLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-    },
-    logo: {
-      width: 120,
-      height: 40,
-      resizeMode: 'contain',
-    },
     headerTitle: {
       fontSize: 28,
       fontWeight: 'bold',
@@ -402,12 +392,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Image 
-              source={require('@/assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png')}
-              style={styles.logo}
-            />
-          </View>
+          <Text style={styles.headerTitle}>Profile</Text>
           <Pressable
             onPress={() => {
               if (Platform.OS !== 'web') {
