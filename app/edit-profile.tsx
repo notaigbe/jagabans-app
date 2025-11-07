@@ -12,14 +12,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
 import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const { userProfile } = useApp();
+  const { userProfile, currentColors } = useApp();
   const [name, setName] = useState(userProfile.name);
   const [email, setEmail] = useState(userProfile.email);
   const [phone, setPhone] = useState(userProfile.phone);
@@ -39,7 +38,7 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Pressable
@@ -51,11 +50,11 @@ export default function EditProfileScreen() {
             }}
             style={styles.backButton}
           >
-            <IconSymbol name="chevron.left" size={24} color={colors.text} />
+            <IconSymbol name="chevron.left" size={24} color={currentColors.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Edit Profile</Text>
           <Pressable onPress={handleSave}>
-            <Text style={styles.saveButton}>Save</Text>
+            <Text style={[styles.saveButton, { color: currentColors.primary }]}>Save</Text>
           </Pressable>
         </View>
 
@@ -65,37 +64,37 @@ export default function EditProfileScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Full Name</Text>
+            <Text style={[styles.inputLabel, { color: currentColors.text }]}>Full Name</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text, borderColor: currentColors.textSecondary + '30' }]}
               value={name}
               onChangeText={setName}
               placeholder="Enter your name"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={currentColors.textSecondary}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email</Text>
+            <Text style={[styles.inputLabel, { color: currentColors.text }]}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text, borderColor: currentColors.textSecondary + '30' }]}
               value={email}
               onChangeText={setEmail}
               placeholder="Enter your email"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={currentColors.textSecondary}
               keyboardType="email-address"
               autoCapitalize="none"
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Phone</Text>
+            <Text style={[styles.inputLabel, { color: currentColors.text }]}>Phone</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text, borderColor: currentColors.textSecondary + '30' }]}
               value={phone}
               onChangeText={setPhone}
               placeholder="Enter your phone"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={currentColors.textSecondary}
               keyboardType="phone-pad"
             />
           </View>
@@ -108,7 +107,6 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -126,12 +124,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.text,
   },
   saveButton: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.primary,
   },
   scrollView: {
     flex: 1,
@@ -146,16 +142,12 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: colors.text,
     borderWidth: 1,
-    borderColor: colors.textSecondary + '30',
   },
 });

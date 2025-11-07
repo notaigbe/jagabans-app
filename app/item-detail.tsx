@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '@/styles/commonStyles';
 import { menuItems } from '@/data/menuData';
 import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -20,14 +19,14 @@ import * as Haptics from 'expo-haptics';
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { addToCart } = useApp();
+  const { addToCart, currentColors } = useApp();
   const [quantity, setQuantity] = useState(1);
 
   const item = menuItems.find((i) => i.id === id);
 
   if (!item) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]}>
         <View style={styles.header}>
           <Pressable
             style={styles.backButton}
@@ -37,12 +36,12 @@ export default function ItemDetailScreen() {
               router.back();
             }}
           >
-            <IconSymbol name="chevron.left" size={24} color={colors.text} />
-            <Text style={styles.backButtonText}>Back</Text>
+            <IconSymbol name="chevron.left" size={24} color={currentColors.text} />
+            <Text style={[styles.backButtonText, { color: currentColors.text }]}>Back</Text>
           </Pressable>
         </View>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Item not found</Text>
+          <Text style={[styles.errorText, { color: currentColors.textSecondary }]}>Item not found</Text>
         </View>
       </SafeAreaView>
     );
@@ -73,77 +72,77 @@ export default function ItemDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['bottom']}>
+      <View style={[styles.header, { backgroundColor: currentColors.background, borderBottomColor: currentColors.accent }]}>
         <Pressable
           style={styles.backButton}
           onPress={handleBackPress}
         >
-          <IconSymbol name="chevron.left" size={24} color={colors.text} />
-          <Text style={styles.backButtonText}>Back</Text>
+          <IconSymbol name="chevron.left" size={24} color={currentColors.text} />
+          <Text style={[styles.backButtonText, { color: currentColors.text }]}>Back</Text>
         </Pressable>
       </View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: item.image }} style={styles.image} />
+        <Image source={{ uri: item.image }} style={[styles.image, { backgroundColor: currentColors.accent }]} />
         
         <View style={styles.content}>
           <View style={styles.headerInfo}>
             <View style={styles.headerLeft}>
-              <Text style={styles.name}>{item.name}</Text>
+              <Text style={[styles.name, { color: currentColors.text }]}>{item.name}</Text>
               {item.popular && (
-                <View style={styles.popularBadge}>
-                  <IconSymbol name="star.fill" size={14} color={colors.card} />
-                  <Text style={styles.popularText}>Popular</Text>
+                <View style={[styles.popularBadge, { backgroundColor: currentColors.primary }]}>
+                  <IconSymbol name="star.fill" size={14} color={currentColors.card} />
+                  <Text style={[styles.popularText, { color: currentColors.card }]}>Popular</Text>
                 </View>
               )}
             </View>
-            <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+            <Text style={[styles.price, { color: currentColors.primary }]}>${item.price.toFixed(2)}</Text>
           </View>
 
           <View style={styles.categoryContainer}>
-            <IconSymbol name="tag.fill" size={16} color={colors.textSecondary} />
-            <Text style={styles.category}>{item.category}</Text>
+            <IconSymbol name="tag.fill" size={16} color={currentColors.textSecondary} />
+            <Text style={[styles.category, { color: currentColors.textSecondary }]}>{item.category}</Text>
           </View>
 
-          <Text style={styles.description}>{item.description}</Text>
+          <Text style={[styles.description, { color: currentColors.text }]}>{item.description}</Text>
 
-          <View style={styles.infoCard}>
-            <IconSymbol name="star.fill" size={20} color={colors.highlight} />
-            <Text style={styles.infoText}>
+          <View style={[styles.infoCard, { backgroundColor: currentColors.card }]}>
+            <IconSymbol name="star.fill" size={20} color={currentColors.highlight} />
+            <Text style={[styles.infoText, { color: currentColors.text }]}>
               Earn {Math.floor(item.price * quantity)} points with this order!
             </Text>
           </View>
 
-          <View style={styles.quantitySection}>
-            <Text style={styles.quantityLabel}>Quantity</Text>
+          <View style={[styles.quantitySection, { backgroundColor: currentColors.card }]}>
+            <Text style={[styles.quantityLabel, { color: currentColors.text }]}>Quantity</Text>
             <View style={styles.quantityControls}>
               <Pressable
-                style={styles.quantityButton}
+                style={[styles.quantityButton, { backgroundColor: currentColors.background }]}
                 onPress={() => handleQuantityChange(-1)}
               >
-                <IconSymbol name="minus" size={20} color={colors.primary} />
+                <IconSymbol name="minus" size={20} color={currentColors.primary} />
               </Pressable>
-              <Text style={styles.quantityValue}>{quantity}</Text>
+              <Text style={[styles.quantityValue, { color: currentColors.text }]}>{quantity}</Text>
               <Pressable
-                style={styles.quantityButton}
+                style={[styles.quantityButton, { backgroundColor: currentColors.background }]}
                 onPress={() => handleQuantityChange(1)}
               >
-                <IconSymbol name="plus" size={20} color={colors.primary} />
+                <IconSymbol name="plus" size={20} color={currentColors.primary} />
               </Pressable>
             </View>
           </View>
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: currentColors.card, borderTopColor: currentColors.background }]}>
         <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>${(item.price * quantity).toFixed(2)}</Text>
+          <Text style={[styles.totalLabel, { color: currentColors.textSecondary }]}>Total</Text>
+          <Text style={[styles.totalValue, { color: currentColors.text }]}>${(item.price * quantity).toFixed(2)}</Text>
         </View>
-        <Pressable style={styles.addButton} onPress={handleAddToCart}>
-          <IconSymbol name="cart.fill" size={20} color={colors.card} />
-          <Text style={styles.addButtonText}>Add to Cart</Text>
+        <Pressable style={[styles.addButton, { backgroundColor: currentColors.primary }]} onPress={handleAddToCart}>
+          <IconSymbol name="cart.fill" size={20} color={currentColors.card} />
+          <Text style={[styles.addButtonText, { color: currentColors.card }]}>Add to Cart</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -153,14 +152,11 @@ export default function ItemDetailScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: colors.background,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.accent,
   },
   backButton: {
     flexDirection: 'row',
@@ -172,7 +168,6 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 17,
-    color: colors.text,
     fontWeight: '600',
   },
   container: {
@@ -185,12 +180,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    color: colors.textSecondary,
   },
   image: {
     width: '100%',
     height: 300,
-    backgroundColor: colors.accent,
   },
   content: {
     padding: 20,
@@ -208,13 +201,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: colors.text,
     marginBottom: 8,
   },
   popularBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary,
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -222,14 +213,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   popularText: {
-    color: colors.card,
     fontSize: 12,
     fontWeight: '600',
   },
   price: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: colors.primary,
   },
   categoryContainer: {
     flexDirection: 'row',
@@ -239,18 +228,15 @@ const styles = StyleSheet.create({
   },
   category: {
     fontSize: 16,
-    color: colors.textSecondary,
   },
   description: {
     fontSize: 16,
-    color: colors.text,
     lineHeight: 24,
     marginBottom: 20,
   },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
     padding: 16,
     borderRadius: 12,
     gap: 12,
@@ -262,10 +248,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
   },
   quantitySection: {
-    backgroundColor: colors.card,
     padding: 20,
     borderRadius: 12,
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
@@ -274,7 +258,6 @@ const styles = StyleSheet.create({
   quantityLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
     marginBottom: 12,
   },
   quantityControls: {
@@ -287,22 +270,18 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text,
     minWidth: 40,
     textAlign: 'center',
   },
   footer: {
-    backgroundColor: colors.card,
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: colors.background,
     gap: 12,
   },
   totalContainer: {
@@ -312,15 +291,12 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 18,
-    color: colors.textSecondary,
   },
   totalValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text,
   },
   addButton: {
-    backgroundColor: colors.primary,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -331,6 +307,5 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.card,
   },
 });

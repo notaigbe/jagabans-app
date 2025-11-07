@@ -1,5 +1,6 @@
 
-import React from 'react';
+import * as Haptics from 'expo-haptics';
+import { useApp } from '@/contexts/AppContext';
 import {
   View,
   Text,
@@ -10,27 +11,24 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { IconSymbol } from '@/components/IconSymbol';
+import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
-import { useApp } from '@/contexts/AppContext';
-import { IconSymbol } from '@/components/IconSymbol';
-import * as Haptics from 'expo-haptics';
 
 export default function CartScreen() {
   const router = useRouter();
-  const { cart, updateCartQuantity, removeFromCart } = useApp();
+  const { cart, updateCartQuantity, removeFromCart, currentColors } = useApp();
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.0875;
   const total = subtotal + tax;
-  const pointsToEarn = Math.floor(total);
 
   const handleQuantityChange = (itemId: string, change: number) => {
-    console.log('Quantity change:', itemId, change);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    console.log('Updating quantity:', itemId, change);
     const item = cart.find((i) => i.id === itemId);
     if (item) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       updateCartQuantity(itemId, item.quantity + change);
     }
   };
@@ -38,14 +36,14 @@ export default function CartScreen() {
   const handleRemoveItem = (itemId: string) => {
     console.log('Removing item:', itemId);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
-      'Remove Item',
-      'Are you sure you want to remove this item from your cart?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: () => removeFromCart(itemId) },
-      ]
-    );
+    Alert.alert('Remove Item', 'Remove this item from cart?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => removeFromCart(itemId),
+      },
+    ]);
   };
 
   const handleCheckout = () => {
@@ -56,15 +54,23 @@ export default function CartScreen() {
 
   if (cart.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Your Cart</Text>
+            <Text style={[styles.headerTitle, { color: currentColors.text }]}>Cart</Text>
           </View>
           <View style={styles.emptyContainer}>
-            <IconSymbol name="cart" size={80} color={colors.textSecondary} />
-            <Text style={styles.emptyTitle}>Your cart is empty</Text>
-            <Text style={styles.emptySubtitle}>Add some delicious items to get started!</Text>
+            <IconSymbol name="cart" size={80} color={currentColors.textSecondary} />
+            <Text style={[styles.emptyTitle, { color: currentColors.text }]}>Your cart is empty</Text>
+            <Text style={[styles.emptyText, { color: currentColors.textSecondary }]}>
+              Add some delicious items to get started!
+            </Text>
+            <Pressable
+              style={[styles.browseButton, { backgroundColor: currentColors.primary }]}
+              onPress={() => router.push('/(tabs)/(home)')}
+            >
+              <Text style={[styles.browseButtonText, { color: currentColors.card }]}>Browse Menu</Text>
+            </Pressable>
           </View>
         </View>
       </SafeAreaView>
@@ -72,11 +78,13 @@ export default function CartScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Your Cart</Text>
-          <Text style={styles.itemCount}>{cart.length} items</Text>
+          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Cart</Text>
+          <Text style={[styles.itemCount, { color: currentColors.textSecondary }]}>
+            {cart.length} {cart.length === 1 ? 'item' : 'items'}
+          </Text>
         </View>
 
         <ScrollView
@@ -88,24 +96,26 @@ export default function CartScreen() {
           showsVerticalScrollIndicator={false}
         >
           {cart.map((item) => (
-            <View key={item.id} style={styles.cartItem}>
-              <Image source={{ uri: item.image }} style={styles.cartItemImage} />
-              <View style={styles.cartItemInfo}>
-                <Text style={styles.cartItemName}>{item.name}</Text>
-                <Text style={styles.cartItemPrice}>${item.price.toFixed(2)}</Text>
+            <View key={item.id} style={[styles.cartItem, { backgroundColor: currentColors.card }]}>
+              <Image source={{ uri: item.image }} style={styles.itemImage} />
+              <View style={styles.itemInfo}>
+                <Text style={[styles.itemName, { color: currentColors.text }]}>{item.name}</Text>
+                <Text style={[styles.itemPrice, { color: currentColors.primary }]}>
+                  ${item.price.toFixed(2)}
+                </Text>
                 <View style={styles.quantityContainer}>
                   <Pressable
-                    style={styles.quantityButton}
+                    style={[styles.quantityButton, { backgroundColor: currentColors.background }]}
                     onPress={() => handleQuantityChange(item.id, -1)}
                   >
-                    <IconSymbol name="minus" size={16} color={colors.primary} />
+                    <IconSymbol name="minus" size={16} color={currentColors.text} />
                   </Pressable>
-                  <Text style={styles.quantityText}>{item.quantity}</Text>
+                  <Text style={[styles.quantity, { color: currentColors.text }]}>{item.quantity}</Text>
                   <Pressable
-                    style={styles.quantityButton}
+                    style={[styles.quantityButton, { backgroundColor: currentColors.background }]}
                     onPress={() => handleQuantityChange(item.id, 1)}
                   >
-                    <IconSymbol name="plus" size={16} color={colors.primary} />
+                    <IconSymbol name="plus" size={16} color={currentColors.text} />
                   </Pressable>
                 </View>
               </View>
@@ -113,39 +123,40 @@ export default function CartScreen() {
                 style={styles.removeButton}
                 onPress={() => handleRemoveItem(item.id)}
               >
-                <IconSymbol name="trash" size={20} color={colors.primary} />
+                <IconSymbol name="trash" size={20} color={currentColors.textSecondary} />
               </Pressable>
             </View>
           ))}
 
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Order Summary</Text>
+          <View style={[styles.summaryCard, { backgroundColor: currentColors.card }]}>
+            <Text style={[styles.summaryTitle, { color: currentColors.text }]}>Order Summary</Text>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
+              <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Subtotal</Text>
+              <Text style={[styles.summaryValue, { color: currentColors.text }]}>${subtotal.toFixed(2)}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tax (8.75%)</Text>
-              <Text style={styles.summaryValue}>${tax.toFixed(2)}</Text>
+              <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Tax (8.75%)</Text>
+              <Text style={[styles.summaryValue, { color: currentColors.text }]}>${tax.toFixed(2)}</Text>
             </View>
-            <View style={[styles.summaryRow, styles.summaryRowTotal]}>
-              <Text style={styles.summaryLabelTotal}>Total</Text>
-              <Text style={styles.summaryValueTotal}>${total.toFixed(2)}</Text>
-            </View>
-            <View style={styles.pointsEarnCard}>
-              <IconSymbol name="star.fill" size={20} color={colors.highlight} />
-              <Text style={styles.pointsEarnText}>
-                You&apos;ll earn {pointsToEarn} points with this order!
-              </Text>
+            <View style={[styles.summaryDivider, { backgroundColor: currentColors.textSecondary + '30' }]} />
+            <View style={styles.summaryRow}>
+              <Text style={[styles.totalLabel, { color: currentColors.text }]}>Total</Text>
+              <Text style={[styles.totalValue, { color: currentColors.primary }]}>${total.toFixed(2)}</Text>
             </View>
           </View>
         </ScrollView>
 
-        <View style={styles.checkoutContainer}>
-          <Pressable style={styles.checkoutButton} onPress={handleCheckout}>
-            <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-            <IconSymbol name="arrow.right" size={20} color={colors.card} />
-          </Pressable>
+        <View style={[styles.footer, { backgroundColor: currentColors.card, borderTopColor: currentColors.textSecondary + '30' }]}>
+          <View style={styles.footerContent}>
+            <View>
+              <Text style={[styles.footerLabel, { color: currentColors.textSecondary }]}>Total</Text>
+              <Text style={[styles.footerTotal, { color: currentColors.primary }]}>${total.toFixed(2)}</Text>
+            </View>
+            <Pressable style={[styles.checkoutButton, { backgroundColor: currentColors.primary }]} onPress={handleCheckout}>
+              <Text style={[styles.checkoutButtonText, { color: currentColors.card }]}>Checkout</Text>
+              <IconSymbol name="arrow.right" size={20} color={currentColors.card} />
+            </Pressable>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -155,7 +166,6 @@ export default function CartScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -170,11 +180,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: colors.text,
   },
   itemCount: {
-    fontSize: 16,
-    color: colors.textSecondary,
+    fontSize: 14,
   },
   emptyContainer: {
     flex: 1,
@@ -185,14 +193,22 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text,
     marginTop: 20,
+    marginBottom: 8,
   },
-  emptySubtitle: {
+  emptyText: {
     fontSize: 16,
-    color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: 8,
+    marginBottom: 32,
+  },
+  browseButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  browseButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
@@ -202,37 +218,33 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   scrollContentWithTabBar: {
-    paddingBottom: 180,
+    paddingBottom: 100,
   },
   cartItem: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
+    flexDirection: 'row',
+    borderRadius: 16,
     padding: 12,
     marginBottom: 12,
-    flexDirection: 'row',
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 2,
   },
-  cartItemImage: {
+  itemImage: {
     width: 80,
     height: 80,
-    borderRadius: 8,
-    backgroundColor: colors.accent,
+    borderRadius: 12,
   },
-  cartItemInfo: {
+  itemInfo: {
     flex: 1,
     marginLeft: 12,
     justifyContent: 'space-between',
   },
-  cartItemName: {
+  itemName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
   },
-  cartItemPrice: {
+  itemPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.primary,
   },
   quantityContainer: {
     flexDirection: 'row',
@@ -243,23 +255,20 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  quantityText: {
+  quantity: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
-    minWidth: 20,
+    minWidth: 24,
     textAlign: 'center',
   },
   removeButton: {
     padding: 8,
   },
   summaryCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     marginTop: 8,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
@@ -268,7 +277,6 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text,
     marginBottom: 16,
   },
   summaryRow: {
@@ -277,62 +285,51 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   summaryLabel: {
-    fontSize: 16,
-    color: colors.textSecondary,
+    fontSize: 14,
   },
   summaryValue: {
-    fontSize: 16,
-    color: colors.text,
-  },
-  summaryRowTotal: {
-    borderTopWidth: 1,
-    borderTopColor: colors.background,
-    paddingTop: 12,
-    marginTop: 4,
-  },
-  summaryLabelTotal: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  summaryValueTotal: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  pointsEarnCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 16,
-    gap: 8,
-  },
-  pointsEarnText: {
-    flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
   },
-  checkoutContainer: {
-    padding: 20,
-    backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: colors.background,
+  summaryDivider: {
+    height: 1,
+    marginVertical: 12,
   },
-  checkoutButton: {
-    backgroundColor: colors.primary,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  checkoutButtonText: {
+  totalLabel: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.card,
+  },
+  totalValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  footer: {
+    borderTopWidth: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  footerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  footerLabel: {
+    fontSize: 14,
+  },
+  footerTotal: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  checkoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  checkoutButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

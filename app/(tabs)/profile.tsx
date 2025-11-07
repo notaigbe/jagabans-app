@@ -1,5 +1,9 @@
 
+import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
+import { useApp } from '@/contexts/AppContext';
+import { IconSymbol } from '@/components/IconSymbol';
+import * as ImagePicker from 'expo-image-picker';
 import {
   View,
   Text,
@@ -11,610 +15,308 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useApp } from '@/contexts/AppContext';
-import { IconSymbol } from '@/components/IconSymbol';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import * as Haptics from 'expo-haptics';
 
 export default function ProfileScreen() {
-  const { userProfile, updateProfileImage, currentColors } = useApp();
   const router = useRouter();
+  const { userProfile, updateProfileImage, currentColors } = useApp();
   const [imageLoading, setImageLoading] = useState(false);
 
   const handleImagePick = async () => {
-    try {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
+    console.log('Picking image from library');
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setImageLoading(true);
-        updateProfileImage(result.assets[0].uri);
-        setImageLoading(false);
-        Alert.alert('Success', 'Profile image updated successfully!');
-      }
-    } catch (error) {
-      console.log('Error picking image:', error);
-      Alert.alert('Error', 'Failed to update profile image. Please try again.');
+    if (!result.canceled && result.assets[0]) {
+      setImageLoading(true);
+      updateProfileImage(result.assets[0].uri);
       setImageLoading(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   };
 
   const handleTakePhoto = async () => {
-    try {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
+    console.log('Taking photo with camera');
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
 
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-      
-      if (!permissionResult.granted) {
-        Alert.alert('Permission Required', 'Camera permission is required to take photos.');
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setImageLoading(true);
-        updateProfileImage(result.assets[0].uri);
-        setImageLoading(false);
-        Alert.alert('Success', 'Profile image updated successfully!');
-      }
-    } catch (error) {
-      console.log('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    if (!result.canceled && result.assets[0]) {
+      setImageLoading(true);
+      updateProfileImage(result.assets[0].uri);
       setImageLoading(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   };
 
   const showImageOptions = () => {
-    if (Platform.OS === 'web') {
-      handleImagePick();
-      return;
-    }
-
-    Alert.alert(
-      'Update Profile Picture',
-      'Choose an option',
-      [
-        {
-          text: 'Take Photo',
-          onPress: handleTakePhoto,
-        },
-        {
-          text: 'Choose from Library',
-          onPress: handleImagePick,
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ]
-    );
+    Alert.alert('Profile Picture', 'Choose an option', [
+      { text: 'Take Photo', onPress: handleTakePhoto },
+      { text: 'Choose from Library', onPress: handleImagePick },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
-  const unreadNotifications = userProfile.notifications.filter(n => !n.read).length;
-
-  const styles = StyleSheet.create({
-    safeArea: {
-      flex: 1,
-      backgroundColor: currentColors.background,
+  const menuItems = [
+    {
+      id: 'edit-profile',
+      title: 'Edit Profile',
+      icon: 'person.circle' as const,
+      route: '/edit-profile',
     },
-    container: {
-      flex: 1,
+    {
+      id: 'payment-methods',
+      title: 'Payment Methods',
+      icon: 'creditcard' as const,
+      route: '/payment-methods',
     },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
+    {
+      id: 'order-history',
+      title: 'Order History',
+      icon: 'clock' as const,
+      route: '/order-history',
     },
-    headerTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: currentColors.text,
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      icon: 'bell.fill' as const,
+      route: '/notifications',
+      badge: userProfile.notifications.filter((n) => !n.read).length,
     },
-    notificationBadge: {
-      position: 'absolute',
-      top: -4,
-      right: -4,
-      backgroundColor: currentColors.accent,
-      borderRadius: 10,
-      minWidth: 20,
-      height: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 4,
+    {
+      id: 'events',
+      title: 'Private Events',
+      icon: 'calendar' as const,
+      route: '/events',
     },
-    notificationBadgeText: {
-      color: currentColors.card,
-      fontSize: 10,
-      fontWeight: 'bold',
+    {
+      id: 'theme-settings',
+      title: 'Theme Settings',
+      icon: 'paintbrush.fill' as const,
+      route: '/theme-settings',
     },
-    scrollView: {
-      flex: 1,
-    },
-    scrollContent: {
-      paddingHorizontal: 20,
-      paddingBottom: 20,
-    },
-    scrollContentWithTabBar: {
-      paddingBottom: 100,
-    },
-    profileCard: {
-      backgroundColor: currentColors.card,
-      borderRadius: 16,
-      padding: 24,
-      alignItems: 'center',
-      marginBottom: 16,
-      boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-      elevation: 3,
-    },
-    avatarContainer: {
-      marginBottom: 12,
-      position: 'relative',
-    },
-    profileImage: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-    },
-    cameraIconContainer: {
-      position: 'absolute',
-      bottom: 0,
-      right: 0,
-      backgroundColor: currentColors.primary,
-      borderRadius: 15,
-      width: 30,
-      height: 30,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 2,
-      borderColor: currentColors.card,
-    },
-    profileName: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: currentColors.text,
-      marginBottom: 4,
-    },
-    profileEmail: {
-      fontSize: 16,
-      color: currentColors.textSecondary,
-      marginBottom: 2,
-    },
-    profilePhone: {
-      fontSize: 16,
-      color: currentColors.textSecondary,
-    },
-    pointsCard: {
-      backgroundColor: currentColors.card,
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 16,
-      boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-      elevation: 3,
-    },
-    pointsHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 16,
-      marginBottom: 12,
-    },
-    pointsInfo: {
-      flex: 1,
-    },
-    pointsLabel: {
-      fontSize: 14,
-      color: currentColors.textSecondary,
-    },
-    pointsValue: {
-      fontSize: 32,
-      fontWeight: 'bold',
-      color: currentColors.primary,
-    },
-    pointsSubtext: {
-      fontSize: 14,
-      color: currentColors.textSecondary,
-      lineHeight: 20,
-    },
-    statsContainer: {
-      flexDirection: 'row',
-      gap: 12,
-      marginBottom: 24,
-    },
-    statCard: {
-      flex: 1,
-      backgroundColor: currentColors.card,
-      borderRadius: 12,
-      padding: 20,
-      alignItems: 'center',
-      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      elevation: 2,
-    },
-    statValue: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: currentColors.text,
-      marginTop: 8,
-    },
-    statLabel: {
-      fontSize: 14,
-      color: currentColors.textSecondary,
-      marginTop: 4,
-    },
-    section: {
-      marginBottom: 24,
-    },
-    sectionHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    sectionTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: currentColors.text,
-    },
-    seeAllText: {
-      fontSize: 14,
-      color: currentColors.primary,
-      fontWeight: '600',
-    },
-    emptyState: {
-      backgroundColor: currentColors.card,
-      borderRadius: 12,
-      padding: 40,
-      alignItems: 'center',
-      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      elevation: 2,
-    },
-    emptyStateText: {
-      fontSize: 16,
-      color: currentColors.textSecondary,
-      marginTop: 12,
-    },
-    orderCard: {
-      backgroundColor: currentColors.card,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 12,
-      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      elevation: 2,
-    },
-    orderHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 8,
-    },
-    orderDate: {
-      fontSize: 14,
-      color: currentColors.textSecondary,
-    },
-    statusBadge: {
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 12,
-    },
-    statuspending: {
-      backgroundColor: currentColors.highlight,
-    },
-    statuspreparing: {
-      backgroundColor: currentColors.secondary,
-    },
-    statusready: {
-      backgroundColor: currentColors.accent,
-    },
-    statuscompleted: {
-      backgroundColor: currentColors.primary,
-    },
-    statusText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: currentColors.card,
-      textTransform: 'capitalize',
-    },
-    orderItems: {
-      fontSize: 14,
-      color: currentColors.textSecondary,
-      marginBottom: 8,
-    },
-    orderFooter: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    orderTotal: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: currentColors.text,
-    },
-    orderPoints: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
-    orderPointsText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: currentColors.text,
-    },
-    actionButton: {
-      backgroundColor: currentColors.card,
-      borderRadius: 12,
-      padding: 16,
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 8,
-      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      elevation: 2,
-    },
-    actionButtonText: {
-      flex: 1,
-      fontSize: 16,
-      color: currentColors.text,
-      marginLeft: 12,
-    },
-    actionBadge: {
-      backgroundColor: currentColors.accent,
-      borderRadius: 10,
-      minWidth: 20,
-      height: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 6,
-      marginRight: 8,
-    },
-    actionBadgeText: {
-      color: currentColors.card,
-      fontSize: 11,
-      fontWeight: 'bold',
-    },
-  });
+  ];
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.container}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.scrollContent,
+          Platform.OS !== 'ios' && styles.scrollContentWithTabBar,
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
-          <Pressable
-            onPress={() => {
-              if (Platform.OS !== 'web') {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }
-              router.push('/notifications');
-            }}
-          >
-            <View>
-              <IconSymbol name="bell.fill" size={24} color={currentColors.primary} />
-              {unreadNotifications > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>
-                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </Pressable>
+          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Profile</Text>
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            Platform.OS !== 'ios' && styles.scrollContentWithTabBar,
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Profile Info */}
-          <View style={styles.profileCard}>
-            <Pressable 
-              style={styles.avatarContainer}
-              onPress={showImageOptions}
-            >
-              {userProfile.profileImage ? (
-                <Image 
-                  source={{ uri: userProfile.profileImage }} 
-                  style={styles.profileImage}
-                />
-              ) : (
-                <IconSymbol name="person.circle.fill" size={80} color={currentColors.primary} />
-              )}
-              <View style={styles.cameraIconContainer}>
-                <IconSymbol name="camera.fill" size={20} color={currentColors.card} />
-              </View>
-            </Pressable>
-            <Text style={styles.profileName}>{userProfile.name}</Text>
-            <Text style={styles.profileEmail}>{userProfile.email}</Text>
-            <Text style={styles.profilePhone}>{userProfile.phone}</Text>
-          </View>
-
-          {/* Points Card */}
-          <View style={styles.pointsCard}>
-            <View style={styles.pointsHeader}>
-              <IconSymbol name="star.fill" size={32} color={currentColors.highlight} />
-              <View style={styles.pointsInfo}>
-                <Text style={styles.pointsLabel}>Reward Points</Text>
-                <Text style={styles.pointsValue}>{userProfile.points}</Text>
-              </View>
-            </View>
-            <Text style={styles.pointsSubtext}>
-              Earn 1 point for every dollar spent. Use points for discounts or redeem exclusive merch!
-            </Text>
-          </View>
-
-          {/* Stats */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <IconSymbol name="bag.fill" size={24} color={currentColors.primary} />
-              <Text style={styles.statValue}>{userProfile.orders.length}</Text>
-              <Text style={styles.statLabel}>Orders</Text>
-            </View>
-            <View style={styles.statCard}>
-              <IconSymbol name="giftcard.fill" size={24} color={currentColors.primary} />
-              <Text style={styles.statValue}>{userProfile.giftCards.length}</Text>
-              <Text style={styles.statLabel}>Gift Cards</Text>
-            </View>
-            <View style={styles.statCard}>
-              <IconSymbol name="creditcard.fill" size={24} color={currentColors.primary} />
-              <Text style={styles.statValue}>{userProfile.paymentMethods.length}</Text>
-              <Text style={styles.statLabel}>Cards</Text>
-            </View>
-          </View>
-
-          {/* Order History */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Orders</Text>
-              {userProfile.orders.length > 0 && (
-                <Pressable
-                  onPress={() => {
-                    if (Platform.OS !== 'web') {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                    router.push('/order-history');
-                  }}
-                >
-                  <Text style={styles.seeAllText}>See All</Text>
-                </Pressable>
-              )}
-            </View>
-            {userProfile.orders.length === 0 ? (
-              <View style={styles.emptyState}>
-                <IconSymbol name="bag" size={48} color={currentColors.textSecondary} />
-                <Text style={styles.emptyStateText}>No orders yet</Text>
-              </View>
+        <View style={[styles.profileCard, { backgroundColor: currentColors.card }]}>
+          <Pressable onPress={showImageOptions} style={styles.avatarContainer}>
+            {userProfile.profileImage ? (
+              <Image source={{ uri: userProfile.profileImage }} style={styles.avatar} />
             ) : (
-              userProfile.orders.slice(0, 3).map((order) => (
-                <View key={order.id} style={styles.orderCard}>
-                  <View style={styles.orderHeader}>
-                    <Text style={styles.orderDate}>
-                      {new Date(order.date).toLocaleDateString()}
-                    </Text>
-                    <View style={[styles.statusBadge, styles[`status${order.status}`]]}>
-                      <Text style={styles.statusText}>{order.status}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.orderItems}>
-                    {order.items.length} item{order.items.length !== 1 ? 's' : ''}
-                  </Text>
-                  <View style={styles.orderFooter}>
-                    <Text style={styles.orderTotal}>${order.total.toFixed(2)}</Text>
-                    <View style={styles.orderPoints}>
-                      <IconSymbol name="star.fill" size={14} color={currentColors.highlight} />
-                      <Text style={styles.orderPointsText}>+{order.pointsEarned} pts</Text>
-                    </View>
-                  </View>
-                </View>
-              ))
+              <View style={[styles.avatarPlaceholder, { backgroundColor: currentColors.primary }]}>
+                <IconSymbol name="person.fill" size={48} color={currentColors.card} />
+              </View>
             )}
-          </View>
+            <View style={[styles.editBadge, { backgroundColor: currentColors.primary }]}>
+              <IconSymbol name="camera.fill" size={16} color={currentColors.card} />
+            </View>
+          </Pressable>
+          <Text style={[styles.userName, { color: currentColors.text }]}>{userProfile.name}</Text>
+          <Text style={[styles.userEmail, { color: currentColors.textSecondary }]}>{userProfile.email}</Text>
+        </View>
 
-          {/* Quick Actions */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-            <Pressable 
-              style={styles.actionButton}
-              onPress={() => {
-                if (Platform.OS !== 'web') {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push('/edit-profile');
-              }}
-            >
-              <IconSymbol name="person.fill" size={20} color={currentColors.primary} />
-              <Text style={styles.actionButtonText}>Edit Profile</Text>
-              <IconSymbol name="chevron.right" size={20} color={currentColors.textSecondary} />
-            </Pressable>
-            <Pressable 
-              style={styles.actionButton}
-              onPress={() => {
-                if (Platform.OS !== 'web') {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push('/theme-settings');
-              }}
-            >
-              <IconSymbol name="paintbrush.fill" size={20} color={currentColors.primary} />
-              <Text style={styles.actionButtonText}>Theme & Appearance</Text>
-              <IconSymbol name="chevron.right" size={20} color={currentColors.textSecondary} />
-            </Pressable>
-            <Pressable 
-              style={styles.actionButton}
-              onPress={() => {
-                if (Platform.OS !== 'web') {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push('/payment-methods');
-              }}
-            >
-              <IconSymbol name="creditcard.fill" size={20} color={currentColors.primary} />
-              <Text style={styles.actionButtonText}>Payment Methods</Text>
-              <IconSymbol name="chevron.right" size={20} color={currentColors.textSecondary} />
-            </Pressable>
-            <Pressable 
-              style={styles.actionButton}
-              onPress={() => {
-                if (Platform.OS !== 'web') {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push('/order-history');
-              }}
-            >
-              <IconSymbol name="clock.fill" size={20} color={currentColors.primary} />
-              <Text style={styles.actionButtonText}>Order History</Text>
-              <IconSymbol name="chevron.right" size={20} color={currentColors.textSecondary} />
-            </Pressable>
-            <Pressable 
-              style={styles.actionButton}
-              onPress={() => {
-                if (Platform.OS !== 'web') {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push('/events');
-              }}
-            >
-              <IconSymbol name="calendar" size={20} color={currentColors.primary} />
-              <Text style={styles.actionButtonText}>Private Events</Text>
-              <IconSymbol name="chevron.right" size={20} color={currentColors.textSecondary} />
-            </Pressable>
-            <Pressable 
-              style={styles.actionButton}
-              onPress={() => {
-                if (Platform.OS !== 'web') {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push('/notifications');
-              }}
-            >
-              <IconSymbol name="bell.fill" size={20} color={currentColors.primary} />
-              <Text style={styles.actionButtonText}>Notifications</Text>
-              {unreadNotifications > 0 && (
-                <View style={styles.actionBadge}>
-                  <Text style={styles.actionBadgeText}>{unreadNotifications}</Text>
-                </View>
-              )}
-              <IconSymbol name="chevron.right" size={20} color={currentColors.textSecondary} />
-            </Pressable>
+        <View style={[styles.pointsCard, { backgroundColor: currentColors.card }]}>
+          <View style={styles.pointsContent}>
+            <IconSymbol name="star.fill" size={32} color={currentColors.highlight} />
+            <View style={styles.pointsInfo}>
+              <Text style={[styles.pointsLabel, { color: currentColors.textSecondary }]}>Reward Points</Text>
+              <Text style={[styles.pointsValue, { color: currentColors.primary }]}>{userProfile.points}</Text>
+            </View>
           </View>
-        </ScrollView>
-      </View>
+          <Text style={[styles.pointsSubtext, { color: currentColors.textSecondary }]}>
+            Earn 1 point for every dollar spent
+          </Text>
+        </View>
+
+        <View style={styles.menuSection}>
+          {menuItems.map((item) => (
+            <Pressable
+              key={item.id}
+              style={[styles.menuItem, { backgroundColor: currentColors.card }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(item.route as any);
+              }}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuItemIcon, { backgroundColor: currentColors.primary + '20' }]}>
+                  <IconSymbol name={item.icon} size={20} color={currentColors.primary} />
+                </View>
+                <Text style={[styles.menuItemText, { color: currentColors.text }]}>{item.title}</Text>
+              </View>
+              <View style={styles.menuItemRight}>
+                {item.badge && item.badge > 0 ? (
+                  <View style={[styles.badge, { backgroundColor: currentColors.primary }]}>
+                    <Text style={[styles.badgeText, { color: currentColors.card }]}>{item.badge}</Text>
+                  </View>
+                ) : null}
+                <IconSymbol name="chevron.right" size={20} color={currentColors.textSecondary} />
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  scrollContentWithTabBar: {
+    paddingBottom: 100,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  profileCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  avatarPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+  },
+  pointsCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  pointsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 12,
+  },
+  pointsInfo: {
+    flex: 1,
+  },
+  pointsLabel: {
+    fontSize: 14,
+  },
+  pointsValue: {
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  pointsSubtext: {
+    fontSize: 12,
+  },
+  menuSection: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  menuItemIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  menuItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  badge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+});

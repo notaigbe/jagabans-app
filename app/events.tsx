@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
 import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
@@ -56,7 +55,7 @@ const mockEvents: Event[] = [
 
 export default function EventsScreen() {
   const router = useRouter();
-  const { userProfile, addNotification } = useApp();
+  const { userProfile, addNotification, currentColors } = useApp();
 
   const handleRSVP = (event: Event) => {
     if (Platform.OS !== 'web') {
@@ -103,7 +102,7 @@ export default function EventsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Pressable
@@ -115,9 +114,9 @@ export default function EventsScreen() {
             }}
             style={styles.backButton}
           >
-            <IconSymbol name="chevron.left" size={24} color={colors.text} />
+            <IconSymbol name="chevron.left" size={24} color={currentColors.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>Private Events</Text>
+          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Private Events</Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -126,9 +125,9 @@ export default function EventsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.infoCard}>
-            <IconSymbol name="star.fill" size={24} color={colors.highlight} />
-            <Text style={styles.infoText}>
+          <View style={[styles.infoCard, { backgroundColor: currentColors.highlight + '20' }]}>
+            <IconSymbol name="star.fill" size={24} color={currentColors.highlight} />
+            <Text style={[styles.infoText, { color: currentColors.text }]}>
               Exclusive events for app users! RSVP to secure your spot and receive notifications.
             </Text>
           </View>
@@ -138,22 +137,22 @@ export default function EventsScreen() {
             const isRSVPd = userProfile.rsvpEvents.includes(event.id);
 
             return (
-              <View key={event.id} style={styles.eventCard}>
-                <Image source={{ uri: event.image }} style={styles.eventImage} />
+              <View key={event.id} style={[styles.eventCard, { backgroundColor: currentColors.card }]}>
+                <Image source={{ uri: event.image }} style={[styles.eventImage, { backgroundColor: currentColors.textSecondary + '20' }]} />
                 {event.isPrivate && (
-                  <View style={styles.privateBadge}>
-                    <IconSymbol name="lock.fill" size={12} color={colors.card} />
-                    <Text style={styles.privateBadgeText}>Private</Text>
+                  <View style={[styles.privateBadge, { backgroundColor: currentColors.primary }]}>
+                    <IconSymbol name="lock.fill" size={12} color={currentColors.card} />
+                    <Text style={[styles.privateBadgeText, { color: currentColors.card }]}>Private</Text>
                   </View>
                 )}
                 <View style={styles.eventContent}>
-                  <Text style={styles.eventTitle}>{event.title}</Text>
-                  <Text style={styles.eventDescription}>{event.description}</Text>
+                  <Text style={[styles.eventTitle, { color: currentColors.text }]}>{event.title}</Text>
+                  <Text style={[styles.eventDescription, { color: currentColors.textSecondary }]}>{event.description}</Text>
                   
                   <View style={styles.eventDetails}>
                     <View style={styles.eventDetail}>
-                      <IconSymbol name="calendar" size={16} color={colors.primary} />
-                      <Text style={styles.eventDetailText}>
+                      <IconSymbol name="calendar" size={16} color={currentColors.primary} />
+                      <Text style={[styles.eventDetailText, { color: currentColors.text }]}>
                         {new Date(event.date).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -162,12 +161,12 @@ export default function EventsScreen() {
                       </Text>
                     </View>
                     <View style={styles.eventDetail}>
-                      <IconSymbol name="location.fill" size={16} color={colors.primary} />
-                      <Text style={styles.eventDetailText}>{event.location}</Text>
+                      <IconSymbol name="location.fill" size={16} color={currentColors.primary} />
+                      <Text style={[styles.eventDetailText, { color: currentColors.text }]}>{event.location}</Text>
                     </View>
                     <View style={styles.eventDetail}>
-                      <IconSymbol name="person.2.fill" size={16} color={colors.primary} />
-                      <Text style={styles.eventDetailText}>
+                      <IconSymbol name="person.2.fill" size={16} color={currentColors.primary} />
+                      <Text style={[styles.eventDetailText, { color: currentColors.text }]}>
                         {spotsLeft} spots left
                       </Text>
                     </View>
@@ -176,13 +175,14 @@ export default function EventsScreen() {
                   <Pressable
                     style={[
                       styles.rsvpButton,
-                      isRSVPd && styles.rsvpButtonConfirmed,
-                      spotsLeft <= 0 && styles.rsvpButtonDisabled,
+                      { backgroundColor: currentColors.primary },
+                      isRSVPd && { backgroundColor: currentColors.accent },
+                      spotsLeft <= 0 && { backgroundColor: currentColors.textSecondary + '40' },
                     ]}
                     onPress={() => handleRSVP(event)}
                     disabled={spotsLeft <= 0}
                   >
-                    <Text style={styles.rsvpButtonText}>
+                    <Text style={[styles.rsvpButtonText, { color: currentColors.card }]}>
                       {isRSVPd ? 'RSVP Confirmed' : spotsLeft <= 0 ? 'Event Full' : 'RSVP Now'}
                     </Text>
                   </Pressable>
@@ -199,7 +199,6 @@ export default function EventsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -217,7 +216,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.text,
   },
   scrollView: {
     flex: 1,
@@ -227,7 +225,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   infoCard: {
-    backgroundColor: colors.highlight + '20',
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
@@ -238,11 +235,9 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: colors.text,
     lineHeight: 20,
   },
   eventCard: {
-    backgroundColor: colors.card,
     borderRadius: 16,
     marginBottom: 20,
     overflow: 'hidden',
@@ -252,13 +247,11 @@ const styles = StyleSheet.create({
   eventImage: {
     width: '100%',
     height: 200,
-    backgroundColor: colors.textSecondary + '20',
   },
   privateBadge: {
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -267,7 +260,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   privateBadgeText: {
-    color: colors.card,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -277,12 +269,10 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.text,
     marginBottom: 8,
   },
   eventDescription: {
     fontSize: 14,
-    color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: 16,
   },
@@ -297,22 +287,13 @@ const styles = StyleSheet.create({
   },
   eventDetailText: {
     fontSize: 14,
-    color: colors.text,
   },
   rsvpButton: {
-    backgroundColor: colors.primary,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
   },
-  rsvpButtonConfirmed: {
-    backgroundColor: colors.accent,
-  },
-  rsvpButtonDisabled: {
-    backgroundColor: colors.textSecondary + '40',
-  },
   rsvpButtonText: {
-    color: colors.card,
     fontSize: 16,
     fontWeight: '600',
   },

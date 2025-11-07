@@ -11,14 +11,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '@/styles/commonStyles';
 import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 
 export default function CheckoutScreen() {
   const router = useRouter();
-  const { cart, placeOrder, userProfile } = useApp();
+  const { cart, placeOrder, userProfile, currentColors } = useApp();
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [usePoints, setUsePoints] = useState(false);
@@ -55,15 +54,15 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['bottom']}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Delivery Address</Text>
+            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Delivery Address</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
               placeholder="Enter your delivery address"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={currentColors.textSecondary}
               value={deliveryAddress}
               onChangeText={setDeliveryAddress}
               multiline
@@ -73,11 +72,11 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Special Instructions</Text>
+            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Special Instructions</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
               placeholder="Any special requests? (Optional)"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={currentColors.textSecondary}
               value={specialInstructions}
               onChangeText={setSpecialInstructions}
               multiline
@@ -87,64 +86,64 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Payment Method</Text>
-            <Pressable style={styles.paymentOption}>
-              <IconSymbol name="creditcard.fill" size={24} color={colors.primary} />
-              <Text style={styles.paymentText}>Credit Card</Text>
-              <IconSymbol name="chevron.right" size={20} color={colors.textSecondary} />
+            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Payment Method</Text>
+            <Pressable style={[styles.paymentOption, { backgroundColor: currentColors.card }]}>
+              <IconSymbol name="creditcard.fill" size={24} color={currentColors.primary} />
+              <Text style={[styles.paymentText, { color: currentColors.text }]}>Credit Card</Text>
+              <IconSymbol name="chevron.right" size={20} color={currentColors.textSecondary} />
             </Pressable>
           </View>
 
           <View style={styles.section}>
             <Pressable
-              style={styles.pointsToggle}
+              style={[styles.pointsToggle, { backgroundColor: currentColors.card }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setUsePoints(!usePoints);
               }}
             >
               <View style={styles.pointsToggleLeft}>
-                <IconSymbol name="star.fill" size={24} color={colors.highlight} />
+                <IconSymbol name="star.fill" size={24} color={currentColors.highlight} />
                 <View style={styles.pointsToggleInfo}>
-                  <Text style={styles.pointsToggleTitle}>Use Reward Points</Text>
-                  <Text style={styles.pointsToggleSubtitle}>
+                  <Text style={[styles.pointsToggleTitle, { color: currentColors.text }]}>Use Reward Points</Text>
+                  <Text style={[styles.pointsToggleSubtitle, { color: currentColors.textSecondary }]}>
                     You have {userProfile.points} points available
                   </Text>
                 </View>
               </View>
-              <View style={[styles.checkbox, usePoints && styles.checkboxActive]}>
-                {usePoints && <IconSymbol name="checkmark" size={16} color={colors.card} />}
+              <View style={[styles.checkbox, { borderColor: currentColors.textSecondary }, usePoints && { backgroundColor: currentColors.primary, borderColor: currentColors.primary }]}>
+                {usePoints && <IconSymbol name="checkmark" size={16} color={currentColors.card} />}
               </View>
             </Pressable>
           </View>
 
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Order Summary</Text>
+          <View style={[styles.summaryCard, { backgroundColor: currentColors.card }]}>
+            <Text style={[styles.summaryTitle, { color: currentColors.text }]}>Order Summary</Text>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
+              <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Subtotal</Text>
+              <Text style={[styles.summaryValue, { color: currentColors.text }]}>${subtotal.toFixed(2)}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tax (8.75%)</Text>
-              <Text style={styles.summaryValue}>${tax.toFixed(2)}</Text>
+              <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Tax (8.75%)</Text>
+              <Text style={[styles.summaryValue, { color: currentColors.text }]}>${tax.toFixed(2)}</Text>
             </View>
             {usePoints && pointsDiscount > 0 && (
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: colors.primary }]}>
+                <Text style={[styles.summaryLabel, { color: currentColors.primary }]}>
                   Points Discount
                 </Text>
-                <Text style={[styles.summaryValue, { color: colors.primary }]}>
+                <Text style={[styles.summaryValue, { color: currentColors.primary }]}>
                   -${pointsDiscount.toFixed(2)}
                 </Text>
               </View>
             )}
-            <View style={[styles.summaryRow, styles.summaryRowTotal]}>
-              <Text style={styles.summaryLabelTotal}>Total</Text>
-              <Text style={styles.summaryValueTotal}>${total.toFixed(2)}</Text>
+            <View style={[styles.summaryRow, styles.summaryRowTotal, { borderTopColor: currentColors.background }]}>
+              <Text style={[styles.summaryLabelTotal, { color: currentColors.text }]}>Total</Text>
+              <Text style={[styles.summaryValueTotal, { color: currentColors.primary }]}>${total.toFixed(2)}</Text>
             </View>
-            <View style={styles.pointsEarnCard}>
-              <IconSymbol name="star.fill" size={20} color={colors.highlight} />
-              <Text style={styles.pointsEarnText}>
+            <View style={[styles.pointsEarnCard, { backgroundColor: currentColors.background }]}>
+              <IconSymbol name="star.fill" size={20} color={currentColors.highlight} />
+              <Text style={[styles.pointsEarnText, { color: currentColors.text }]}>
                 You&apos;ll earn {pointsToEarn} points with this order!
               </Text>
             </View>
@@ -152,9 +151,9 @@ export default function CheckoutScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <Pressable style={styles.placeOrderButton} onPress={handlePlaceOrder}>
-          <Text style={styles.placeOrderButtonText}>Place Order - ${total.toFixed(2)}</Text>
+      <View style={[styles.footer, { backgroundColor: currentColors.card, borderTopColor: currentColors.background }]}>
+        <Pressable style={[styles.placeOrderButton, { backgroundColor: currentColors.primary }]} onPress={handlePlaceOrder}>
+          <Text style={[styles.placeOrderButtonText, { color: currentColors.card }]}>Place Order - ${total.toFixed(2)}</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -164,7 +163,6 @@ export default function CheckoutScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -178,21 +176,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text,
     marginBottom: 12,
   },
   input: {
-    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: colors.text,
     minHeight: 80,
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 2,
   },
   paymentOption: {
-    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
@@ -204,10 +198,8 @@ const styles = StyleSheet.create({
   paymentText: {
     flex: 1,
     fontSize: 16,
-    color: colors.text,
   },
   pointsToggle: {
-    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
@@ -228,11 +220,9 @@ const styles = StyleSheet.create({
   pointsToggleTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
   },
   pointsToggleSubtitle: {
     fontSize: 14,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   checkbox: {
@@ -240,16 +230,10 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: colors.textSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkboxActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
   summaryCard: {
-    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 20,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
@@ -258,7 +242,6 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text,
     marginBottom: 16,
   },
   summaryRow: {
@@ -268,32 +251,26 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 16,
-    color: colors.textSecondary,
   },
   summaryValue: {
     fontSize: 16,
-    color: colors.text,
   },
   summaryRowTotal: {
     borderTopWidth: 1,
-    borderTopColor: colors.background,
     paddingTop: 12,
     marginTop: 4,
   },
   summaryLabelTotal: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text,
   },
   summaryValueTotal: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.primary,
   },
   pointsEarnCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background,
     padding: 12,
     borderRadius: 8,
     marginTop: 16,
@@ -303,16 +280,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
   },
   footer: {
     padding: 20,
-    backgroundColor: colors.card,
     borderTopWidth: 1,
-    borderTopColor: colors.background,
   },
   placeOrderButton: {
-    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -322,6 +295,5 @@ const styles = StyleSheet.create({
   placeOrderButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.card,
   },
 });

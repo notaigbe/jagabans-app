@@ -11,13 +11,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
 import { menuItems, menuCategories } from '@/data/menuData';
 import { IconSymbol } from '@/components/IconSymbol';
+import { useApp } from '@/contexts/AppContext';
 import * as Haptics from 'expo-haptics';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { currentColors } = useApp();
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   const filteredItems = selectedCategory === 'All'
@@ -37,7 +38,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -46,9 +47,9 @@ export default function HomeScreen() {
               source={require('@/assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png')}
               style={styles.logo}
             />
-            <Text style={styles.headerSubtitle}>Authentic West African Cuisine</Text>
+            <Text style={[styles.headerSubtitle, { color: currentColors.textSecondary }]}>Authentic West African Cuisine</Text>
           </View>
-          <IconSymbol name="bell.fill" size={24} color={colors.primary} />
+          <IconSymbol name="bell.fill" size={24} color={currentColors.primary} />
         </View>
 
         {/* Categories */}
@@ -63,14 +64,16 @@ export default function HomeScreen() {
               key={category}
               style={[
                 styles.categoryButton,
-                selectedCategory === category && styles.categoryButtonActive,
+                { backgroundColor: currentColors.card },
+                selectedCategory === category && { backgroundColor: currentColors.primary },
               ]}
               onPress={() => handleCategoryPress(category)}
             >
               <Text
                 style={[
                   styles.categoryText,
-                  selectedCategory === category && styles.categoryTextActive,
+                  { color: currentColors.text },
+                  selectedCategory === category && { color: currentColors.card },
                 ]}
               >
                 {category}
@@ -91,25 +94,25 @@ export default function HomeScreen() {
           {filteredItems.map((item) => (
             <Pressable
               key={item.id}
-              style={styles.menuItem}
+              style={[styles.menuItem, { backgroundColor: currentColors.card }]}
               onPress={() => handleItemPress(item.id)}
             >
-              <Image source={{ uri: item.image }} style={styles.menuItemImage} />
+              <Image source={{ uri: item.image }} style={[styles.menuItemImage, { backgroundColor: currentColors.accent }]} />
               {item.popular && (
-                <View style={styles.popularBadge}>
-                  <IconSymbol name="star.fill" size={12} color={colors.card} />
-                  <Text style={styles.popularText}>Popular</Text>
+                <View style={[styles.popularBadge, { backgroundColor: currentColors.primary }]}>
+                  <IconSymbol name="star.fill" size={12} color={currentColors.card} />
+                  <Text style={[styles.popularText, { color: currentColors.card }]}>Popular</Text>
                 </View>
               )}
               <View style={styles.menuItemInfo}>
-                <Text style={styles.menuItemName}>{item.name}</Text>
-                <Text style={styles.menuItemDescription} numberOfLines={2}>
+                <Text style={[styles.menuItemName, { color: currentColors.text }]}>{item.name}</Text>
+                <Text style={[styles.menuItemDescription, { color: currentColors.textSecondary }]} numberOfLines={2}>
                   {item.description}
                 </Text>
                 <View style={styles.menuItemFooter}>
-                  <Text style={styles.menuItemPrice}>${item.price.toFixed(2)}</Text>
-                  <View style={styles.addButton}>
-                    <IconSymbol name="plus" size={20} color={colors.card} />
+                  <Text style={[styles.menuItemPrice, { color: currentColors.primary }]}>${item.price.toFixed(2)}</Text>
+                  <View style={[styles.addButton, { backgroundColor: currentColors.primary }]}>
+                    <IconSymbol name="plus" size={20} color={currentColors.card} />
                   </View>
                 </View>
               </View>
@@ -124,7 +127,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -144,12 +146,11 @@ const styles = StyleSheet.create({
     width: 140,
     height: 50,
     resizeMode: 'contain',
-    marginBottom: 4,
+    marginBottom: 1,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: 0,
   },
   categoriesContainer: {
     maxHeight: 50,
@@ -163,19 +164,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: colors.card,
     marginRight: 8,
-  },
-  categoryButtonActive: {
-    backgroundColor: colors.primary,
   },
   categoryText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
-  },
-  categoryTextActive: {
-    color: colors.card,
   },
   menuContainer: {
     flex: 1,
@@ -189,7 +182,6 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   menuItem: {
-    backgroundColor: colors.card,
     borderRadius: 16,
     marginBottom: 16,
     overflow: 'hidden',
@@ -199,13 +191,11 @@ const styles = StyleSheet.create({
   menuItemImage: {
     width: '100%',
     height: 200,
-    backgroundColor: colors.accent,
   },
   popularBadge: {
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
@@ -214,7 +204,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   popularText: {
-    color: colors.card,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -224,12 +213,10 @@ const styles = StyleSheet.create({
   menuItemName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text,
     marginBottom: 4,
   },
   menuItemDescription: {
     fontSize: 14,
-    color: colors.textSecondary,
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -241,10 +228,8 @@ const styles = StyleSheet.create({
   menuItemPrice: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.primary,
   },
   addButton: {
-    backgroundColor: colors.primary,
     width: 36,
     height: 36,
     borderRadius: 18,

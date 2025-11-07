@@ -10,14 +10,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
 import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { userProfile, markNotificationAsRead } = useApp();
+  const { userProfile, markNotificationAsRead, currentColors } = useApp();
 
   const handleNotificationPress = (notificationId: string, actionUrl?: string) => {
     if (Platform.OS !== 'web') {
@@ -45,18 +44,18 @@ export default function NotificationsScreen() {
   const getNotificationColor = (type: string) => {
     switch (type) {
       case 'special':
-        return colors.highlight;
+        return currentColors.highlight;
       case 'event':
-        return colors.accent;
+        return currentColors.accent;
       case 'order':
-        return colors.primary;
+        return currentColors.primary;
       default:
-        return colors.secondary;
+        return currentColors.secondary;
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Pressable
@@ -68,9 +67,9 @@ export default function NotificationsScreen() {
             }}
             style={styles.backButton}
           >
-            <IconSymbol name="chevron.left" size={24} color={colors.text} />
+            <IconSymbol name="chevron.left" size={24} color={currentColors.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>Notifications</Text>
+          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Notifications</Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -81,9 +80,9 @@ export default function NotificationsScreen() {
         >
           {userProfile.notifications.length === 0 ? (
             <View style={styles.emptyState}>
-              <IconSymbol name="bell" size={64} color={colors.textSecondary} />
-              <Text style={styles.emptyStateTitle}>No Notifications</Text>
-              <Text style={styles.emptyStateText}>
+              <IconSymbol name="bell" size={64} color={currentColors.textSecondary} />
+              <Text style={[styles.emptyStateTitle, { color: currentColors.text }]}>No Notifications</Text>
+              <Text style={[styles.emptyStateText, { color: currentColors.textSecondary }]}>
                 You&apos;ll see notifications about orders, specials, and events here
               </Text>
             </View>
@@ -94,7 +93,8 @@ export default function NotificationsScreen() {
                   key={notification.id}
                   style={[
                     styles.notificationCard,
-                    !notification.read && styles.unreadNotification,
+                    { backgroundColor: currentColors.card },
+                    !notification.read && { borderLeftWidth: 4, borderLeftColor: currentColors.primary },
                   ]}
                   onPress={() =>
                     handleNotificationPress(notification.id, notification.actionUrl)
@@ -114,11 +114,11 @@ export default function NotificationsScreen() {
                   </View>
                   <View style={styles.notificationContent}>
                     <View style={styles.notificationHeader}>
-                      <Text style={styles.notificationTitle}>{notification.title}</Text>
-                      {!notification.read && <View style={styles.unreadDot} />}
+                      <Text style={[styles.notificationTitle, { color: currentColors.text }]}>{notification.title}</Text>
+                      {!notification.read && <View style={[styles.unreadDot, { backgroundColor: currentColors.primary }]} />}
                     </View>
-                    <Text style={styles.notificationMessage}>{notification.message}</Text>
-                    <Text style={styles.notificationDate}>
+                    <Text style={[styles.notificationMessage, { color: currentColors.textSecondary }]}>{notification.message}</Text>
+                    <Text style={[styles.notificationDate, { color: currentColors.textSecondary }]}>
                       {new Date(notification.date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -140,7 +140,6 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -158,7 +157,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.text,
   },
   scrollView: {
     flex: 1,
@@ -175,28 +173,21 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.text,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateText: {
     fontSize: 16,
-    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 40,
   },
   notificationCard: {
-    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 2,
-  },
-  unreadNotification: {
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
   },
   notificationIcon: {
     width: 48,
@@ -217,24 +208,20 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
     flex: 1,
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.primary,
     marginLeft: 8,
   },
   notificationMessage: {
     fontSize: 14,
-    color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: 8,
   },
   notificationDate: {
     fontSize: 12,
-    color: colors.textSecondary,
   },
 });

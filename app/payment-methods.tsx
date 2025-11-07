@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
 import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { PaymentMethod } from '@/types';
@@ -20,7 +19,7 @@ import * as Haptics from 'expo-haptics';
 
 export default function PaymentMethodsScreen() {
   const router = useRouter();
-  const { userProfile, addPaymentMethod, removePaymentMethod, setDefaultPaymentMethod } = useApp();
+  const { userProfile, addPaymentMethod, removePaymentMethod, setDefaultPaymentMethod, currentColors } = useApp();
   const [showAddCard, setShowAddCard] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
   const [cardholderName, setCardholderName] = useState('');
@@ -112,7 +111,7 @@ export default function PaymentMethodsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Pressable
@@ -124,9 +123,9 @@ export default function PaymentMethodsScreen() {
             }}
             style={styles.backButton}
           >
-            <IconSymbol name="chevron.left" size={24} color={colors.text} />
+            <IconSymbol name="chevron.left" size={24} color={currentColors.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>Payment Methods</Text>
+          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Payment Methods</Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -137,42 +136,42 @@ export default function PaymentMethodsScreen() {
         >
           {userProfile.paymentMethods.length === 0 && !showAddCard ? (
             <View style={styles.emptyState}>
-              <IconSymbol name="creditcard" size={64} color={colors.textSecondary} />
-              <Text style={styles.emptyStateTitle}>No Payment Methods</Text>
-              <Text style={styles.emptyStateText}>
+              <IconSymbol name="creditcard" size={64} color={currentColors.textSecondary} />
+              <Text style={[styles.emptyStateTitle, { color: currentColors.text }]}>No Payment Methods</Text>
+              <Text style={[styles.emptyStateText, { color: currentColors.textSecondary }]}>
                 Add a payment method to make checkout faster and easier
               </Text>
             </View>
           ) : (
             <View style={styles.cardsContainer}>
               {userProfile.paymentMethods.map((method) => (
-                <View key={method.id} style={styles.cardItem}>
+                <View key={method.id} style={[styles.cardItem, { backgroundColor: currentColors.card }]}>
                   <View style={styles.cardInfo}>
-                    <IconSymbol name="creditcard.fill" size={32} color={colors.primary} />
+                    <IconSymbol name="creditcard.fill" size={32} color={currentColors.primary} />
                     <View style={styles.cardDetails}>
-                      <Text style={styles.cardNumber}>{method.cardNumber}</Text>
-                      <Text style={styles.cardHolder}>{method.cardholderName}</Text>
-                      <Text style={styles.cardExpiry}>Expires {method.expiryDate}</Text>
+                      <Text style={[styles.cardNumber, { color: currentColors.text }]}>{method.cardNumber}</Text>
+                      <Text style={[styles.cardHolder, { color: currentColors.textSecondary }]}>{method.cardholderName}</Text>
+                      <Text style={[styles.cardExpiry, { color: currentColors.textSecondary }]}>Expires {method.expiryDate}</Text>
                     </View>
                   </View>
                   <View style={styles.cardActions}>
                     {method.isDefault ? (
-                      <View style={styles.defaultBadge}>
-                        <Text style={styles.defaultBadgeText}>Default</Text>
+                      <View style={[styles.defaultBadge, { backgroundColor: currentColors.primary }]}>
+                        <Text style={[styles.defaultBadgeText, { color: currentColors.card }]}>Default</Text>
                       </View>
                     ) : (
                       <Pressable
                         onPress={() => handleSetDefault(method.id)}
                         style={styles.setDefaultButton}
                       >
-                        <Text style={styles.setDefaultText}>Set as Default</Text>
+                        <Text style={[styles.setDefaultText, { color: currentColors.primary }]}>Set as Default</Text>
                       </Pressable>
                     )}
                     <Pressable
                       onPress={() => handleRemoveCard(method.id)}
                       style={styles.removeButton}
                     >
-                      <IconSymbol name="trash" size={20} color={colors.accent} />
+                      <IconSymbol name="trash" size={20} color={currentColors.accent} />
                     </Pressable>
                   </View>
                 </View>
@@ -181,15 +180,15 @@ export default function PaymentMethodsScreen() {
           )}
 
           {showAddCard && (
-            <View style={styles.addCardForm}>
-              <Text style={styles.formTitle}>Add New Card</Text>
+            <View style={[styles.addCardForm, { backgroundColor: currentColors.card }]}>
+              <Text style={[styles.formTitle, { color: currentColors.text }]}>Add New Card</Text>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Card Number</Text>
+                <Text style={[styles.inputLabel, { color: currentColors.text }]}>Card Number</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: currentColors.background, color: currentColors.text, borderColor: currentColors.textSecondary + '30' }]}
                   placeholder="1234 5678 9012 3456"
-                  placeholderTextColor={colors.textSecondary}
+                  placeholderTextColor={currentColors.textSecondary}
                   value={cardNumber}
                   onChangeText={(text) => setCardNumber(formatCardNumber(text))}
                   keyboardType="numeric"
@@ -198,11 +197,11 @@ export default function PaymentMethodsScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Cardholder Name</Text>
+                <Text style={[styles.inputLabel, { color: currentColors.text }]}>Cardholder Name</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: currentColors.background, color: currentColors.text, borderColor: currentColors.textSecondary + '30' }]}
                   placeholder="John Doe"
-                  placeholderTextColor={colors.textSecondary}
+                  placeholderTextColor={currentColors.textSecondary}
                   value={cardholderName}
                   onChangeText={setCardholderName}
                   autoCapitalize="words"
@@ -211,11 +210,11 @@ export default function PaymentMethodsScreen() {
 
               <View style={styles.row}>
                 <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.inputLabel}>Expiry Date</Text>
+                  <Text style={[styles.inputLabel, { color: currentColors.text }]}>Expiry Date</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: currentColors.background, color: currentColors.text, borderColor: currentColors.textSecondary + '30' }]}
                     placeholder="MM/YY"
-                    placeholderTextColor={colors.textSecondary}
+                    placeholderTextColor={currentColors.textSecondary}
                     value={expiryDate}
                     onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
                     keyboardType="numeric"
@@ -224,11 +223,11 @@ export default function PaymentMethodsScreen() {
                 </View>
 
                 <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.inputLabel}>CVV</Text>
+                  <Text style={[styles.inputLabel, { color: currentColors.text }]}>CVV</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: currentColors.background, color: currentColors.text, borderColor: currentColors.textSecondary + '30' }]}
                     placeholder="123"
-                    placeholderTextColor={colors.textSecondary}
+                    placeholderTextColor={currentColors.textSecondary}
                     value={cvv}
                     onChangeText={(text) => setCvv(text.replace(/\D/g, ''))}
                     keyboardType="numeric"
@@ -240,7 +239,7 @@ export default function PaymentMethodsScreen() {
 
               <View style={styles.formActions}>
                 <Pressable
-                  style={[styles.button, styles.cancelButton]}
+                  style={[styles.button, styles.cancelButton, { backgroundColor: currentColors.background }]}
                   onPress={() => {
                     if (Platform.OS !== 'web') {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -252,13 +251,13 @@ export default function PaymentMethodsScreen() {
                     setCvv('');
                   }}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={[styles.cancelButtonText, { color: currentColors.text }]}>Cancel</Text>
                 </Pressable>
                 <Pressable
-                  style={[styles.button, styles.addButton]}
+                  style={[styles.button, styles.addButton, { backgroundColor: currentColors.primary }]}
                   onPress={handleAddCard}
                 >
-                  <Text style={styles.addButtonText}>Add Card</Text>
+                  <Text style={[styles.addButtonText, { color: currentColors.card }]}>Add Card</Text>
                 </Pressable>
               </View>
             </View>
@@ -266,7 +265,7 @@ export default function PaymentMethodsScreen() {
 
           {!showAddCard && (
             <Pressable
-              style={styles.addNewButton}
+              style={[styles.addNewButton, { backgroundColor: currentColors.card }]}
               onPress={() => {
                 if (Platform.OS !== 'web') {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -274,14 +273,14 @@ export default function PaymentMethodsScreen() {
                 setShowAddCard(true);
               }}
             >
-              <IconSymbol name="plus.circle.fill" size={24} color={colors.primary} />
-              <Text style={styles.addNewButtonText}>Add New Payment Method</Text>
+              <IconSymbol name="plus.circle.fill" size={24} color={currentColors.primary} />
+              <Text style={[styles.addNewButtonText, { color: currentColors.primary }]}>Add New Payment Method</Text>
             </Pressable>
           )}
 
           <View style={styles.securityNote}>
-            <IconSymbol name="lock.fill" size={20} color={colors.textSecondary} />
-            <Text style={styles.securityNoteText}>
+            <IconSymbol name="lock.fill" size={20} color={currentColors.textSecondary} />
+            <Text style={[styles.securityNoteText, { color: currentColors.textSecondary }]}>
               Your payment information is encrypted and secure
             </Text>
           </View>
@@ -294,7 +293,6 @@ export default function PaymentMethodsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -312,7 +310,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.text,
   },
   scrollView: {
     flex: 1,
@@ -329,13 +326,11 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.text,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateText: {
     fontSize: 16,
-    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 40,
   },
@@ -343,7 +338,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   cardItem: {
-    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
@@ -362,17 +356,14 @@ const styles = StyleSheet.create({
   cardNumber: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.text,
     marginBottom: 4,
   },
   cardHolder: {
     fontSize: 14,
-    color: colors.textSecondary,
     marginBottom: 2,
   },
   cardExpiry: {
     fontSize: 12,
-    color: colors.textSecondary,
   },
   cardActions: {
     flexDirection: 'row',
@@ -380,13 +371,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   defaultBadge: {
-    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
   defaultBadgeText: {
-    color: colors.card,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -395,7 +384,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   setDefaultText: {
-    color: colors.primary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -403,7 +391,6 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   addCardForm: {
-    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
@@ -413,7 +400,6 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.text,
     marginBottom: 20,
   },
   inputGroup: {
@@ -422,17 +408,13 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: colors.text,
     borderWidth: 1,
-    borderColor: colors.textSecondary + '30',
   },
   row: {
     flexDirection: 'row',
@@ -449,23 +431,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: colors.background,
   },
   cancelButtonText: {
-    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
   addButton: {
-    backgroundColor: colors.primary,
   },
   addButtonText: {
-    color: colors.card,
     fontSize: 16,
     fontWeight: '600',
   },
   addNewButton: {
-    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 20,
     flexDirection: 'row',
@@ -478,7 +455,6 @@ const styles = StyleSheet.create({
   addNewButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.primary,
     marginLeft: 12,
   },
   securityNote: {
@@ -490,6 +466,5 @@ const styles = StyleSheet.create({
   },
   securityNoteText: {
     fontSize: 14,
-    color: colors.textSecondary,
   },
 });
