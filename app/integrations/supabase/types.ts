@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -6,10 +7,411 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      [_ in never]: never
+      user_profiles: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          phone: string | null
+          points: number
+          profile_image: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          email: string
+          phone?: string | null
+          points?: number
+          profile_image?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          phone?: string | null
+          points?: number
+          profile_image?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      menu_items: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          price: number
+          category: string
+          image: string
+          popular: boolean
+          available: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description: string
+          price: number
+          category: string
+          image: string
+          popular?: boolean
+          available?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          price?: number
+          category?: string
+          image?: string
+          popular?: boolean
+          available?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      orders: {
+        Row: {
+          id: string
+          user_id: string
+          total: number
+          points_earned: number
+          status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+          delivery_address: string | null
+          pickup_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          total: number
+          points_earned?: number
+          status?: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+          delivery_address?: string | null
+          pickup_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          total?: number
+          points_earned?: number
+          status?: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+          delivery_address?: string | null
+          pickup_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          menu_item_id: string | null
+          name: string
+          price: number
+          quantity: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          menu_item_id?: string | null
+          name: string
+          price: number
+          quantity: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          menu_item_id?: string | null
+          name?: string
+          price?: number
+          quantity?: number
+          created_at?: string
+        }
+      }
+      gift_cards: {
+        Row: {
+          id: string
+          sender_id: string
+          recipient_id: string | null
+          recipient_email: string | null
+          recipient_name: string | null
+          points: number
+          message: string | null
+          status: 'pending' | 'sent' | 'redeemed' | 'expired'
+          redeemed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sender_id: string
+          recipient_id?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          points: number
+          message?: string | null
+          status?: 'pending' | 'sent' | 'redeemed' | 'expired'
+          redeemed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sender_id?: string
+          recipient_id?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          points?: number
+          message?: string | null
+          status?: 'pending' | 'sent' | 'redeemed' | 'expired'
+          redeemed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      merch_items: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          points_cost: number
+          image: string
+          in_stock: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description: string
+          points_cost: number
+          image: string
+          in_stock?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          points_cost?: number
+          image?: string
+          in_stock?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      merch_redemptions: {
+        Row: {
+          id: string
+          user_id: string
+          merch_item_id: string | null
+          merch_name: string
+          points_cost: number
+          delivery_address: string | null
+          pickup_notes: string | null
+          status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          merch_item_id?: string | null
+          merch_name: string
+          points_cost: number
+          delivery_address?: string | null
+          pickup_notes?: string | null
+          status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          merch_item_id?: string | null
+          merch_name?: string
+          points_cost?: number
+          delivery_address?: string | null
+          pickup_notes?: string | null
+          status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      events: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          date: string
+          location: string
+          capacity: number
+          image: string
+          is_private: boolean
+          is_invite_only: boolean
+          shareable_link: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          date: string
+          location: string
+          capacity: number
+          image: string
+          is_private?: boolean
+          is_invite_only?: boolean
+          shareable_link?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          date?: string
+          location?: string
+          capacity?: number
+          image?: string
+          is_private?: boolean
+          is_invite_only?: boolean
+          shareable_link?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      event_rsvps: {
+        Row: {
+          id: string
+          event_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          user_id?: string
+          created_at?: string
+        }
+      }
+      payment_methods: {
+        Row: {
+          id: string
+          user_id: string
+          type: 'credit' | 'debit'
+          card_number: string
+          cardholder_name: string
+          expiry_date: string
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: 'credit' | 'debit'
+          card_number: string
+          cardholder_name: string
+          expiry_date: string
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: 'credit' | 'debit'
+          card_number?: string
+          cardholder_name?: string
+          expiry_date?: string
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          message: string
+          type: 'special' | 'event' | 'order' | 'general' | 'giftcard'
+          read: boolean
+          action_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          message: string
+          type: 'special' | 'event' | 'order' | 'general' | 'giftcard'
+          read?: boolean
+          action_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          message?: string
+          type?: 'special' | 'event' | 'order' | 'general' | 'giftcard'
+          read?: boolean
+          action_url?: string | null
+          created_at?: string
+        }
+      }
+      theme_settings: {
+        Row: {
+          id: string
+          user_id: string
+          mode: 'light' | 'dark' | 'auto'
+          color_scheme: 'default' | 'warm' | 'cool' | 'vibrant' | 'minimal'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          mode?: 'light' | 'dark' | 'auto'
+          color_scheme?: 'default' | 'warm' | 'cool' | 'vibrant' | 'minimal'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          mode?: 'light' | 'dark' | 'auto'
+          color_scheme?: 'default' | 'warm' | 'cool' | 'vibrant' | 'minimal'
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
