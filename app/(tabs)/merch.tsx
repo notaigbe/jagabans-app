@@ -11,33 +11,29 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { merchItems } from '@/data/merchData';
 import { useApp } from '@/contexts/AppContext';
-import { IconSymbol } from '@/components/IconSymbol';
+import { merchItems } from '@/data/merchData';
 import * as Haptics from 'expo-haptics';
+import { IconSymbol } from '@/components/IconSymbol';
 
 export default function MerchScreen() {
   const { userProfile, redeemMerch, currentColors } = useApp();
 
-  const handleRedeem = (merchId: string, pointsCost: number, merchName: string, inStock: boolean) => {
+  const handleRedeem = (merchId: string, pointsCost: number, merchName: string) => {
     console.log('Redeeming merch:', merchId);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
-    if (!inStock) {
-      Alert.alert('Out of Stock', 'This item is currently out of stock.');
-      return;
-    }
-
     if (userProfile.points < pointsCost) {
       Alert.alert(
         'Insufficient Points',
-        `You need ${pointsCost - userProfile.points} more points to redeem this item.`
+        `You need ${pointsCost - userProfile.points} more points to redeem this item.`,
+        [{ text: 'OK' }]
       );
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert(
-      'Redeem Merch',
+      'Redeem Item',
       `Redeem ${merchName} for ${pointsCost} points?`,
       [
         { text: 'Cancel', style: 'cancel' },
@@ -45,7 +41,8 @@ export default function MerchScreen() {
           text: 'Redeem',
           onPress: () => {
             redeemMerch(merchId, pointsCost);
-            Alert.alert('Success!', `You&apos;ve redeemed ${merchName}! We&apos;ll ship it to you soon.`);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert('Success!', `You've redeemed ${merchName}!`);
           },
         },
       ]
@@ -55,62 +52,60 @@ export default function MerchScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
       <View style={styles.container}>
+        {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={[styles.headerTitle, { color: currentColors.text }]}>Merch Store</Text>
-            <Text style={[styles.headerSubtitle, { color: currentColors.textSecondary }]}>Redeem exclusive items with points</Text>
-          </View>
-        </View>
-
-        <View style={[styles.pointsCard, { backgroundColor: currentColors.card }]}>
-          <IconSymbol name="star.fill" size={32} color={currentColors.highlight} />
-          <View style={styles.pointsInfo}>
-            <Text style={[styles.pointsLabel, { color: currentColors.textSecondary }]}>Your Points</Text>
-            <Text style={[styles.pointsValue, { color: currentColors.primary }]}>{userProfile.points}</Text>
+          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Merch Store</Text>
+          <View style={[styles.pointsBadge, { backgroundColor: currentColors.primary }]}>
+            <IconSymbol name="star.fill" size={16} color={currentColors.card} />
+            <Text style={[styles.pointsText, { color: currentColors.card }]}>
+              {userProfile.points} pts
+            </Text>
           </View>
         </View>
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            Platform.OS !== 'ios' && styles.scrollContentWithTabBar,
-          ]}
+          style={styles.merchList}
+          contentContainerStyle={styles.merchListContent}
           showsVerticalScrollIndicator={false}
         >
-          {merchItems.map((item) => (
-            <View key={item.id} style={[styles.merchItem, { backgroundColor: currentColors.card }]}>
-              <Image source={{ uri: item.image }} style={[styles.merchImage, { backgroundColor: currentColors.accent }]} />
-              {!item.inStock && (
-                <View style={[styles.outOfStockBadge, { backgroundColor: currentColors.textSecondary }]}>
-                  <Text style={[styles.outOfStockText, { color: currentColors.card }]}>Out of Stock</Text>
-                </View>
-              )}
-              <View style={styles.merchInfo}>
-                <Text style={[styles.merchName, { color: currentColors.text }]}>{item.name}</Text>
-                <Text style={[styles.merchDescription, { color: currentColors.textSecondary }]}>{item.description}</Text>
-                <View style={styles.merchFooter}>
-                  <View style={styles.pointsCostContainer}>
-                    <IconSymbol name="star.fill" size={16} color={currentColors.highlight} />
-                    <Text style={[styles.pointsCost, { color: currentColors.text }]}>{item.pointsCost} pts</Text>
+          <Text style={[styles.sectionTitle, { color: currentColors.textSecondary }]}>
+            Redeem your points for exclusive merchandise
+          </Text>
+
+          {merchItems.map((item) => {
+            const canAfford = userProfile.points >= item.pointsCost;
+            return (
+              <View key={item.id} style={[styles.merchItem, { backgroundColor: currentColors.card }]}>
+                <Image source={{ uri: item.image }} style={styles.merchImage} />
+                <View style={styles.merchInfo}>
+                  <Text style={[styles.merchName, { color: currentColors.text }]}>{item.name}</Text>
+                  <Text style={[styles.merchDescription, { color: currentColors.textSecondary }]} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+                  <View style={styles.merchFooter}>
+                    <View style={styles.pointsContainer}>
+                      <IconSymbol name="star.fill" size={16} color={currentColors.primary} />
+                      <Text style={[styles.pointsCost, { color: currentColors.primary }]}>
+                        {item.pointsCost} points
+                      </Text>
+                    </View>
+                    <Pressable
+                      style={[
+                        styles.redeemButton,
+                        { backgroundColor: canAfford ? currentColors.primary : currentColors.textSecondary },
+                      ]}
+                      onPress={() => handleRedeem(item.id, item.pointsCost, item.name)}
+                      disabled={!canAfford}
+                    >
+                      <Text style={[styles.redeemButtonText, { color: currentColors.card }]}>
+                        {canAfford ? 'Redeem' : 'Not Enough'}
+                      </Text>
+                    </Pressable>
                   </View>
-                  <Pressable
-                    style={[
-                      styles.redeemButton,
-                      { backgroundColor: currentColors.primary },
-                      (!item.inStock || userProfile.points < item.pointsCost) && [
-                        styles.redeemButtonDisabled,
-                        { backgroundColor: currentColors.textSecondary, opacity: 0.5 }
-                      ],
-                    ]}
-                    onPress={() => handleRedeem(item.id, item.pointsCost, item.name, item.inStock)}
-                  >
-                    <Text style={[styles.redeemButtonText, { color: currentColors.card }]}>Redeem</Text>
-                  </Pressable>
                 </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -130,48 +125,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
   },
-  headerSubtitle: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-  pointsCard: {
-    marginHorizontal: 20,
-    marginBottom: 16,
-    padding: 20,
-    borderRadius: 12,
+  pointsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-    elevation: 3,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
   },
-  pointsInfo: {
-    flex: 1,
-  },
-  pointsLabel: {
+  pointsText: {
     fontSize: 14,
-  },
-  pointsValue: {
-    fontSize: 32,
     fontWeight: 'bold',
   },
-  scrollView: {
+  merchList: {
     flex: 1,
   },
-  scrollContent: {
+  merchListContent: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingTop: 16,
+    paddingBottom: 120,
   },
-  scrollContentWithTabBar: {
-    paddingBottom: 100,
+  sectionTitle: {
+    fontSize: 14,
+    marginBottom: 16,
   },
   merchItem: {
-    borderRadius: 16,
+    borderRadius: 12,
     marginBottom: 16,
     overflow: 'hidden',
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
@@ -180,18 +166,6 @@ const styles = StyleSheet.create({
   merchImage: {
     width: '100%',
     height: 200,
-  },
-  outOfStockBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  outOfStockText: {
-    fontSize: 12,
-    fontWeight: '600',
   },
   merchInfo: {
     padding: 16,
@@ -211,24 +185,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  pointsCostContainer: {
+  pointsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
   pointsCost: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   redeemButton: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
   },
-  redeemButtonDisabled: {
-  },
   redeemButtonText: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

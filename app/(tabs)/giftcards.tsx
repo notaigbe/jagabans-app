@@ -6,30 +6,23 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Platform,
-  Alert,
   TextInput,
+  Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/contexts/AppContext';
-import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
+import { IconSymbol } from '@/components/IconSymbol';
 
-const giftCardAmounts = [25, 50, 75, 100];
+const giftCardAmounts = [25, 50, 75, 100, 150, 200];
 
 export default function GiftCardsScreen() {
-  const { purchaseGiftCard, currentColors, setTabBarVisible } = useApp();
+  const { purchaseGiftCard, currentColors } = useApp();
   const [selectedAmount, setSelectedAmount] = useState(50);
-  const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientName, setRecipientName] = useState('');
   const [message, setMessage] = useState('');
-
-  React.useEffect(() => {
-    setTabBarVisible(true);
-    return () => {
-      setTabBarVisible(true);
-    };
-  }, []);
 
   const handleAmountSelect = (amount: number) => {
     console.log('Amount selected:', amount);
@@ -39,69 +32,56 @@ export default function GiftCardsScreen() {
 
   const handlePurchase = () => {
     console.log('Purchasing gift card');
-    
-    if (!recipientName.trim() || !recipientEmail.trim()) {
-      Alert.alert('Missing Information', 'Please enter recipient name and email.');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    if (!recipientEmail || !recipientName) {
+      Alert.alert('Missing Information', 'Please fill in all required fields.');
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    purchaseGiftCard({
+    const giftCard = {
       id: Date.now().toString(),
       amount: selectedAmount,
-      recipientName,
       recipientEmail,
-      message: message.trim() || undefined,
-    });
+      recipientName,
+      message,
+      code: `GC${Date.now().toString().slice(-8)}`,
+    };
 
+    purchaseGiftCard(giftCard);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert(
-      'Gift Card Sent!',
+      'Gift Card Purchased!',
       `A $${selectedAmount} gift card has been sent to ${recipientName} at ${recipientEmail}`,
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            setRecipientName('');
-            setRecipientEmail('');
-            setMessage('');
-          },
-        },
-      ]
+      [{ text: 'OK' }]
     );
+
+    setRecipientEmail('');
+    setRecipientName('');
+    setMessage('');
   };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
       <View style={styles.container}>
+        {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={[styles.headerTitle, { color: currentColors.text }]}>Gift Cards</Text>
-            <Text style={[styles.headerSubtitle, { color: currentColors.textSecondary }]}>Share the love of great food</Text>
-          </View>
+          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Gift Cards</Text>
+          <IconSymbol name="giftcard.fill" size={28} color={currentColors.primary} />
         </View>
 
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            Platform.OS !== 'ios' && styles.scrollContentWithTabBar,
-          ]}
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.giftCardPreview, { backgroundColor: currentColors.primary }]}>
-            <View style={styles.giftCardIconContainer}>
-              <IconSymbol name="giftcard.fill" size={48} color={currentColors.card} style={styles.giftCardIcon} />
-            </View>
-            <View style={styles.giftCardDesign}>
-              <Text style={[styles.giftCardBrand, { color: currentColors.card }]}>Jagabans LA</Text>
-              <Text style={[styles.giftCardAmount, { color: currentColors.card }]}>${selectedAmount}</Text>
-              <Text style={[styles.giftCardSubtext, { color: currentColors.card }]}>Gift Card</Text>
-            </View>
-          </View>
+          <Text style={[styles.sectionTitle, { color: currentColors.textSecondary }]}>
+            Share the love of authentic West African cuisine
+          </Text>
 
+          {/* Amount Selection */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Select Amount</Text>
+            <Text style={[styles.label, { color: currentColors.text }]}>Select Amount</Text>
             <View style={styles.amountGrid}>
               {giftCardAmounts.map((amount) => (
                 <Pressable
@@ -127,27 +107,36 @@ export default function GiftCardsScreen() {
             </View>
           </View>
 
+          {/* Recipient Information */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Recipient Information</Text>
+            <Text style={[styles.label, { color: currentColors.text }]}>Recipient Name *</Text>
             <TextInput
               style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
-              placeholder="Recipient Name"
+              placeholder="Enter recipient's name"
               placeholderTextColor={currentColors.textSecondary}
               value={recipientName}
               onChangeText={setRecipientName}
             />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: currentColors.text }]}>Recipient Email *</Text>
             <TextInput
               style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
-              placeholder="Recipient Email"
+              placeholder="Enter recipient's email"
               placeholderTextColor={currentColors.textSecondary}
               value={recipientEmail}
               onChangeText={setRecipientEmail}
               keyboardType="email-address"
               autoCapitalize="none"
             />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: currentColors.text }]}>Personal Message (Optional)</Text>
             <TextInput
-              style={[styles.input, styles.messageInput, { backgroundColor: currentColors.card, color: currentColors.text }]}
-              placeholder="Personal Message (Optional)"
+              style={[styles.textArea, { backgroundColor: currentColors.card, color: currentColors.text }]}
+              placeholder="Add a personal message..."
               placeholderTextColor={currentColors.textSecondary}
               value={message}
               onChangeText={setMessage}
@@ -157,16 +146,25 @@ export default function GiftCardsScreen() {
             />
           </View>
 
-          <View style={[styles.infoCard, { backgroundColor: currentColors.card }]}>
-            <IconSymbol name="info.circle.fill" size={24} color={currentColors.primary} />
-            <Text style={[styles.infoText, { color: currentColors.textSecondary }]}>
-              Gift cards are delivered instantly via email and can be used for any menu items or merch.
-            </Text>
+          {/* Summary */}
+          <View style={[styles.summary, { backgroundColor: currentColors.card }]}>
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Gift Card Amount</Text>
+              <Text style={[styles.summaryValue, { color: currentColors.text }]}>${selectedAmount.toFixed(2)}</Text>
+            </View>
+            <View style={[styles.summaryRow, styles.totalRow]}>
+              <Text style={[styles.totalLabel, { color: currentColors.text }]}>Total</Text>
+              <Text style={[styles.totalValue, { color: currentColors.primary }]}>${selectedAmount.toFixed(2)}</Text>
+            </View>
           </View>
 
-          <Pressable style={[styles.purchaseButton, { backgroundColor: currentColors.primary }]} onPress={handlePurchase}>
+          <Pressable
+            style={[styles.purchaseButton, { backgroundColor: currentColors.primary }]}
+            onPress={handlePurchase}
+          >
+            <IconSymbol name="giftcard.fill" size={20} color={currentColors.card} />
             <Text style={[styles.purchaseButtonText, { color: currentColors.card }]}>
-              Purchase Gift Card - ${selectedAmount}
+              Purchase Gift Card
             </Text>
           </Pressable>
         </ScrollView>
@@ -188,67 +186,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
   },
-  headerSubtitle: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-  scrollView: {
+  content: {
     flex: 1,
   },
-  scrollContent: {
+  contentContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  scrollContentWithTabBar: {
-    paddingBottom: 100,
-  },
-  giftCardPreview: {
-    marginBottom: 24,
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
-    elevation: 5,
-    position: 'relative',
-  },
-  giftCardIconContainer: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    opacity: 0.3,
-  },
-  giftCardIcon: {
-    transform: [{ rotate: '15deg' }],
-  },
-  giftCardDesign: {
-    alignItems: 'center',
-  },
-  giftCardBrand: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  giftCardAmount: {
-    fontSize: 48,
-    fontWeight: 'bold',
-  },
-  giftCardSubtext: {
-    fontSize: 16,
-    marginTop: 8,
-    opacity: 0.9,
-  },
-  section: {
-    marginBottom: 24,
+    paddingTop: 16,
+    paddingBottom: 120,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontSize: 14,
+    marginBottom: 24,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   amountGrid: {
     flexDirection: 'row',
@@ -256,53 +219,78 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   amountButton: {
-    flex: 1,
-    minWidth: '45%',
-    paddingVertical: 20,
+    width: '30%',
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 2,
   },
   amountText: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   input: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 12,
-    padding: 16,
     fontSize: 16,
-    marginBottom: 12,
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 2,
   },
-  messageInput: {
-    minHeight: 100,
-    paddingTop: 16,
-  },
-  infoCard: {
+  textArea: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    fontSize: 16,
+    minHeight: 100,
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 2,
   },
-  infoText: {
-    flex: 1,
+  summary: {
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 20,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryLabel: {
     fontSize: 14,
-    lineHeight: 20,
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  totalRow: {
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  totalLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  totalValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   purchaseButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
-    elevation: 4,
+    paddingVertical: 16,
+    borderRadius: 25,
+    gap: 8,
   },
   purchaseButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

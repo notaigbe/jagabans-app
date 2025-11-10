@@ -49,7 +49,9 @@ export default function HomeScreen() {
             />
             <Text style={[styles.headerSubtitle, { color: currentColors.textSecondary }]}>Authentic West African Cuisine</Text>
           </View>
-          <IconSymbol name="bell.fill" size={24} color={currentColors.primary} />
+          <Pressable onPress={() => router.push('/notifications')}>
+            <IconSymbol name="bell.fill" size={24} color={currentColors.primary} />
+          </Pressable>
         </View>
 
         {/* Categories */}
@@ -85,10 +87,7 @@ export default function HomeScreen() {
         {/* Menu Items */}
         <ScrollView
           style={styles.menuContainer}
-          contentContainerStyle={[
-            styles.menuContent,
-            Platform.OS !== 'ios' && styles.menuContentWithTabBar,
-          ]}
+          contentContainerStyle={styles.menuContent}
           showsVerticalScrollIndicator={false}
         >
           {filteredItems.map((item) => (
@@ -176,10 +175,7 @@ const styles = StyleSheet.create({
   menuContent: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 20,
-  },
-  menuContentWithTabBar: {
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   menuItem: {
     borderRadius: 16,

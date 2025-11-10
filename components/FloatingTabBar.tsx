@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  Animated,
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -36,16 +35,7 @@ export default function FloatingTabBar({
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isTabBarVisible } = useApp();
-  const translateY = React.useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    Animated.timing(translateY, {
-      toValue: isTabBarVisible ? 0 : 150,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  }, [isTabBarVisible]);
+  const { cart, currentColors } = useApp();
 
   const handleTabPress = (route: string) => {
     console.log('Tab pressed:', route);
@@ -59,14 +49,19 @@ export default function FloatingTabBar({
     return pathname.includes(route.split('/').pop() || '');
   };
 
+  const getCartItemCount = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const cartItemCount = getCartItemCount();
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <Animated.View 
+      <View 
         style={[
           styles.container, 
           { 
             marginBottom: bottomMargin,
-            transform: [{ translateY }],
           }
         ]}
       >
@@ -76,11 +71,14 @@ export default function FloatingTabBar({
             {
               maxWidth: containerWidth,
               borderRadius,
+              backgroundColor: currentColors.card,
             },
           ]}
         >
           {tabs.map((tab) => {
             const active = isActive(tab.route);
+            const isCartTab = tab.name === 'cart';
+            
             return (
               <TouchableOpacity
                 key={tab.name}
@@ -88,15 +86,24 @@ export default function FloatingTabBar({
                 onPress={() => handleTabPress(tab.route)}
                 activeOpacity={0.7}
               >
-                <IconSymbol
-                  name={tab.icon as any}
-                  size={24}
-                  color={active ? colors.primary : colors.textSecondary}
-                />
+                <View style={styles.iconContainer}>
+                  <IconSymbol
+                    name={tab.icon as any}
+                    size={24}
+                    color={active ? currentColors.primary : currentColors.textSecondary}
+                  />
+                  {isCartTab && cartItemCount > 0 && (
+                    <View style={[styles.badge, { backgroundColor: currentColors.primary }]}>
+                      <Text style={[styles.badgeText, { color: currentColors.card }]}>
+                        {cartItemCount > 99 ? '99+' : cartItemCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text
                   style={[
                     styles.label,
-                    { color: active ? colors.primary : colors.textSecondary },
+                    { color: active ? currentColors.primary : currentColors.textSecondary },
                   ]}
                 >
                   {tab.label}
@@ -105,7 +112,7 @@ export default function FloatingTabBar({
             );
           })}
         </View>
-      </Animated.View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -117,14 +124,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: 'transparent',
+    pointerEvents: 'box-none',
   },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
+    pointerEvents: 'box-none',
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: colors.card,
     paddingVertical: 12,
     paddingHorizontal: 8,
     width: '90%',
@@ -138,6 +146,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
+  },
+  iconContainer: {
+    position: 'relative',
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -8,
+    right: -12,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   label: {
     fontSize: 11,
