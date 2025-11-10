@@ -28,7 +28,7 @@ export default function TabLayout() {
     {
       name: 'giftcards',
       route: '/(tabs)/giftcards',
-      icon: 'giftcard.fill',
+      icon: 'gift.fill',
       label: 'Gift Cards',
     },
     {

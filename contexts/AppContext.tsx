@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { CartItem, Order, UserProfile, GiftCard, PaymentMethod, AppNotification, ThemeSettings, ThemeMode, ColorScheme } from '@/types';
+import { CartItem, Order, UserProfile, GiftCard, PaymentMethod, AppNotification, ThemeSettings, ThemeMode, ColorScheme, MerchRedemption } from '@/types';
 
 interface AppContextType {
   cart: CartItem[];
@@ -10,9 +10,10 @@ interface AppContextType {
   updateCartQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
   userProfile: UserProfile;
-  placeOrder: () => void;
+  placeOrder: (deliveryAddress?: string, pickupNotes?: string) => void;
   purchaseGiftCard: (giftCard: GiftCard) => void;
-  redeemMerch: (merchId: string, pointsCost: number) => void;
+  sendPointsGiftCard: (recipientId: string, recipientName: string, points: number, message?: string) => void;
+  redeemMerch: (merchId: string, merchName: string, pointsCost: number, deliveryAddress: string, pickupNotes?: string) => void;
   addPaymentMethod: (paymentMethod: PaymentMethod) => void;
   removePaymentMethod: (paymentMethodId: string) => void;
   setDefaultPaymentMethod: (paymentMethodId: string) => void;
@@ -25,6 +26,7 @@ interface AppContextType {
   currentColors: any;
   isTabBarVisible: boolean;
   setTabBarVisible: (visible: boolean) => void;
+  receivePointsGiftCard: (senderId: string, senderName: string, points: number, message?: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -62,6 +64,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       mode: 'light',
       colorScheme: 'default',
     },
+    merchRedemptions: [],
   });
 
   // Get current colors based on theme settings
@@ -69,24 +72,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const colorSchemes = {
       default: {
         light: {
-          background: '#FFF3E0',
-          text: '#212121',
-          textSecondary: '#757575',
-          primary: '#E64A19',
-          secondary: '#F57C00',
-          accent: '#FFB74D',
+          background: '#E0F2F1',
+          text: '#004D40',
+          textSecondary: '#00695C',
+          primary: '#00897B',
+          secondary: '#26A69A',
+          accent: '#4DB6AC',
           card: '#FFFFFF',
-          highlight: '#FFD54F',
+          highlight: '#80CBC4',
         },
         dark: {
-          background: '#1A1A1A',
-          text: '#FFFFFF',
-          textSecondary: '#B0B0B0',
-          primary: '#FF6E40',
-          secondary: '#FF9800',
-          accent: '#FFB74D',
-          card: '#2A2A2A',
-          highlight: '#FFD54F',
+          background: '#0A1F1C',
+          text: '#E0F2F1',
+          textSecondary: '#80CBC4',
+          primary: '#26A69A',
+          secondary: '#4DB6AC',
+          accent: '#80CBC4',
+          card: '#1A2F2C',
+          highlight: '#4DB6AC',
         },
       },
       warm: {
@@ -94,21 +97,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           background: '#FFF8E1',
           text: '#3E2723',
           textSecondary: '#6D4C41',
-          primary: '#D84315',
-          secondary: '#F4511E',
-          accent: '#FF8A65',
+          primary: '#00897B',
+          secondary: '#26A69A',
+          accent: '#4DB6AC',
           card: '#FFFFFF',
-          highlight: '#FFAB91',
+          highlight: '#80CBC4',
         },
         dark: {
           background: '#1C1410',
           text: '#FAFAFA',
           textSecondary: '#BCAAA4',
-          primary: '#FF6E40',
-          secondary: '#FF7043',
-          accent: '#FF8A65',
+          primary: '#26A69A',
+          secondary: '#4DB6AC',
+          accent: '#80CBC4',
           card: '#2C2018',
-          highlight: '#FFAB91',
+          highlight: '#80CBC4',
         },
       },
       cool: {
@@ -116,21 +119,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           background: '#E3F2FD',
           text: '#0D47A1',
           textSecondary: '#1565C0',
-          primary: '#1976D2',
-          secondary: '#42A5F5',
-          accent: '#64B5F6',
+          primary: '#00897B',
+          secondary: '#26A69A',
+          accent: '#4DB6AC',
           card: '#FFFFFF',
-          highlight: '#90CAF9',
+          highlight: '#80CBC4',
         },
         dark: {
           background: '#0A1929',
           text: '#E3F2FD',
           textSecondary: '#90CAF9',
-          primary: '#42A5F5',
-          secondary: '#64B5F6',
-          accent: '#90CAF9',
+          primary: '#26A69A',
+          secondary: '#4DB6AC',
+          accent: '#80CBC4',
           card: '#132F4C',
-          highlight: '#BBDEFB',
+          highlight: '#80CBC4',
         },
       },
       vibrant: {
@@ -138,21 +141,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           background: '#F3E5F5',
           text: '#4A148C',
           textSecondary: '#6A1B9A',
-          primary: '#7B1FA2',
-          secondary: '#AB47BC',
-          accent: '#CE93D8',
+          primary: '#00897B',
+          secondary: '#26A69A',
+          accent: '#4DB6AC',
           card: '#FFFFFF',
-          highlight: '#E1BEE7',
+          highlight: '#80CBC4',
         },
         dark: {
           background: '#1A0A1F',
           text: '#F3E5F5',
           textSecondary: '#CE93D8',
-          primary: '#AB47BC',
-          secondary: '#BA68C8',
-          accent: '#CE93D8',
+          primary: '#26A69A',
+          secondary: '#4DB6AC',
+          accent: '#80CBC4',
           card: '#2A1A2F',
-          highlight: '#E1BEE7',
+          highlight: '#80CBC4',
         },
       },
       minimal: {
@@ -160,21 +163,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           background: '#FAFAFA',
           text: '#212121',
           textSecondary: '#757575',
-          primary: '#424242',
-          secondary: '#616161',
-          accent: '#9E9E9E',
+          primary: '#00897B',
+          secondary: '#26A69A',
+          accent: '#4DB6AC',
           card: '#FFFFFF',
-          highlight: '#BDBDBD',
+          highlight: '#80CBC4',
         },
         dark: {
           background: '#121212',
           text: '#FAFAFA',
           textSecondary: '#B0B0B0',
-          primary: '#E0E0E0',
-          secondary: '#BDBDBD',
-          accent: '#9E9E9E',
+          primary: '#26A69A',
+          secondary: '#4DB6AC',
+          accent: '#80CBC4',
           card: '#1E1E1E',
-          highlight: '#757575',
+          highlight: '#80CBC4',
         },
       },
     };
@@ -228,7 +231,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setCart([]);
   };
 
-  const placeOrder = () => {
+  const placeOrder = (deliveryAddress?: string, pickupNotes?: string) => {
     console.log('Placing order');
     const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const pointsEarned = Math.floor(total);
@@ -240,6 +243,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       pointsEarned,
       date: new Date().toISOString(),
       status: 'pending',
+      deliveryAddress,
+      pickupNotes,
     };
 
     setUserProfile((prev) => ({
@@ -269,13 +274,93 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const redeemMerch = (merchId: string, pointsCost: number) => {
+  const sendPointsGiftCard = (recipientId: string, recipientName: string, points: number, message?: string) => {
+    console.log('Sending points gift card:', recipientId, points);
+    
+    if (userProfile.points < points) {
+      console.log('Insufficient points');
+      return;
+    }
+
+    const giftCard: GiftCard = {
+      id: Date.now().toString(),
+      points,
+      recipientId,
+      recipientName,
+      message,
+      purchaseDate: new Date().toISOString(),
+      senderId: userProfile.id,
+      type: 'points',
+    };
+
+    setUserProfile((prev) => ({
+      ...prev,
+      points: prev.points - points,
+      giftCards: [...prev.giftCards, giftCard],
+    }));
+
+    const notification: AppNotification = {
+      id: Date.now().toString(),
+      title: 'Points Gift Card Sent!',
+      message: `You sent ${points} points to ${recipientName}`,
+      type: 'giftcard',
+      date: new Date().toISOString(),
+      read: false,
+    };
+
+    addNotification(notification);
+  };
+
+  const receivePointsGiftCard = (senderId: string, senderName: string, points: number, message?: string) => {
+    console.log('Receiving points gift card:', senderId, points);
+
+    setUserProfile((prev) => ({
+      ...prev,
+      points: prev.points + points,
+    }));
+
+    const notification: AppNotification = {
+      id: Date.now().toString(),
+      title: 'Points Gift Card Received!',
+      message: `${senderName} sent you ${points} points! ${message ? `Message: "${message}"` : ''}`,
+      type: 'giftcard',
+      date: new Date().toISOString(),
+      read: false,
+    };
+
+    addNotification(notification);
+  };
+
+  const redeemMerch = (merchId: string, merchName: string, pointsCost: number, deliveryAddress: string, pickupNotes?: string) => {
     console.log('Redeeming merch:', merchId, pointsCost);
     if (userProfile.points >= pointsCost) {
+      const redemption: MerchRedemption = {
+        id: Date.now().toString(),
+        merchId,
+        merchName,
+        pointsCost,
+        deliveryAddress,
+        pickupNotes,
+        date: new Date().toISOString(),
+        status: 'pending',
+      };
+
       setUserProfile((prev) => ({
         ...prev,
         points: prev.points - pointsCost,
+        merchRedemptions: [...(prev.merchRedemptions || []), redemption],
       }));
+
+      const notification: AppNotification = {
+        id: Date.now().toString(),
+        title: 'Merch Redeemed!',
+        message: `You've redeemed ${merchName} for ${pointsCost} points. We'll process your order soon!`,
+        type: 'order',
+        date: new Date().toISOString(),
+        read: false,
+      };
+
+      addNotification(notification);
     }
   };
 
@@ -372,6 +457,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         userProfile,
         placeOrder,
         purchaseGiftCard,
+        sendPointsGiftCard,
+        receivePointsGiftCard,
         redeemMerch,
         addPaymentMethod,
         removePaymentMethod,

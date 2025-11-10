@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,10 @@ import {
   Platform,
   Image,
   Alert,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
@@ -20,42 +21,76 @@ import { Event } from '@/types';
 const mockEvents: Event[] = [
   {
     id: '1',
-    title: 'West African Food Festival',
-    description: 'Join us for an exclusive tasting event featuring our signature dishes and new menu items. Limited spots available!',
+    title: 'Nigerian Food Festival',
+    description: 'Join us for an exclusive tasting event featuring authentic Nigerian dishes including Jollof Rice, Suya, and Puff Puff. Limited spots available!',
     date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     location: 'Jagabans LA Main Location',
     capacity: 50,
     attendees: [],
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800',
+    image: 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=800',
     isPrivate: true,
+    isInviteOnly: false,
   },
   {
     id: '2',
-    title: 'Cooking Class: Jollof Rice Masterclass',
-    description: 'Learn the secrets of making perfect Jollof rice from our head chef. Includes a full meal and recipe booklet.',
+    title: 'Jollof Rice Masterclass',
+    description: 'Learn the secrets of making perfect Nigerian Jollof rice from our head chef. Includes a full meal and recipe booklet.',
     date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
     location: 'Jagabans LA Kitchen',
     capacity: 20,
     attendees: [],
-    image: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=800',
-    isPrivate: false,
+    image: 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=800',
+    isPrivate: true,
+    isInviteOnly: false,
   },
   {
     id: '3',
-    title: 'VIP Dinner Experience',
-    description: 'An intimate 5-course dinner experience with wine pairings. App users only!',
+    title: 'Private Family Dinner',
+    description: 'An intimate family-style dinner experience with traditional Nigerian cuisine. This is an invite-only event.',
     date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
     location: 'Jagabans LA Private Dining',
     capacity: 30,
     attendees: [],
-    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800',
-    isPrivate: true,
+    image: 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=800',
+    isPrivate: false,
+    isInviteOnly: true,
+    shareableLink: 'jagabansla://event/3?token=abc123',
   },
 ];
 
 export default function EventsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { userProfile, addNotification, currentColors } = useApp();
+  const [visibleEvents, setVisibleEvents] = useState<Event[]>([]);
+  const [accessedInviteEvents, setAccessedInviteEvents] = useState<string[]>([]);
+
+  useEffect(() => {
+    console.log('Events screen params:', params);
+    
+    // Check if user accessed via invite link
+    if (params.eventId && params.token) {
+      const eventId = params.eventId as string;
+      if (!accessedInviteEvents.includes(eventId)) {
+        setAccessedInviteEvents([...accessedInviteEvents, eventId]);
+      }
+    }
+
+    // Filter events based on visibility rules
+    const filtered = mockEvents.filter((event) => {
+      // Private Events (open to all app members)
+      if (event.isPrivate && !event.isInviteOnly) {
+        return true;
+      }
+      // Invite Only Events (only visible if accessed via link)
+      if (event.isInviteOnly) {
+        return accessedInviteEvents.includes(event.id);
+      }
+      return false;
+    });
+
+    setVisibleEvents(filtered);
+  }, [params, accessedInviteEvents]);
 
   const handleRSVP = (event: Event) => {
     if (Platform.OS !== 'web') {
@@ -101,6 +136,34 @@ export default function EventsScreen() {
     );
   };
 
+  const handleShareEvent = async (event: Event) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    if (!event.isInviteOnly) {
+      Alert.alert('Cannot Share', 'Only Invite Only events can be shared with specific people.');
+      return;
+    }
+
+    const shareLink = event.shareableLink || `jagabansla://event/${event.id}?token=${Date.now()}`;
+    const message = `You're invited to ${event.title} at Jagabans LA!\n\n${event.description}\n\nDate: ${new Date(event.date).toLocaleDateString()}\nLocation: ${event.location}\n\nAccess the event: ${shareLink}`;
+
+    try {
+      const result = await Share.share({
+        message,
+        title: `Invitation: ${event.title}`,
+      });
+
+      if (result.action === Share.sharedAction) {
+        Alert.alert('Success!', 'Event invitation shared successfully!');
+      }
+    } catch (error) {
+      console.error('Error sharing event:', error);
+      Alert.alert('Error', 'Failed to share event. Please try again.');
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
       <View style={styles.container}>
@@ -116,7 +179,7 @@ export default function EventsScreen() {
           >
             <IconSymbol name="chevron.left" size={24} color={currentColors.text} />
           </Pressable>
-          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Private Events</Text>
+          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Events</Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -127,28 +190,58 @@ export default function EventsScreen() {
         >
           <View style={[styles.infoCard, { backgroundColor: currentColors.highlight + '20' }]}>
             <IconSymbol name="star.fill" size={24} color={currentColors.highlight} />
-            <Text style={[styles.infoText, { color: currentColors.text }]}>
-              Exclusive events for app users! RSVP to secure your spot and receive notifications.
-            </Text>
+            <View style={styles.infoTextContainer}>
+              <Text style={[styles.infoText, { color: currentColors.text }]}>
+                <Text style={{ fontWeight: 'bold' }}>Private Events:</Text> Open to all app members
+              </Text>
+              <Text style={[styles.infoText, { color: currentColors.text }]}>
+                <Text style={{ fontWeight: 'bold' }}>Invite Only:</Text> Accessible via shared link only
+              </Text>
+            </View>
           </View>
 
-          {mockEvents.map((event) => {
+          {visibleEvents.length === 0 && (
+            <View style={[styles.emptyState, { backgroundColor: currentColors.card }]}>
+              <IconSymbol name="calendar" size={48} color={currentColors.textSecondary} />
+              <Text style={[styles.emptyStateText, { color: currentColors.textSecondary }]}>
+                No events available at the moment
+              </Text>
+              <Text style={[styles.emptyStateSubtext, { color: currentColors.textSecondary }]}>
+                Check back later or ask for an invite link to exclusive events!
+              </Text>
+            </View>
+          )}
+
+          {visibleEvents.map((event) => {
             const spotsLeft = event.capacity - event.attendees.length;
             const isRSVPd = userProfile.rsvpEvents.includes(event.id);
 
             return (
               <View key={event.id} style={[styles.eventCard, { backgroundColor: currentColors.card }]}>
-                <Image source={{ uri: event.image }} style={[styles.eventImage, { backgroundColor: currentColors.textSecondary + '20' }]} />
-                {event.isPrivate && (
-                  <View style={[styles.privateBadge, { backgroundColor: currentColors.primary }]}>
-                    <IconSymbol name="lock.fill" size={12} color={currentColors.card} />
-                    <Text style={[styles.privateBadgeText, { color: currentColors.card }]}>Private</Text>
-                  </View>
-                )}
+                <Image
+                  source={{ uri: event.image }}
+                  style={[styles.eventImage, { backgroundColor: currentColors.textSecondary + '20' }]}
+                />
+                <View style={styles.badgeContainer}>
+                  {event.isPrivate && !event.isInviteOnly && (
+                    <View style={[styles.badge, { backgroundColor: currentColors.primary }]}>
+                      <IconSymbol name="lock.fill" size={12} color={currentColors.card} />
+                      <Text style={[styles.badgeText, { color: currentColors.card }]}>Private Event</Text>
+                    </View>
+                  )}
+                  {event.isInviteOnly && (
+                    <View style={[styles.badge, { backgroundColor: currentColors.secondary }]}>
+                      <IconSymbol name="envelope.fill" size={12} color={currentColors.card} />
+                      <Text style={[styles.badgeText, { color: currentColors.card }]}>Invite Only</Text>
+                    </View>
+                  )}
+                </View>
                 <View style={styles.eventContent}>
                   <Text style={[styles.eventTitle, { color: currentColors.text }]}>{event.title}</Text>
-                  <Text style={[styles.eventDescription, { color: currentColors.textSecondary }]}>{event.description}</Text>
-                  
+                  <Text style={[styles.eventDescription, { color: currentColors.textSecondary }]}>
+                    {event.description}
+                  </Text>
+
                   <View style={styles.eventDetails}>
                     <View style={styles.eventDetail}>
                       <IconSymbol name="calendar" size={16} color={currentColors.primary} />
@@ -162,7 +255,9 @@ export default function EventsScreen() {
                     </View>
                     <View style={styles.eventDetail}>
                       <IconSymbol name="location.fill" size={16} color={currentColors.primary} />
-                      <Text style={[styles.eventDetailText, { color: currentColors.text }]}>{event.location}</Text>
+                      <Text style={[styles.eventDetailText, { color: currentColors.text }]}>
+                        {event.location}
+                      </Text>
                     </View>
                     <View style={styles.eventDetail}>
                       <IconSymbol name="person.2.fill" size={16} color={currentColors.primary} />
@@ -172,20 +267,30 @@ export default function EventsScreen() {
                     </View>
                   </View>
 
-                  <Pressable
-                    style={[
-                      styles.rsvpButton,
-                      { backgroundColor: currentColors.primary },
-                      isRSVPd && { backgroundColor: currentColors.accent },
-                      spotsLeft <= 0 && { backgroundColor: currentColors.textSecondary + '40' },
-                    ]}
-                    onPress={() => handleRSVP(event)}
-                    disabled={spotsLeft <= 0}
-                  >
-                    <Text style={[styles.rsvpButtonText, { color: currentColors.card }]}>
-                      {isRSVPd ? 'RSVP Confirmed' : spotsLeft <= 0 ? 'Event Full' : 'RSVP Now'}
-                    </Text>
-                  </Pressable>
+                  <View style={styles.buttonRow}>
+                    <Pressable
+                      style={[
+                        styles.rsvpButton,
+                        { backgroundColor: currentColors.primary },
+                        isRSVPd && { backgroundColor: currentColors.accent },
+                        spotsLeft <= 0 && { backgroundColor: currentColors.textSecondary + '40' },
+                      ]}
+                      onPress={() => handleRSVP(event)}
+                      disabled={spotsLeft <= 0}
+                    >
+                      <Text style={[styles.rsvpButtonText, { color: currentColors.card }]}>
+                        {isRSVPd ? 'RSVP Confirmed' : spotsLeft <= 0 ? 'Event Full' : 'RSVP Now'}
+                      </Text>
+                    </Pressable>
+                    {event.isInviteOnly && (
+                      <Pressable
+                        style={[styles.shareButton, { backgroundColor: currentColors.secondary }]}
+                        onPress={() => handleShareEvent(event)}
+                      >
+                        <IconSymbol name="square.and.arrow.up" size={20} color={currentColors.card} />
+                      </Pressable>
+                    )}
+                  </View>
                 </View>
               </View>
             );
@@ -228,14 +333,32 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
     marginBottom: 20,
   },
-  infoText: {
+  infoTextContainer: {
     flex: 1,
+    gap: 4,
+  },
+  infoText: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  emptyState: {
+    padding: 40,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  emptyStateSubtext: {
     fontSize: 14,
-    lineHeight: 20,
+    textAlign: 'center',
   },
   eventCard: {
     borderRadius: 16,
@@ -248,10 +371,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
   },
-  privateBadge: {
+  badgeContainer: {
     position: 'absolute',
     top: 12,
     right: 12,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -259,7 +386,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 12,
   },
-  privateBadgeText: {
+  badgeText: {
     fontSize: 12,
     fontWeight: '600',
   },
@@ -288,7 +415,12 @@ const styles = StyleSheet.create({
   eventDetailText: {
     fontSize: 14,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
   rsvpButton: {
+    flex: 1,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -296,5 +428,12 @@ const styles = StyleSheet.create({
   rsvpButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  shareButton: {
+    borderRadius: 12,
+    padding: 16,
+    width: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

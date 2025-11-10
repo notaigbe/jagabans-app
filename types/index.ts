@@ -20,6 +20,8 @@ export interface Order {
   pointsEarned: number;
   date: string;
   status: 'pending' | 'preparing' | 'ready' | 'completed';
+  deliveryAddress?: string;
+  pickupNotes?: string;
 }
 
 export interface MerchItem {
@@ -31,13 +33,28 @@ export interface MerchItem {
   inStock: boolean;
 }
 
+export interface MerchRedemption {
+  id: string;
+  merchId: string;
+  merchName: string;
+  pointsCost: number;
+  deliveryAddress: string;
+  pickupNotes?: string;
+  date: string;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered';
+}
+
 export interface GiftCard {
   id: string;
-  amount: number;
+  amount?: number;
+  points?: number;
   recipientEmail?: string;
   recipientName?: string;
+  recipientId?: string;
   message?: string;
   purchaseDate?: string;
+  senderId?: string;
+  type?: 'money' | 'points';
 }
 
 export interface PaymentMethod {
@@ -53,7 +70,7 @@ export interface AppNotification {
   id: string;
   title: string;
   message: string;
-  type: 'special' | 'event' | 'order' | 'general';
+  type: 'special' | 'event' | 'order' | 'general' | 'giftcard';
   date: string;
   read: boolean;
   actionUrl?: string;
@@ -69,6 +86,8 @@ export interface Event {
   attendees: string[];
   image: string;
   isPrivate: boolean;
+  isInviteOnly?: boolean;
+  shareableLink?: string;
 }
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
@@ -92,4 +111,5 @@ export interface UserProfile {
   notifications: AppNotification[];
   rsvpEvents: string[];
   themeSettings?: ThemeSettings;
+  merchRedemptions?: MerchRedemption[];
 }

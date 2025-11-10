@@ -8,45 +8,28 @@ import {
   Image,
   Pressable,
   Platform,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/contexts/AppContext';
 import { merchItems } from '@/data/merchData';
 import * as Haptics from 'expo-haptics';
 import { IconSymbol } from '@/components/IconSymbol';
+import { useRouter } from 'expo-router';
 
 export default function MerchScreen() {
-  const { userProfile, redeemMerch, currentColors } = useApp();
+  const { userProfile, currentColors } = useApp();
+  const router = useRouter();
 
   const handleRedeem = (merchId: string, pointsCost: number, merchName: string) => {
-    console.log('Redeeming merch:', merchId);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
-    if (userProfile.points < pointsCost) {
-      Alert.alert(
-        'Insufficient Points',
-        `You need ${pointsCost - userProfile.points} more points to redeem this item.`,
-        [{ text: 'OK' }]
-      );
-      return;
+    console.log('Navigating to merch redemption:', merchId);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-
-    Alert.alert(
-      'Redeem Item',
-      `Redeem ${merchName} for ${pointsCost} points?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Redeem',
-          onPress: () => {
-            redeemMerch(merchId, pointsCost);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Success!', `You've redeemed ${merchName}!`);
-          },
-        },
-      ]
-    );
+    
+    router.push({
+      pathname: '/merch-redemption',
+      params: { merchId, pointsCost: pointsCost.toString(), merchName },
+    });
   };
 
   return (

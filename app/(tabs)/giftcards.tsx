@@ -16,48 +16,92 @@ import * as Haptics from 'expo-haptics';
 import { IconSymbol } from '@/components/IconSymbol';
 
 const giftCardAmounts = [25, 50, 75, 100, 150, 200];
+const pointsAmounts = [100, 250, 500, 750, 1000, 1500];
 
 export default function GiftCardsScreen() {
-  const { purchaseGiftCard, currentColors } = useApp();
+  const { purchaseGiftCard, sendPointsGiftCard, userProfile, currentColors } = useApp();
+  const [giftType, setGiftType] = useState<'money' | 'points'>('money');
   const [selectedAmount, setSelectedAmount] = useState(50);
+  const [selectedPoints, setSelectedPoints] = useState(250);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
+  const [recipientId, setRecipientId] = useState('');
   const [message, setMessage] = useState('');
 
   const handleAmountSelect = (amount: number) => {
     console.log('Amount selected:', amount);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     setSelectedAmount(amount);
+  };
+
+  const handlePointsSelect = (points: number) => {
+    console.log('Points selected:', points);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectedPoints(points);
   };
 
   const handlePurchase = () => {
     console.log('Purchasing gift card');
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
 
     if (!recipientEmail || !recipientName) {
       Alert.alert('Missing Information', 'Please fill in all required fields.');
       return;
     }
 
-    const giftCard = {
-      id: Date.now().toString(),
-      amount: selectedAmount,
-      recipientEmail,
-      recipientName,
-      message,
-      code: `GC${Date.now().toString().slice(-8)}`,
-    };
+    if (giftType === 'money') {
+      const giftCard = {
+        id: Date.now().toString(),
+        amount: selectedAmount,
+        recipientEmail,
+        recipientName,
+        message,
+        type: 'money' as const,
+      };
 
-    purchaseGiftCard(giftCard);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert(
-      'Gift Card Purchased!',
-      `A $${selectedAmount} gift card has been sent to ${recipientName} at ${recipientEmail}`,
-      [{ text: 'OK' }]
-    );
+      purchaseGiftCard(giftCard);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert(
+        'Gift Card Purchased!',
+        `A $${selectedAmount} gift card has been sent to ${recipientName} at ${recipientEmail}`,
+        [{ text: 'OK' }]
+      );
+    } else {
+      if (!recipientId.trim()) {
+        Alert.alert('Missing Information', 'Please enter the recipient&apos;s user ID.');
+        return;
+      }
+
+      if (userProfile.points < selectedPoints) {
+        Alert.alert(
+          'Insufficient Points',
+          `You need ${selectedPoints - userProfile.points} more points to send this gift.`
+        );
+        return;
+      }
+
+      sendPointsGiftCard(recipientId, recipientName, selectedPoints, message);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert(
+        'Points Gift Card Sent!',
+        `${selectedPoints} points have been sent to ${recipientName}!`,
+        [{ text: 'OK' }]
+      );
+    }
 
     setRecipientEmail('');
     setRecipientName('');
+    setRecipientId('');
     setMessage('');
   };
 
@@ -67,7 +111,15 @@ export default function GiftCardsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: currentColors.text }]}>Gift Cards</Text>
-          <IconSymbol name="giftcard.fill" size={28} color={currentColors.primary} />
+          <View style={styles.headerRight}>
+            <IconSymbol name="giftcard.fill" size={28} color={currentColors.primary} />
+            <View style={[styles.pointsBadge, { backgroundColor: currentColors.primary }]}>
+              <IconSymbol name="star.fill" size={14} color={currentColors.card} />
+              <Text style={[styles.pointsText, { color: currentColors.card }]}>
+                {userProfile.points}
+              </Text>
+            </View>
+          </View>
         </View>
 
         <ScrollView
@@ -76,31 +128,99 @@ export default function GiftCardsScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text style={[styles.sectionTitle, { color: currentColors.textSecondary }]}>
-            Share the love of authentic West African cuisine
+            Share the love of authentic Nigerian cuisine
           </Text>
 
-          {/* Amount Selection */}
+          {/* Gift Type Selection */}
+          <View style={styles.typeSelector}>
+            <Pressable
+              style={[
+                styles.typeButton,
+                { backgroundColor: currentColors.card },
+                giftType === 'money' && { backgroundColor: currentColors.primary },
+              ]}
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                setGiftType('money');
+              }}
+            >
+              <IconSymbol
+                name="dollarsign.circle.fill"
+                size={24}
+                color={giftType === 'money' ? currentColors.card : currentColors.text}
+              />
+              <Text
+                style={[
+                  styles.typeButtonText,
+                  { color: currentColors.text },
+                  giftType === 'money' && { color: currentColors.card },
+                ]}
+              >
+                Money Gift Card
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.typeButton,
+                { backgroundColor: currentColors.card },
+                giftType === 'points' && { backgroundColor: currentColors.primary },
+              ]}
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                setGiftType('points');
+              }}
+            >
+              <IconSymbol
+                name="star.fill"
+                size={24}
+                color={giftType === 'points' ? currentColors.card : currentColors.text}
+              />
+              <Text
+                style={[
+                  styles.typeButtonText,
+                  { color: currentColors.text },
+                  giftType === 'points' && { color: currentColors.card },
+                ]}
+              >
+                Points Gift Card
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Amount/Points Selection */}
           <View style={styles.section}>
-            <Text style={[styles.label, { color: currentColors.text }]}>Select Amount</Text>
+            <Text style={[styles.label, { color: currentColors.text }]}>
+              {giftType === 'money' ? 'Select Amount' : 'Select Points'}
+            </Text>
             <View style={styles.amountGrid}>
-              {giftCardAmounts.map((amount) => (
+              {(giftType === 'money' ? giftCardAmounts : pointsAmounts).map((value) => (
                 <Pressable
-                  key={amount}
+                  key={value}
                   style={[
                     styles.amountButton,
                     { backgroundColor: currentColors.card },
-                    selectedAmount === amount && { backgroundColor: currentColors.primary },
+                    (giftType === 'money' ? selectedAmount === value : selectedPoints === value) && {
+                      backgroundColor: currentColors.primary,
+                    },
                   ]}
-                  onPress={() => handleAmountSelect(amount)}
+                  onPress={() =>
+                    giftType === 'money' ? handleAmountSelect(value) : handlePointsSelect(value)
+                  }
                 >
                   <Text
                     style={[
                       styles.amountText,
                       { color: currentColors.text },
-                      selectedAmount === amount && { color: currentColors.card },
+                      (giftType === 'money' ? selectedAmount === value : selectedPoints === value) && {
+                        color: currentColors.card,
+                      },
                     ]}
                   >
-                    ${amount}
+                    {giftType === 'money' ? `$${value}` : `${value} pts`}
                   </Text>
                 </Pressable>
               ))}
@@ -119,18 +239,34 @@ export default function GiftCardsScreen() {
             />
           </View>
 
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: currentColors.text }]}>Recipient Email *</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
-              placeholder="Enter recipient's email"
-              placeholderTextColor={currentColors.textSecondary}
-              value={recipientEmail}
-              onChangeText={setRecipientEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
+          {giftType === 'money' ? (
+            <View style={styles.section}>
+              <Text style={[styles.label, { color: currentColors.text }]}>Recipient Email *</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
+                placeholder="Enter recipient's email"
+                placeholderTextColor={currentColors.textSecondary}
+                value={recipientEmail}
+                onChangeText={setRecipientEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+          ) : (
+            <View style={styles.section}>
+              <Text style={[styles.label, { color: currentColors.text }]}>Recipient User ID *</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
+                placeholder="Enter recipient's user ID"
+                placeholderTextColor={currentColors.textSecondary}
+                value={recipientId}
+                onChangeText={setRecipientId}
+              />
+              <Text style={[styles.helperText, { color: currentColors.textSecondary }]}>
+                The recipient must be a registered user to receive points
+              </Text>
+            </View>
+          )}
 
           <View style={styles.section}>
             <Text style={[styles.label, { color: currentColors.text }]}>Personal Message (Optional)</Text>
@@ -148,23 +284,62 @@ export default function GiftCardsScreen() {
 
           {/* Summary */}
           <View style={[styles.summary, { backgroundColor: currentColors.card }]}>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Gift Card Amount</Text>
-              <Text style={[styles.summaryValue, { color: currentColors.text }]}>${selectedAmount.toFixed(2)}</Text>
-            </View>
-            <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={[styles.totalLabel, { color: currentColors.text }]}>Total</Text>
-              <Text style={[styles.totalValue, { color: currentColors.primary }]}>${selectedAmount.toFixed(2)}</Text>
-            </View>
+            {giftType === 'money' ? (
+              <>
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>
+                    Gift Card Amount
+                  </Text>
+                  <Text style={[styles.summaryValue, { color: currentColors.text }]}>
+                    ${selectedAmount.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={[styles.summaryRow, styles.totalRow]}>
+                  <Text style={[styles.totalLabel, { color: currentColors.text }]}>Total</Text>
+                  <Text style={[styles.totalValue, { color: currentColors.primary }]}>
+                    ${selectedAmount.toFixed(2)}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>
+                    Your Points
+                  </Text>
+                  <Text style={[styles.summaryValue, { color: currentColors.text }]}>
+                    {userProfile.points} pts
+                  </Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>
+                    Points to Send
+                  </Text>
+                  <Text style={[styles.summaryValue, { color: currentColors.primary }]}>
+                    {selectedPoints} pts
+                  </Text>
+                </View>
+                <View style={[styles.summaryRow, styles.totalRow]}>
+                  <Text style={[styles.totalLabel, { color: currentColors.text }]}>Remaining Points</Text>
+                  <Text style={[styles.totalValue, { color: currentColors.primary }]}>
+                    {userProfile.points - selectedPoints} pts
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
 
           <Pressable
             style={[styles.purchaseButton, { backgroundColor: currentColors.primary }]}
             onPress={handlePurchase}
           >
-            <IconSymbol name="giftcard.fill" size={20} color={currentColors.card} />
+            <IconSymbol
+              name={giftType === 'money' ? 'giftcard.fill' : 'star.fill'}
+              size={20}
+              color={currentColors.card}
+            />
             <Text style={[styles.purchaseButtonText, { color: currentColors.card }]}>
-              Purchase Gift Card
+              {giftType === 'money' ? 'Purchase Gift Card' : 'Send Points Gift Card'}
             </Text>
           </Pressable>
         </ScrollView>
@@ -193,6 +368,23 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  pointsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  pointsText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   content: {
     flex: 1,
   },
@@ -204,6 +396,26 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     marginBottom: 24,
+  },
+  typeSelector: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  typeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
+  },
+  typeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   section: {
     marginBottom: 20,
@@ -227,7 +439,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   amountText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   input: {
@@ -237,6 +449,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 2,
+  },
+  helperText: {
+    fontSize: 12,
+    marginTop: 6,
+    fontStyle: 'italic',
   },
   textArea: {
     paddingHorizontal: 16,

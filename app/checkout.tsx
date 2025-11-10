@@ -19,7 +19,7 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const { cart, placeOrder, userProfile, currentColors, setTabBarVisible } = useApp();
   const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [specialInstructions, setSpecialInstructions] = useState('');
+  const [pickupNotes, setPickupNotes] = useState('');
   const [usePoints, setUsePoints] = useState(false);
 
   React.useEffect(() => {
@@ -44,7 +44,7 @@ export default function CheckoutScreen() {
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    placeOrder();
+    placeOrder(deliveryAddress, pickupNotes || undefined);
     
     Alert.alert(
       'Order Placed!',
@@ -64,8 +64,15 @@ export default function CheckoutScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['bottom']}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
+          <View style={[styles.infoBanner, { backgroundColor: currentColors.highlight + '20' }]}>
+            <IconSymbol name="info.circle.fill" size={20} color={currentColors.primary} />
+            <Text style={[styles.infoText, { color: currentColors.text }]}>
+              Customers primarily pick up orders. Please provide your address and any pickup notes below.
+            </Text>
+          </View>
+
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Delivery Address</Text>
+            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Delivery Address *</Text>
             <TextInput
               style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
               placeholder="Enter your delivery address"
@@ -79,13 +86,13 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Special Instructions</Text>
+            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Pickup Notes (Optional)</Text>
             <TextInput
               style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
-              placeholder="Any special requests? (Optional)"
+              placeholder="Add any special instructions for pickup..."
               placeholderTextColor={currentColors.textSecondary}
-              value={specialInstructions}
-              onChangeText={setSpecialInstructions}
+              value={pickupNotes}
+              onChangeText={setPickupNotes}
               multiline
               numberOfLines={3}
               textAlignVertical="top"
@@ -176,6 +183,18 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  infoBanner: {
+    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    gap: 12,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
   },
   section: {
     marginBottom: 24,
