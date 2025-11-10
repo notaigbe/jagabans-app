@@ -59,7 +59,7 @@ export default function ItemDetailScreen() {
     console.log('Adding to cart:', item.name, quantity);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addToCart({ ...item, quantity });
-    router.back();
+    setQuantity(1);
   };
 
   const handleBackPress = () => {

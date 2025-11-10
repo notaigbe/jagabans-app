@@ -8,6 +8,7 @@ import {
   Image,
   Pressable,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,6 +16,22 @@ import { menuItems, menuCategories } from '@/data/menuData';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useApp } from '@/contexts/AppContext';
 import * as Haptics from 'expo-haptics';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Responsive font size calculation
+const getResponsiveFontSize = (baseSize: number) => {
+  const scale = SCREEN_WIDTH / 375; // Base width (iPhone SE/8)
+  const newSize = baseSize * scale;
+  return Math.round(newSize);
+};
+
+// Responsive padding calculation
+const getResponsivePadding = (basePadding: number) => {
+  const scale = SCREEN_WIDTH / 375;
+  const newPadding = basePadding * scale;
+  return Math.max(Math.round(newPadding), basePadding * 0.8); // Minimum 80% of base
+};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -66,7 +83,11 @@ export default function HomeScreen() {
               key={category}
               style={[
                 styles.categoryButton,
-                { backgroundColor: currentColors.card },
+                { 
+                  backgroundColor: currentColors.card,
+                  paddingHorizontal: getResponsivePadding(16),
+                  paddingVertical: getResponsivePadding(10),
+                },
                 selectedCategory === category && { backgroundColor: currentColors.primary },
               ]}
               onPress={() => handleCategoryPress(category)}
@@ -74,9 +95,15 @@ export default function HomeScreen() {
               <Text
                 style={[
                   styles.categoryText,
-                  { color: currentColors.text },
+                  { 
+                    color: currentColors.text,
+                    fontSize: getResponsiveFontSize(14),
+                  },
                   selectedCategory === category && { color: currentColors.card },
                 ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
               >
                 {category}
               </Text>
@@ -139,7 +166,7 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flex: 1,
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   logo: {
     width: 140,
@@ -152,7 +179,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   categoriesContainer: {
-    maxHeight: 50,
+    maxHeight: 60,
   },
   categoriesContent: {
     paddingHorizontal: 20,
@@ -160,14 +187,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
     borderRadius: 20,
     marginRight: 8,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   categoryText: {
-    fontSize: 14,
     fontWeight: '600',
+    textAlign: 'center',
   },
   menuContainer: {
     flex: 1,

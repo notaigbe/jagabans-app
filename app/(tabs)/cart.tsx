@@ -44,7 +44,10 @@ export default function CartScreen() {
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () => removeFromCart(itemId),
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            removeFromCart(itemId);
+          },
         },
       ]
     );
