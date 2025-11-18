@@ -439,27 +439,30 @@ export const orderService = {
   },
 
   /**
-   * Update order status (Admin)
-   */
-  async updateOrderStatus(orderId: string, status: Order['status']) {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('orders')
-        .update({ 
-          status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId)
-        .select()
-        .single();
+ * Update order status (Admin)
+ */
+async updateOrderStatus(orderId: string, status: Order['status']) {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({
+        status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', orderId)
+      .select(`
+        *,
+        order_items (*)
+      `)
+      .single();
 
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error) {
-      console.error('Update order status error:', error);
-      return { data: null, error };
-    }
-  },
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Update order status error:', error);
+    return { data: null, error };
+  }
+},
 
   /**
    * Get all orders (Admin)

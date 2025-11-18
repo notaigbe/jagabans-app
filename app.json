@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "Jagabans LA",
-    "slug": "Jagabans LA",
+    "name": "Ooosum Foods LLC",
+    "slug": "Ooosum Foods LLC",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png",
@@ -45,5 +44,5 @@
       "router": {}
     }
   },
-  "scheme": "Jagabans LA"
+  "scheme": "Ooosum Foods LLC"
 }

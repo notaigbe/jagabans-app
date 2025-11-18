@@ -354,6 +354,31 @@ export default function ProfileScreen() {
                 </Text>
               </Text>
             </Pressable>
+            {/* Admin Access Link */}
+<Pressable
+  style={styles.adminButton}
+  onPress={() => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    handleMenuPress("/admin");
+  }}
+  disabled={loading}
+>
+  <IconSymbol
+    name="admin-panel-settings"
+    size={16}
+    color={currentColors.textSecondary}
+  />
+  <Text
+    style={[
+      styles.adminButtonText,
+      { color: currentColors.textSecondary },
+    ]}
+  >
+    Admin Dashboard
+  </Text>
+</Pressable>
           </View>
         </ScrollView>
         <Toast
@@ -699,6 +724,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
   },
+  adminButton: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: 24,
+  paddingVertical: 12,
+  gap: 8,
+  opacity: 0.7,
+},
+adminButtonText: {
+  fontSize: 13,
+  fontWeight: "500",
+},
   profileHeader: {
     alignItems: "center",
     padding: 24,

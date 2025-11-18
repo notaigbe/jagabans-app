@@ -54,6 +54,7 @@ interface AppContextType {
 	menuItems: MenuItem[];
   setMenuItems: (items: MenuItem[]) => void;
   loadMenuItems: () => Promise<void>;
+  getUnreadNotificationCount: () => number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -74,12 +75,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     mode: 'light',
     colorScheme: 'default',
   });
-	const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
-	// Load menu items when the app starts (in useEffect):
-	useEffect(() => {
-  loadMenuItems();
-}, []);
+  // Load menu items when the app starts (in useEffect):
+  useEffect(() => {
+    loadMenuItems();
+  }, []);
 	
   // Load user profile when authenticated
   useEffect(() => {
@@ -737,34 +738,41 @@ const updateColorScheme = async (scheme: ColorScheme) => {
     showToast('Failed to save theme settings', 'error');
   }
 };
-	const loadMenuItems = async () => {
-  try {
-    console.log('Loading menu items from Supabase (AppContext)');
-    const { data, error } = await menuService.getMenuItems();
-    
-    if (error) {
-      console.error('Error loading menu items:', error);
-      return;
-    }
+  const loadMenuItems = async () => {
+    try {
+      console.log('Loading menu items from Supabase (AppContext)');
+      const { data, error } = await menuService.getMenuItems();
+      
+      if (error) {
+        console.error('Error loading menu items:', error);
+        return;
+      }
 
-    if (data) {
-      const items: MenuItem[] = data.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        price: parseFloat(item.price),
-        category: item.category,
-        image: item.image,
-        popular: item.popular,
-				serial: item.serial,
-      }));
-      setMenuItems(items);
-      console.log('Loaded', items.length, 'menu items in context');
+      if (data) {
+        const items: MenuItem[] = data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: parseFloat(item.price),
+          category: item.category,
+          image: item.image,
+          popular: item.popular,
+          serial: item.serial,
+        }));
+        setMenuItems(items);
+        console.log('Loaded', items.length, 'menu items in context');
+      }
+    } catch (error) {
+      console.error('Exception loading menu items:', error);
     }
-  } catch (error) {
-    console.error('Exception loading menu items:', error);
-  }
-};
+  };
+
+  const getUnreadNotificationCount = () => {
+    if (!userProfile || !userProfile.notifications) {
+      return 0;
+    }
+    return userProfile.notifications.filter(n => !n.read).length;
+  };
   return (
     <AppContext.Provider
       value={{
@@ -795,9 +803,10 @@ const updateColorScheme = async (scheme: ColorScheme) => {
         toast,
         showToast,
         hideToast,
-				menuItems,
-  			setMenuItems,
-  			loadMenuItems,
+        menuItems,
+        setMenuItems,
+        loadMenuItems,
+        getUnreadNotificationCount,
       }}
     >
       {children}

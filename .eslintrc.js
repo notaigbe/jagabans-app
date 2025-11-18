@@ -26,7 +26,7 @@ module.exports = {
       },
     },
   },
-  ignorePatterns: ['/dist/*', '/public/*', '/babel-plugins/*'],
+  ignorePatterns: ['/dist/*', '/public/*', '/babel-plugins/*', 'babel.config.js', 'metro.config.js'],
   env: {
     browser: true,
   },

@@ -45,7 +45,7 @@ const getResponsivePadding = (basePadding: number) => {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { currentColors, menuItems, loadMenuItems, addToCart } = useApp(); // Added addToCart from context
+  const { currentColors, menuItems, loadMenuItems, addToCart, getUnreadNotificationCount } = useApp(); // Added addToCart and getUnreadNotificationCount from context
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(false);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
@@ -55,6 +55,8 @@ export default function HomeScreen() {
   const [toastType, setToastType] = useState<"success" | "error" | "info">(
     "success"
   );
+
+  const unreadCount = getUnreadNotificationCount();
 
   const showToast = (type: "success" | "error" | "info", message: string) => {
     setToastType(type);
@@ -135,12 +137,22 @@ export default function HomeScreen() {
               Authentic West African Cuisine
             </Text>
           </View>
-          <Pressable onPress={() => router.push("/notifications")}>
+          <Pressable 
+            onPress={() => router.push("/notifications")}
+            style={styles.notificationButton}
+          >
             <IconSymbol
               name="bell.fill"
               size={24}
               color={currentColors.primary}
             />
+            {unreadCount > 0 && (
+              <View style={[styles.notificationBadge, { backgroundColor: currentColors.primary }]}>
+                <Text style={[styles.notificationBadgeText, { color: currentColors.card }]}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
           </Pressable>
         </View>
 
@@ -351,6 +363,28 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     marginTop: 0,
+  },
+  notificationButton: {
+    position: 'relative',
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   categoriesContainer: {
     maxHeight: 60,
