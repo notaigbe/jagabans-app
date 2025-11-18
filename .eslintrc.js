@@ -15,8 +15,13 @@ module.exports = {
     sourceType: 'module',
     ecmaFeatures: {
       jsx: true
-    },
-    project: './tsconfig.json',
+    }
+  },
+  ignorePatterns: ['/dist/*', '/public/*', '/babel-plugins/*'],
+  env: {
+    browser: true,
+    node: true,
+    es2021: true,
   },
   settings: {
     'import/resolver': {
@@ -24,11 +29,23 @@ module.exports = {
         alwaysTryTypes: true,
         project: './tsconfig.json',
       },
+      node: {
+        extensions: [
+          '.js',
+          '.jsx',
+          '.ts',
+          '.tsx',
+          '.json',
+          '.native.js',
+          '.native.jsx',
+          '.native.ts',
+          '.native.tsx'
+        ],
+      },
     },
-  },
-  ignorePatterns: ['/dist/*', '/public/*', '/babel-plugins/*', 'babel.config.js', 'metro.config.js'],
-  env: {
-    browser: true,
+    react: {
+      version: 'detect',
+    },
   },
   rules: {
     "@typescript-eslint/no-unused-vars": "off",
@@ -39,7 +56,7 @@ module.exports = {
     "@typescript-eslint/no-empty-object-type": "off",
     "@typescript-eslint/no-wrapper-object-types": "off",
     "react/no-unescaped-entities": "off",
-    "import/no-unresolved": "off",
+    "import/no-unresolved": "error",
     "prefer-const": "off",
     "react/prop-types": 1,
     "no-case-declarations": "off",
@@ -50,7 +67,8 @@ module.exports = {
     {
       files: ['metro.config.js'],
       rules: {
-        '@typescript-eslint/no-var-requires': 'off'
+        '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/no-require-imports': 'off', // Add this line
       }
     }
   ]

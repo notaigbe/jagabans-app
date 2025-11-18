@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -38,20 +39,19 @@ export default function AdminDashboard() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    // For testing, use admin@jagabansla.com / admin
-    // You can create this user in Supabase or use the default credentials
-    const email = username.includes("@") ? username : "admin@jagabansla.com";
-    const pass = password || "admin";
+    if (!username || !password) {
+      Alert.alert("Login Failed", "Please enter both email and password.");
+      return;
+    }
+
+    const email = username.includes("@") ? username : `${username}@jagabansla.com`;
 
     setLoading(true);
-    const { error } = await signIn(email, pass);
+    const { error } = await signIn(email, password);
     setLoading(false);
 
     if (error) {
-      Alert.alert(
-        "Login Failed",
-        "Invalid credentials. Use admin@jagabansla.com / admin for testing."
-      );
+      Alert.alert("Login Failed", "Invalid credentials. Please try again.");
     }
   };
 
@@ -239,10 +239,6 @@ export default function AdminDashboard() {
                 {loading ? "Signing In..." : "Sign In"}
               </Text>
             </Pressable>
-
-            <Text style={styles.demoText}>
-              Demo: admin@jagabansla.com / admin
-            </Text>
           </View>
         </View>
       </SafeAreaView>
@@ -420,12 +416,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "600",
-  },
-  demoText: {
-    textAlign: "center",
-    color: colors.textSecondary,
-    fontSize: 14,
-    marginTop: 16,
   },
   header: {
     flexDirection: "row",
