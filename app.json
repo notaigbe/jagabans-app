@@ -1,34 +1,35 @@
+
 {
   "expo": {
-    "name": "Jagabans LA",
-    "slug": "Jagabans LA",
+    "name": "Natively",
+    "slug": "Natively",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png",
+    "icon": "./assets/images/natively-dark.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png",
+      "image": "./assets/images/natively-dark.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jagabansla.app",
+      "bundleIdentifier": "com.anonymous.Natively",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png",
+        "foregroundImage": "./assets/images/natively-dark.png",
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.jagabansla.app"
+      "package": "com.anonymous.Natively"
     },
     "web": {
-      "favicon": "./assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png",
+      "favicon": "./assets/images/final_quest_240x240.png",
       "bundler": "metro"
     },
     "plugins": [
@@ -43,6 +44,5 @@
     "extra": {
       "router": {}
     }
-  },
-  "scheme": "Jagabans LA"
+  }
 }

@@ -1,0 +1,31 @@
+'Log files:
+G:\notai\VSCodeProjects\jagabans-rewards-app-zbaymg\notai\packages\npm\_logs\2025-11-18T09_14_48_612Z-debug-0.log
+
+# npm resolution error report
+
+While resolving: Natively@1.0.0
+Found: @typescript-eslint/utils@6.21.0
+node_modules/@typescript-eslint/utils
+  @typescript-eslint/utils@"6.21.0" from @typescript-eslint/eslint-plugin@6.21.0
+  node_modules/@typescript-eslint/eslint-plugin
+    dev @typescript-eslint/eslint-plugin@"^6.21.0" from the root project
+  @typescript-eslint/utils@"6.21.0" from @typescript-eslint/type-utils@6.21.0
+  node_modules/@typescript-eslint/type-utils
+    @typescript-eslint/type-utils@"6.21.0" from @typescript-eslint/eslint-plugin@6.21.0
+    node_modules/@typescript-eslint/eslint-plugin
+      dev @typescript-eslint/eslint-plugin@"^6.21.0" from the root project
+
+Could not resolve dependency:
+dev eslint-import-resolver-typescript@"4.4.4" from the root project
+
+Conflicting peer dependency: @typescript-eslint/utils@8.47.0
+node_modules/@typescript-eslint/utils
+  peerOptional @typescript-eslint/utils@"^8.0.0" from eslint-plugin-import-x@4.16.1
+  node_modules/eslint-plugin-import-x
+    peerOptional eslint-plugin-import-x@"*" from eslint-import-resolver-typescript@4.4.4
+    node_modules/eslint-import-resolver-typescript
+      dev eslint-import-resolver-typescript@"4.4.4" from the root project
+
+Fix the upstream dependency conflict, or retry
+this command with --force or --legacy-peer-deps
+to accept an incorrect (and potentially broken) dependency resolution.

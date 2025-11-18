@@ -9,6 +9,8 @@ import {
   ViewStyle,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
 
 // Add your SFSymbol to MaterialIcons mappings here.
 const MAPPING = ({
