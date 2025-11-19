@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -181,66 +182,107 @@ export default function AdminDashboard() {
     router.push(route as any);
   };
 
+  const handleUserProfilePress = () => {
+    console.log("Navigating to user profile");
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push("/(tabs)/profile" as any);
+  };
+
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loginContainer}>
-          <View style={styles.loginHeader}>
-            <IconSymbol
-              name="admin-panel-settings"
-              size={64}
-              color={colors.primary}
-            />
-            <Text style={styles.loginTitle}>Admin Dashboard</Text>
-            <Text style={styles.loginSubtitle}>Jagabans LA</Text>
-          </View>
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
+          <ScrollView
+            contentContainerStyle={styles.loginScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.loginContainer}>
+              <View style={styles.loginHeader}>
+                <IconSymbol
+                  name="admin-panel-settings"
+                  size={64}
+                  color={colors.primary}
+                />
+                <Text style={styles.loginTitle}>Admin Dashboard</Text>
+                <Text style={styles.loginSubtitle}>Jagabans LA</Text>
+              </View>
 
-          <View style={styles.loginForm}>
-            <View style={styles.inputContainer}>
-              <IconSymbol
-                name="person"
-                size={20}
-                color={colors.textSecondary}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Email or Username"
-                placeholderTextColor={colors.textSecondary}
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
+              <View style={styles.loginForm}>
+                <View style={styles.inputContainer}>
+                  <IconSymbol
+                    name="person"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email or Username"
+                    placeholderTextColor={colors.textSecondary}
+                    value={username}
+                    onChangeText={setUsername}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <IconSymbol name="lock" size={20} color={colors.textSecondary} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor={colors.textSecondary}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.loginButton,
+                    pressed && styles.loginButtonPressed,
+                    loading && styles.loginButtonDisabled,
+                  ]}
+                  onPress={handleLogin}
+                  disabled={loading}
+                >
+                  <Text style={styles.loginButtonText}>
+                    {loading ? "Signing In..." : "Sign In"}
+                  </Text>
+                </Pressable>
+
+                {/* User Profile Link */}
+                <Pressable
+                  style={styles.userProfileButton}
+                  onPress={handleUserProfilePress}
+                  disabled={loading}
+                >
+                  <IconSymbol
+                    name="person-circle"
+                    size={16}
+                    color={colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.userProfileButtonText,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    Switch to User Profile
+                  </Text>
+                </Pressable>
+              </View>
             </View>
-
-            <View style={styles.inputContainer}>
-              <IconSymbol name="lock" size={20} color={colors.textSecondary} />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor={colors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.loginButton,
-                pressed && styles.loginButtonPressed,
-                loading && styles.loginButtonDisabled,
-              ]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              <Text style={styles.loginButtonText}>
-                {loading ? "Signing In..." : "Sign In"}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -256,9 +298,17 @@ export default function AdminDashboard() {
             <Text style={styles.title}>Admin Dashboard</Text>
             <Text style={styles.subtitle}>Jagabans LA Management</Text>
           </View>
-          <Pressable style={styles.logoutButton} onPress={handleLogout}>
-            <IconSymbol name="logout" size={24} color={colors.primary} />
-          </Pressable>
+          <View style={styles.headerButtons}>
+            <Pressable
+              style={styles.userProfileIconButton}
+              onPress={handleUserProfilePress}
+            >
+              <IconSymbol name="person-circle" size={28} color={colors.primary} />
+            </Pressable>
+            <Pressable style={styles.logoutButton} onPress={handleLogout}>
+              <IconSymbol name="logout" size={24} color={colors.primary} />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.statsContainer}>
@@ -354,14 +404,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
+  },
+  loginScrollContent: {
+    flexGrow: 1,
   },
   loginContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
+    minHeight: 600,
   },
   loginHeader: {
     alignItems: "center",
@@ -417,6 +474,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
+  userProfileButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 24,
+    paddingVertical: 12,
+    gap: 8,
+    opacity: 0.7,
+  },
+  userProfileButtonText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -432,6 +502,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     marginTop: 4,
+  },
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  userProfileIconButton: {
+    padding: 8,
   },
   logoutButton: {
     padding: 8,

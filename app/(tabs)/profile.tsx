@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -9,6 +10,7 @@ import {
   Platform,
   TextInput,
   Alert,
+  KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -164,223 +166,231 @@ export default function ProfileScreen() {
         style={[styles.safeArea, { backgroundColor: currentColors.background }]}
         edges={["top"]}
       >
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={styles.authContent}
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
-          <View style={styles.authHeader}>
-            <IconSymbol
-              name="person.circle.fill"
-              size={80}
-              color={currentColors.primary}
-            />
-            <Text style={[styles.authTitle, { color: currentColors.text }]}>
-              {isSignUp ? "Create Account" : "Welcome Back"}
-            </Text>
-            <Text
-              style={[
-                styles.authSubtitle,
-                { color: currentColors.textSecondary },
-              ]}
-            >
-              {isSignUp
-                ? "Sign up to start earning points"
-                : "Sign in to your account"}
-            </Text>
-          </View>
-
-          <View style={styles.authForm}>
-            {isSignUp && (
-              <View
-                style={[
-                  styles.inputContainer,
-                  {
-                    backgroundColor: currentColors.card,
-                    borderColor: currentColors.border,
-                  },
-                ]}
-              >
-                <IconSymbol
-                  name="person"
-                  size={20}
-                  color={currentColors.textSecondary}
-                />
-                <TextInput
-                  style={[styles.input, { color: currentColors.text }]}
-                  placeholder="Full Name"
-                  placeholderTextColor={currentColors.textSecondary}
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
-              </View>
-            )}
-
-            <View
-              style={[
-                styles.inputContainer,
-                {
-                  backgroundColor: currentColors.card,
-                  borderColor: currentColors.border,
-                },
-              ]}
-            >
+          <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.authContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.authHeader}>
               <IconSymbol
-                name="envelope"
-                size={20}
-                color={currentColors.textSecondary}
+                name="person.circle.fill"
+                size={80}
+                color={currentColors.primary}
               />
-              <TextInput
-                style={[styles.input, { color: currentColors.text }]}
-                placeholder="Email"
-                placeholderTextColor={currentColors.textSecondary}
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
-            </View>
-
-            <View
-              style={[
-                styles.inputContainer,
-                {
-                  backgroundColor: currentColors.card,
-                  borderColor: currentColors.border,
-                },
-              ]}
-            >
-              <IconSymbol
-                name="lock"
-                size={20}
-                color={currentColors.textSecondary}
-              />
-              <TextInput
-                style={[styles.input, { color: currentColors.text }]}
-                placeholder="Password"
-                placeholderTextColor={currentColors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <Pressable
-                onPress={() => {
-                  setShowPassword(!showPassword);
-                  if (Platform.OS !== "web") {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
-                }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <IconSymbol
-                  name={showPassword ? "eye.slash.fill" : "eye.fill"}
-                  size={20}
-                  color={currentColors.textSecondary}
-                />
-              </Pressable>
-            </View>
-
-            {isSignUp && (
-              <View
-                style={[
-                  styles.inputContainer,
-                  {
-                    backgroundColor: currentColors.card,
-                    borderColor: currentColors.border,
-                  },
-                ]}
-              >
-                <IconSymbol
-                  name="phone"
-                  size={20}
-                  color={currentColors.textSecondary}
-                />
-                <TextInput
-                  style={[styles.input, { color: currentColors.text }]}
-                  placeholder="Phone (optional)"
-                  placeholderTextColor={currentColors.textSecondary}
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            )}
-
-            <Pressable
-              style={[
-                styles.authButton,
-                {
-                  backgroundColor: currentColors.primary,
-                  opacity: loading ? 0.6 : 1,
-                },
-              ]}
-              onPress={handleAuth}
-              disabled={loading}
-            >
-              <Text
-                style={[styles.authButtonText, { color: currentColors.card }]}
-              >
-                {loading ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
+              <Text style={[styles.authTitle, { color: currentColors.text }]}>
+                {isSignUp ? "Create Account" : "Welcome Back"}
               </Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.switchButton}
-              onPress={() => {
-                setIsSignUp(!isSignUp);
-                // Clear form when switching
-                setEmail("");
-                setPassword("");
-                setName("");
-                setPhone("");
-                setShowPassword(false);
-              }}
-              disabled={loading}
-            >
               <Text
                 style={[
-                  styles.switchButtonText,
+                  styles.authSubtitle,
                   { color: currentColors.textSecondary },
                 ]}
               >
                 {isSignUp
-                  ? "Already have an account? "
-                  : "Don't have an account? "}
-                <Text
-                  style={{ color: currentColors.primary, fontWeight: "600" }}
-                >
-                  {isSignUp ? "Sign In" : "Sign Up"}
-                </Text>
+                  ? "Sign up to start earning points"
+                  : "Sign in to your account"}
               </Text>
-            </Pressable>
-            {/* Admin Access Link */}
-<Pressable
-  style={styles.adminButton}
-  onPress={() => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    handleMenuPress("/admin");
-  }}
-  disabled={loading}
->
-  <IconSymbol
-    name="admin-panel-settings"
-    size={16}
-    color={currentColors.textSecondary}
-  />
-  <Text
-    style={[
-      styles.adminButtonText,
-      { color: currentColors.textSecondary },
-    ]}
-  >
-    Admin Dashboard
-  </Text>
-</Pressable>
-          </View>
-        </ScrollView>
+            </View>
+
+            <View style={styles.authForm}>
+              {isSignUp && (
+                <View
+                  style={[
+                    styles.inputContainer,
+                    {
+                      backgroundColor: currentColors.card,
+                      borderColor: currentColors.border,
+                    },
+                  ]}
+                >
+                  <IconSymbol
+                    name="person"
+                    size={20}
+                    color={currentColors.textSecondary}
+                  />
+                  <TextInput
+                    style={[styles.input, { color: currentColors.text }]}
+                    placeholder="Full Name"
+                    placeholderTextColor={currentColors.textSecondary}
+                    value={name}
+                    onChangeText={setName}
+                    autoCapitalize="words"
+                  />
+                </View>
+              )}
+
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: currentColors.card,
+                    borderColor: currentColors.border,
+                  },
+                ]}
+              >
+                <IconSymbol
+                  name="envelope"
+                  size={20}
+                  color={currentColors.textSecondary}
+                />
+                <TextInput
+                  style={[styles.input, { color: currentColors.text }]}
+                  placeholder="Email"
+                  placeholderTextColor={currentColors.textSecondary}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: currentColors.card,
+                    borderColor: currentColors.border,
+                  },
+                ]}
+              >
+                <IconSymbol
+                  name="lock"
+                  size={20}
+                  color={currentColors.textSecondary}
+                />
+                <TextInput
+                  style={[styles.input, { color: currentColors.text }]}
+                  placeholder="Password"
+                  placeholderTextColor={currentColors.textSecondary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <Pressable
+                  onPress={() => {
+                    setShowPassword(!showPassword);
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <IconSymbol
+                    name={showPassword ? "eye.slash.fill" : "eye.fill"}
+                    size={20}
+                    color={currentColors.textSecondary}
+                  />
+                </Pressable>
+              </View>
+
+              {isSignUp && (
+                <View
+                  style={[
+                    styles.inputContainer,
+                    {
+                      backgroundColor: currentColors.card,
+                      borderColor: currentColors.border,
+                    },
+                  ]}
+                >
+                  <IconSymbol
+                    name="phone"
+                    size={20}
+                    color={currentColors.textSecondary}
+                  />
+                  <TextInput
+                    style={[styles.input, { color: currentColors.text }]}
+                    placeholder="Phone (optional)"
+                    placeholderTextColor={currentColors.textSecondary}
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+              )}
+
+              <Pressable
+                style={[
+                  styles.authButton,
+                  {
+                    backgroundColor: currentColors.primary,
+                    opacity: loading ? 0.6 : 1,
+                  },
+                ]}
+                onPress={handleAuth}
+                disabled={loading}
+              >
+                <Text
+                  style={[styles.authButtonText, { color: currentColors.card }]}
+                >
+                  {loading ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.switchButton}
+                onPress={() => {
+                  setIsSignUp(!isSignUp);
+                  // Clear form when switching
+                  setEmail("");
+                  setPassword("");
+                  setName("");
+                  setPhone("");
+                  setShowPassword(false);
+                }}
+                disabled={loading}
+              >
+                <Text
+                  style={[
+                    styles.switchButtonText,
+                    { color: currentColors.textSecondary },
+                  ]}
+                >
+                  {isSignUp
+                    ? "Already have an account? "
+                    : "Don't have an account? "}
+                  <Text
+                    style={{ color: currentColors.primary, fontWeight: "600" }}
+                  >
+                    {isSignUp ? "Sign In" : "Sign Up"}
+                  </Text>
+                </Text>
+              </Pressable>
+              {/* Admin Access Link */}
+              <Pressable
+                style={styles.adminButton}
+                onPress={() => {
+                  if (Platform.OS !== "web") {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                  handleMenuPress("/admin");
+                }}
+                disabled={loading}
+              >
+                <IconSymbol
+                  name="admin-panel-settings"
+                  size={16}
+                  color={currentColors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.adminButtonText,
+                    { color: currentColors.textSecondary },
+                  ]}
+                >
+                  Admin Dashboard
+                </Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
         <Toast
           visible={toastVisible}
           message={toastMessage}
@@ -655,6 +665,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -725,18 +738,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   adminButton: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  marginTop: 24,
-  paddingVertical: 12,
-  gap: 8,
-  opacity: 0.7,
-},
-adminButtonText: {
-  fontSize: 13,
-  fontWeight: "500",
-},
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 24,
+    paddingVertical: 12,
+    gap: 8,
+    opacity: 0.7,
+  },
+  adminButtonText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
   profileHeader: {
     alignItems: "center",
     padding: 24,
