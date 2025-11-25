@@ -92,6 +92,20 @@ export interface Event {
   shareableLink?: string;
 }
 
+export interface Reservation {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  date: string;
+  time: string;
+  guests: number;
+  specialRequests?: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no-show';
+  tableNumber?: string;
+  createdAt: string;
+}
+
 export type ThemeMode = 'light' | 'dark' | 'auto';
 export type ColorScheme = 'default' | 'warm' | 'cool' | 'vibrant' | 'minimal';
 

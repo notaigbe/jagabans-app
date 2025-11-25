@@ -12,7 +12,8 @@ import {
   PaymentMethod,
   UserProfile,
   AppNotification,
-  ThemeSettings
+  ThemeSettings,
+  Reservation
 } from '@/types';
 
 // The imported `supabase` from client.ts is already typed as SupabaseClient<Database>
@@ -483,6 +484,173 @@ async updateOrderStatus(orderId: string, status: Order['status']) {
       return { data, error: null };
     } catch (error) {
       console.error('Get all orders error:', error);
+      return { data: null, error };
+    }
+  },
+};
+
+// ============================================
+// RESERVATION SERVICES
+// ============================================
+
+export const reservationService = {
+  /**
+   * Get all reservations (Admin)
+   */
+  async getAllReservations() {
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Get all reservations error:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Get reservation by ID
+   */
+  async getReservation(reservationId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('id', reservationId)
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Get reservation error:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Update reservation status (Admin)
+   */
+  async updateReservationStatus(reservationId: string, status: Reservation['status']) {
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .update({
+          status,
+        })
+        .eq('id', reservationId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Update reservation status error:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Update reservation table number (Admin)
+   */
+  async updateReservationTable(reservationId: string, tableNumber: string) {
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .update({
+          table_number: tableNumber,
+        })
+        .eq('id', reservationId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Update reservation table error:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Update reservation details (Admin)
+   */
+  async updateReservation(reservationId: string, updates: Partial<Reservation>) {
+    try {
+      const updateData: any = {};
+      
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.email !== undefined) updateData.email = updates.email;
+      if (updates.phone !== undefined) updateData.phone = updates.phone;
+      if (updates.date !== undefined) updateData.date = updates.date;
+      if (updates.time !== undefined) updateData.time = updates.time;
+      if (updates.guests !== undefined) updateData.guests = updates.guests;
+      if (updates.specialRequests !== undefined) updateData.special_requests = updates.specialRequests;
+      if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.tableNumber !== undefined) updateData.table_number = updates.tableNumber;
+
+      const { data, error } = await supabase
+        .from('reservations')
+        .update(updateData)
+        .eq('id', reservationId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Update reservation error:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Delete reservation (Admin)
+   */
+  async deleteReservation(reservationId: string) {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', reservationId);
+
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      console.error('Delete reservation error:', error);
+      return { error };
+    }
+  },
+
+  /**
+   * Create a new reservation (Admin)
+   */
+  async createReservation(reservation: Omit<Reservation, 'id' | 'createdAt'>) {
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .insert({
+          name: reservation.name,
+          email: reservation.email,
+          phone: reservation.phone,
+          date: reservation.date,
+          time: reservation.time,
+          guests: reservation.guests,
+          special_requests: reservation.specialRequests,
+          status: reservation.status || 'pending',
+          table_number: reservation.tableNumber,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Create reservation error:', error);
       return { data: null, error };
     }
   },
@@ -1202,7 +1370,6 @@ export const imageService = {
    * @param path - path including filename (e.g., 'avatars/user123.png')
    * @param file - File or Blob object
    */
-// Updated imageService.uploadImage method:
 async uploadImage(
   bucket: string, 
   path: string, 

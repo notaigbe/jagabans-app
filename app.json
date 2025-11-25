@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/natively-dark.png",
+      "image": "./assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -21,7 +21,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/natively-dark.png",
+        "foregroundImage": "./assets/images/32297f18-8c85-4435-9bd9-0ac1fa24076e.png",
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,

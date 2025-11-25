@@ -18,6 +18,7 @@ export default function AdminLayout() {
       <Stack.Screen name="giftcards" />
       <Stack.Screen name="notifications" />
       <Stack.Screen name="analytics" />
+      <Stack.Screen name="reservations" />
     </Stack>
   );
 }

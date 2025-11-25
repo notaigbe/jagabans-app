@@ -125,6 +125,14 @@ export default function AdminDashboard() {
       color: "#FF6B35",
     },
     {
+      id: "reservations",
+      title: "Reservations",
+      description: "Manage table bookings",
+      icon: "event-seat" as const,
+      route: "/admin/reservations",
+      color: "#9B59B6",
+    },
+    {
       id: "users",
       title: "User Management",
       description: "Manage user accounts and profiles",
@@ -259,14 +267,13 @@ export default function AdminDashboard() {
                   </Text>
                 </Pressable>
 
-                {/* User Profile Link */}
                 <Pressable
                   style={styles.userProfileButton}
                   onPress={handleUserProfilePress}
                   disabled={loading}
                 >
                   <IconSymbol
-                    name="person-circle"
+                    name="person-pin"
                     size={16}
                     color={colors.textSecondary}
                   />
