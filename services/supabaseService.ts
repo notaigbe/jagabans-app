@@ -13,7 +13,8 @@ import {
   UserProfile,
   AppNotification,
   ThemeSettings,
-  Reservation
+  Reservation,
+  UserRole
 } from '@/types';
 
 // The imported `supabase` from client.ts is already typed as SupabaseClient<Database>
@@ -52,6 +53,7 @@ export const authService = {
             email,
             phone: phone || '',
             points: 0,
+            user_role: 'user',
           }) as unknown)) as { data: Database['public']['Tables']['user_profiles']['Row'][] | null; error: any };
 
         if (profileError) {
@@ -172,7 +174,10 @@ export const userService = {
           phone: updates.phone,
           profile_image: updates.profileImage,
           updated_at: new Date().toISOString(),
-        }) as unknown)) as { data: Database['public']['Tables']['user_profiles']['Row'] | null; error: any };
+        })
+        .eq('id', userId)
+        .select()
+        .single() as unknown)) as { data: Database['public']['Tables']['user_profiles']['Row'] | null; error: any };
 
       if (error) throw error;
       return { data, error: null };
@@ -197,7 +202,10 @@ export const userService = {
 
       const { data, error } = (await ((supabase as any)
         .from('user_profiles')
-        .update({ points: profile.points + points }) as unknown)) as { data: Database['public']['Tables']['user_profiles']['Row'] | null; error: any };
+        .update({ points: profile.points + points })
+        .eq('id', userId)
+        .select()
+        .single() as unknown)) as { data: Database['public']['Tables']['user_profiles']['Row'] | null; error: any };
 
       if (error) throw error;
       return { data, error: null };
@@ -223,7 +231,10 @@ export const userService = {
 
       const { data, error } = (await ((supabase as any)
         .from('user_profiles')
-        .update({ points: profile.points - points }) as unknown)) as { data: Database['public']['Tables']['user_profiles']['Row'] | null; error: any };
+        .update({ points: profile.points - points })
+        .eq('id', userId)
+        .select()
+        .single() as unknown)) as { data: Database['public']['Tables']['user_profiles']['Row'] | null; error: any };
 
       if (error) throw error;
       return { data, error: null };
@@ -252,14 +263,14 @@ export const userService = {
   },
 
   /**
-   * Update user admin status (Super-Admin only)
+   * Update user role (Super-Admin only)
    */
-  async updateUserAdminStatus(userId: string, isAdmin: boolean) {
+  async updateUserRole(userId: string, role: UserRole) {
     try {
       const { data, error } = await (supabase as any)
         .from('user_profiles')
         .update({ 
-          is_admin: isAdmin,
+          user_role: role,
           updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
@@ -269,30 +280,7 @@ export const userService = {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Update user admin status error:', error);
-      return { data: null, error };
-    }
-  },
-
-  /**
-   * Update user super-admin status (Super-Admin only)
-   */
-  async updateUserSuperAdminStatus(userId: string, isSuperAdmin: boolean) {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('user_profiles')
-        .update({ 
-          is_super_admin: isSuperAdmin,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error) {
-      console.error('Update user super-admin status error:', error);
+      console.error('Update user role error:', error);
       return { data: null, error };
     }
   },
@@ -522,31 +510,30 @@ export const orderService = {
   },
 
   /**
- * Update order status (Admin)
- */
-async updateOrderStatus(orderId: string, status: Order['status']) {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .update({
-        status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', orderId)
-      .select(`
-        *,
-        order_items (*)
-      `)
-      .single();
+   * Update order status (Admin)
+   */
+  async updateOrderStatus(orderId: string, status: Order['status']) {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .update({
+          status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId)
+        .select(`
+          *,
+          order_items (*)
+        `)
+        .single();
 
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error) {
-    console.error('Update order status error:', error);
-    return { data: null, error };
-  }
-},
-
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Update order status error:', error);
+      return { data: null, error };
+    }
+  },
 
   /**
    * Get all orders (Admin)
@@ -1452,27 +1439,27 @@ export const imageService = {
    * @param path - path including filename (e.g., 'avatars/user123.png')
    * @param file - File or Blob object
    */
-async uploadImage(
-  bucket: string, 
-  path: string, 
-  file: ArrayBuffer | Blob | File,
-  options?: { contentType?: string; upsert?: boolean }
-) {
-  try {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, { 
-        cacheControl: '3600', 
-        upsert: options?.upsert ?? true,
-        contentType: options?.contentType
-      });
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error) {
-    console.error('Upload image error:', error);
-    return { data: null, error };
-  }
-},
+  async uploadImage(
+    bucket: string, 
+    path: string, 
+    file: ArrayBuffer | Blob | File,
+    options?: { contentType?: string; upsert?: boolean }
+  ) {
+    try {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(path, file, { 
+          cacheControl: '3600', 
+          upsert: options?.upsert ?? true,
+          contentType: options?.contentType
+        });
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Upload image error:', error);
+      return { data: null, error };
+    }
+  },
 
   /**
    * Get public URL for a public bucket
@@ -1532,6 +1519,22 @@ async uploadImage(
     } catch (error) {
       console.error('Download file error:', error);
       return null;
+    }
+  },
+
+  /**
+   * Delete file from storage
+   * @param bucket - bucket name
+   * @param path - file path
+   */
+  async deleteFile(bucket: string, path: string) {
+    try {
+      const { error } = await supabase.storage.from(bucket).remove([path]);
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      console.error('Delete file error:', error);
+      return { error };
     }
   },
 };

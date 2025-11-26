@@ -21,8 +21,7 @@ export interface Database {
           created_at: string
           updated_at: string
           user_id: string | null
-          is_admin: boolean | null
-          is_super_admin: boolean | null
+          user_role: 'user' | 'admin' | 'super_admin'
         }
         Insert: {
           id: string
@@ -34,8 +33,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           user_id?: string | null
-          is_admin?: boolean | null
-          is_super_admin?: boolean | null
+          user_role?: 'user' | 'admin' | 'super_admin'
         }
         Update: {
           id?: string
@@ -47,8 +45,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           user_id?: string | null
-          is_admin?: boolean | null
-          is_super_admin?: boolean | null
+          user_role?: 'user' | 'admin' | 'super_admin'
         }
       }
       menu_items: {
@@ -419,6 +416,47 @@ export interface Database {
           color_scheme?: 'default' | 'warm' | 'cool' | 'vibrant' | 'minimal'
           created_at?: string
           updated_at?: string
+        }
+      }
+      reservations: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          phone: string
+          date: string
+          time: string
+          guests: number
+          special_requests: string | null
+          created_at: string | null
+          status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no-show' | null
+          table_number: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          phone: string
+          date: string
+          time: string
+          guests: number
+          special_requests?: string | null
+          created_at?: string | null
+          status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no-show' | null
+          table_number?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          phone?: string
+          date?: string
+          time?: string
+          guests?: number
+          special_requests?: string | null
+          created_at?: string | null
+          status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no-show' | null
+          table_number?: string | null
         }
       }
     }

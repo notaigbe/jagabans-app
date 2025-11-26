@@ -108,6 +108,7 @@ export interface Reservation {
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 export type ColorScheme = 'default' | 'warm' | 'cool' | 'vibrant' | 'minimal';
+export type UserRole = 'user' | 'admin' | 'super_admin';
 
 export interface ThemeSettings {
   mode: ThemeMode;
@@ -128,6 +129,5 @@ export interface UserProfile {
   rsvpEvents: string[];
   themeSettings?: ThemeSettings;
   merchRedemptions?: MerchRedemption[];
-  isAdmin?: boolean;
-  isSuperAdmin?: boolean;
+  userRole: UserRole;
 }

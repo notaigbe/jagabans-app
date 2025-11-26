@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react';
-import { MenuItem, CartItem, Order, UserProfile, GiftCard, PaymentMethod, AppNotification, ThemeSettings, ThemeMode, ColorScheme, MerchRedemption } from '@/types';
+import { MenuItem, CartItem, Order, UserProfile, GiftCard, PaymentMethod, AppNotification, ThemeSettings, ThemeMode, ColorScheme, MerchRedemption, UserRole } from '@/types';
 import { useColorScheme } from 'react-native';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/app/integrations/supabase/client';
@@ -173,7 +173,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (!profile) {
         console.log('No profile found, creating default profile');
         // Create default profile if it doesn't exist
-        // Cast the result to the DB Row shape to satisfy TypeScript
         await (supabase
           .from('user_profiles')
           .insert({
@@ -182,6 +181,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             email: user.email || '',
             phone: user.user_metadata?.phone || '',
             points: 0,
+            user_role: 'user',
           } as any) as unknown) as { data: Database['public']['Tables']['user_profiles']['Row'][] | null; error: any };
         return loadUserProfile();
       }
@@ -221,8 +221,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         phone: profile.phone || '',
         points: profile.points || 0,
         profileImage: profile.profile_image ?? undefined,
-        isAdmin: profile.is_admin ?? false,
-        isSuperAdmin: profile.is_super_admin ?? false,
+        userRole: profile.user_role as UserRole,
         orders: orders?.map((o: any) => ({
           id: o.id,
           items: o.order_items?.map((oi: any) => ({

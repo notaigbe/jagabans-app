@@ -36,6 +36,9 @@ export default function AdminDashboard() {
     revenue: 0,
   });
 
+  const isAdmin = userProfile?.userRole === 'admin' || userProfile?.userRole === 'super_admin';
+  const isSuperAdmin = userProfile?.userRole === 'super_admin';
+
   const handleLogin = async () => {
     console.log("Admin login attempt");
     if (Platform.OS !== "web") {
@@ -104,10 +107,10 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && isAdmin) {
       fetchStats();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isAdmin]);
 
   const allAdminSections = [
     {
@@ -204,7 +207,7 @@ export default function AdminDashboard() {
 
   // Filter sections based on user role
   const adminSections = allAdminSections.filter(
-    (section) => !section.superAdminOnly || userProfile?.isSuperAdmin
+    (section) => !section.superAdminOnly || isSuperAdmin
   );
 
   const handleSectionPress = (route: string) => {
@@ -223,7 +226,7 @@ export default function AdminDashboard() {
     router.push("/(tabs)/profile" as any);
   };
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !isAdmin) {
     return (
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
@@ -330,13 +333,13 @@ export default function AdminDashboard() {
             <Text style={styles.title}>Admin Dashboard</Text>
             <View style={styles.subtitleRow}>
               <Text style={styles.subtitle}>Jagabans LA Management</Text>
-              {userProfile?.isSuperAdmin && (
+              {isSuperAdmin && (
                 <View style={styles.superAdminBadge}>
                   <IconSymbol name="verified" size={12} color="#FFFFFF" />
                   <Text style={styles.superAdminBadgeText}>Super Admin</Text>
                 </View>
               )}
-              {userProfile?.isAdmin && !userProfile?.isSuperAdmin && (
+              {isAdmin && !isSuperAdmin && (
                 <View style={styles.adminBadge}>
                   <IconSymbol name="admin-panel-settings" size={12} color="#FFFFFF" />
                   <Text style={styles.adminBadgeText}>Admin</Text>
