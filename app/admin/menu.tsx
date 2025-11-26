@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   View,
@@ -9,22 +10,25 @@ import {
   TextInput,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/IconSymbol";
 import { colors } from "@/styles/commonStyles";
 import { menuItems as staticMenuItems } from "@/data/menuData";
-import { menuService } from "@/services/supabaseService";
+import { menuService, imageService } from "@/services/supabaseService";
 import { MenuItem } from "@/types";
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
 
 export default function AdminMenuManagement() {
   const router = useRouter();
   const [items, setItems] = useState<MenuItem[]>(staticMenuItems);
   const [isAddingItem, setIsAddingItem] = useState(false);
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -38,6 +42,72 @@ export default function AdminMenuManagement() {
     "All",
     ...Array.from(new Set(items.map((i) => i.category))),
   ];
+
+  const handlePickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert("Permission Required", "Please allow access to your photo library");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image");
+    }
+  };
+
+  const uploadImage = async (uri: string) => {
+    try {
+      setUploadingImage(true);
+
+      // Fetch the image as a blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Generate a unique filename
+      const filename = `menu-${Date.now()}.jpg`;
+      const path = `menu/${filename}`;
+
+      // Upload to Supabase Storage
+      const uploadResult = await imageService.uploadImage(
+        "menu",
+        path,
+        blob,
+        { contentType: "image/jpeg", upsert: true }
+      );
+
+      if (uploadResult.error) {
+        throw uploadResult.error;
+      }
+
+      // Get the public URL
+      const publicUrl = imageService.getPublicUrl("menu", path);
+
+      if (publicUrl) {
+        setFormData({ ...formData, image: publicUrl });
+        Alert.alert("Success", "Image uploaded successfully");
+      } else {
+        throw new Error("Failed to get public URL");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Error", "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleAddItem = () => {
     console.log("Adding new menu item");
@@ -74,11 +144,9 @@ export default function AdminMenuManagement() {
     })();
   };
 
-  const handleUpdateItem = () => {
+  const handleUpdateItem = (itemId: string) => {
     console.log("Updating menu item");
     (async () => {
-      if (!editingItem) return;
-
       const updates: Partial<MenuItem> = {
         name: formData.name,
         description: formData.description,
@@ -88,15 +156,15 @@ export default function AdminMenuManagement() {
       };
 
       try {
-        const res = await menuService.updateMenuItem(editingItem.id, updates);
+        const res = await menuService.updateMenuItem(itemId, updates);
         if (res.error || !res.data)
           throw res.error || new Error("Update failed");
         setItems((prev) =>
           prev.map((it) =>
-            it.id === editingItem.id ? (res.data as MenuItem) : it
+            it.id === itemId ? (res.data as MenuItem) : it
           )
         );
-        setEditingItem(null);
+        setEditingItemId(null);
         resetForm();
         Alert.alert("Success", "Menu item updated successfully");
       } catch (err) {
@@ -138,7 +206,7 @@ export default function AdminMenuManagement() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    setEditingItem(item);
+    setEditingItemId(item.id);
     setFormData({
       name: item.name,
       description: item.description,
@@ -146,7 +214,6 @@ export default function AdminMenuManagement() {
       category: item.category,
       image: item.image,
     });
-    setIsAddingItem(true);
   };
 
   const resetForm = () => {
@@ -176,6 +243,146 @@ export default function AdminMenuManagement() {
     })();
   }, []);
 
+  const renderEditForm = (itemId?: string) => (
+    <View style={styles.formContainer}>
+      <Text style={styles.formTitle}>
+        {itemId ? "Edit Menu Item" : "Add New Menu Item"}
+      </Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Item Name *"
+        placeholderTextColor={colors.textSecondary}
+        value={formData.name}
+        onChangeText={(text) => setFormData({ ...formData, name: text })}
+      />
+
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        placeholder="Description"
+        placeholderTextColor={colors.textSecondary}
+        value={formData.description}
+        onChangeText={(text) =>
+          setFormData({ ...formData, description: text })
+        }
+        multiline
+        numberOfLines={3}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Price *"
+        placeholderTextColor={colors.textSecondary}
+        value={formData.price}
+        onChangeText={(text) => setFormData({ ...formData, price: text })}
+        keyboardType="decimal-pad"
+      />
+
+      <View style={styles.categorySelector}>
+        <Text style={styles.inputLabel}>Category:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {categories
+            .filter((cat) => cat !== "All")
+            .map((category) => (
+              <Pressable
+                key={category}
+                style={[
+                  styles.categoryChip,
+                  formData.category === category &&
+                    styles.categoryChipActive,
+                ]}
+                onPress={() => {
+                  if (Platform.OS !== "web") {
+                    Haptics.impactAsync(
+                      Haptics.ImpactFeedbackStyle.Light
+                    );
+                  }
+                  setFormData({ ...formData, category });
+                }}
+              >
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    formData.category === category &&
+                      styles.categoryChipTextActive,
+                  ]}
+                >
+                  {category}
+                </Text>
+              </Pressable>
+            ))}
+        </ScrollView>
+      </View>
+
+      <View style={styles.imageSection}>
+        <Text style={styles.inputLabel}>Image:</Text>
+        {formData.image ? (
+          <View style={styles.imagePreviewContainer}>
+            <Image source={{ uri: formData.image }} style={styles.imagePreview} />
+            <Pressable
+              style={styles.removeImageButton}
+              onPress={() => setFormData({ ...formData, image: "" })}
+            >
+              <IconSymbol name="close" size={16} color="#FFFFFF" />
+            </Pressable>
+          </View>
+        ) : null}
+        
+        <Pressable
+          style={styles.uploadButton}
+          onPress={handlePickImage}
+          disabled={uploadingImage}
+        >
+          {uploadingImage ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <React.Fragment>
+              <IconSymbol name="image" size={20} color={colors.primary} />
+              <Text style={styles.uploadButtonText}>
+                {formData.image ? "Change Image" : "Upload Image"}
+              </Text>
+            </React.Fragment>
+          )}
+        </Pressable>
+      </View>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Or paste Image URL"
+        placeholderTextColor={colors.textSecondary}
+        value={formData.image}
+        onChangeText={(text) => setFormData({ ...formData, image: text })}
+      />
+
+      <View style={styles.formButtons}>
+        <Pressable
+          style={[styles.button, styles.cancelButton]}
+          onPress={() => {
+            if (Platform.OS !== "web") {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+            if (itemId) {
+              setEditingItemId(null);
+            } else {
+              setIsAddingItem(false);
+            }
+            resetForm();
+          }}
+        >
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.button, styles.saveButton]}
+          onPress={() => itemId ? handleUpdateItem(itemId) : handleAddItem()}
+        >
+          <Text style={styles.saveButtonText}>
+            {itemId ? "Update" : "Add Item"}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -198,7 +405,7 @@ export default function AdminMenuManagement() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }
             setIsAddingItem(!isAddingItem);
-            setEditingItem(null);
+            setEditingItemId(null);
             resetForm();
           }}
         >
@@ -214,110 +421,7 @@ export default function AdminMenuManagement() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {isAddingItem && (
-          <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>
-              {editingItem ? "Edit Menu Item" : "Add New Menu Item"}
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Item Name *"
-              placeholderTextColor={colors.textSecondary}
-              value={formData.name}
-              onChangeText={(text) => setFormData({ ...formData, name: text })}
-            />
-
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Description"
-              placeholderTextColor={colors.textSecondary}
-              value={formData.description}
-              onChangeText={(text) =>
-                setFormData({ ...formData, description: text })
-              }
-              multiline
-              numberOfLines={3}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Price *"
-              placeholderTextColor={colors.textSecondary}
-              value={formData.price}
-              onChangeText={(text) => setFormData({ ...formData, price: text })}
-              keyboardType="decimal-pad"
-            />
-
-            <View style={styles.categorySelector}>
-              <Text style={styles.inputLabel}>Category:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {categories
-                  .filter((cat) => cat !== "All")
-                  .map((category) => (
-                    <Pressable
-                      key={category}
-                      style={[
-                        styles.categoryChip,
-                        formData.category === category &&
-                          styles.categoryChipActive,
-                      ]}
-                      onPress={() => {
-                        if (Platform.OS !== "web") {
-                          Haptics.impactAsync(
-                            Haptics.ImpactFeedbackStyle.Light
-                          );
-                        }
-                        setFormData({ ...formData, category });
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.categoryChipText,
-                          formData.category === category &&
-                            styles.categoryChipTextActive,
-                        ]}
-                      >
-                        {category}
-                      </Text>
-                    </Pressable>
-                  ))}
-              </ScrollView>
-            </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Image URL (optional)"
-              placeholderTextColor={colors.textSecondary}
-              value={formData.image}
-              onChangeText={(text) => setFormData({ ...formData, image: text })}
-            />
-
-            <View style={styles.formButtons}>
-              <Pressable
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => {
-                  if (Platform.OS !== "web") {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
-                  setIsAddingItem(false);
-                  setEditingItem(null);
-                  resetForm();
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.button, styles.saveButton]}
-                onPress={editingItem ? handleUpdateItem : handleAddItem}
-              >
-                <Text style={styles.saveButtonText}>
-                  {editingItem ? "Update" : "Add Item"}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
+        {isAddingItem && renderEditForm()}
 
         <ScrollView
           horizontal
@@ -353,33 +457,37 @@ export default function AdminMenuManagement() {
 
         <View style={styles.itemsContainer}>
           {filteredItems.map((item) => (
-            <View key={item.id} style={styles.menuItem}>
-              <Image source={{ uri: item.image }} style={styles.itemImage} />
-              <View style={styles.itemContent}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemDescription} numberOfLines={2}>
-                  {item.description}
-                </Text>
-                <View style={styles.itemFooter}>
-                  <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
-                  <Text style={styles.itemCategory}>{item.category}</Text>
+            <React.Fragment key={item.id}>
+              <View style={styles.menuItem}>
+                <Image source={{ uri: item.image }} style={styles.itemImage} />
+                <View style={styles.itemContent}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text style={styles.itemDescription} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+                  <View style={styles.itemFooter}>
+                    <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+                    <Text style={styles.itemCategory}>{item.category}</Text>
+                  </View>
+                </View>
+                <View style={styles.itemActions}>
+                  <Pressable
+                    style={styles.actionButton}
+                    onPress={() => handleEditItem(item)}
+                  >
+                    <IconSymbol name="edit" size={20} color={colors.primary} />
+                  </Pressable>
+                  <Pressable
+                    style={styles.actionButton}
+                    onPress={() => handleDeleteItem(item.id)}
+                  >
+                    <IconSymbol name="delete" size={20} color="#FF6B6B" />
+                  </Pressable>
                 </View>
               </View>
-              <View style={styles.itemActions}>
-                <Pressable
-                  style={styles.actionButton}
-                  onPress={() => handleEditItem(item)}
-                >
-                  <IconSymbol name="edit" size={20} color={colors.primary} />
-                </Pressable>
-                <Pressable
-                  style={styles.actionButton}
-                  onPress={() => handleDeleteItem(item.id)}
-                >
-                  <IconSymbol name="delete" size={20} color="#FF6B6B" />
-                </Pressable>
-              </View>
-            </View>
+              
+              {editingItemId === item.id && renderEditForm(item.id)}
+            </React.Fragment>
           ))}
         </View>
       </ScrollView>
@@ -473,6 +581,47 @@ const styles = StyleSheet.create({
   categoryChipTextActive: {
     color: "#FFFFFF",
     fontWeight: "600",
+  },
+  imageSection: {
+    marginBottom: 12,
+  },
+  imagePreviewContainer: {
+    position: "relative",
+    marginBottom: 12,
+  },
+  imagePreview: {
+    width: "100%",
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: colors.background,
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  uploadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12,
+  },
+  uploadButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.primary,
   },
   formButtons: {
     flexDirection: "row",

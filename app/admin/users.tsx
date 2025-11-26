@@ -30,8 +30,7 @@ interface User {
   totalSpent: number;
   joinDate: string;
   active: boolean;
-  isAdmin: boolean;
-  isSuperAdmin: boolean;
+  userRole: 'user' | 'admin' | 'super_admin';
 }
 
 export default function AdminUserManagement() {
@@ -77,8 +76,7 @@ export default function AdminUserManagement() {
           totalSpent,
           joinDate: profile.created_at || new Date().toISOString(),
           active: true,
-          isAdmin: profile.is_admin || false,
-          isSuperAdmin: profile.is_super_admin || false,
+          userRole: profile.user_role || 'user',
         };
       });
 
@@ -105,7 +103,7 @@ export default function AdminUserManagement() {
           {
             text: 'Promote',
             onPress: async () => {
-              const { error } = await userService.updateUserAdminStatus(userId, true);
+              const { error } = await userService.updateUserRole(userId, 'admin');
 
               if (error) {
                 Alert.alert('Error', 'Failed to promote user to admin');
@@ -139,7 +137,7 @@ export default function AdminUserManagement() {
             text: 'Revoke',
             style: 'destructive',
             onPress: async () => {
-              const { error } = await userService.updateUserAdminStatus(userId, false);
+              const { error } = await userService.updateUserRole(userId, 'user');
 
               if (error) {
                 Alert.alert('Error', 'Failed to revoke admin privileges');
@@ -163,6 +161,9 @@ export default function AdminUserManagement() {
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Calculate active users (excluding admins and super_admins)
+  const activeRegularUsers = users.filter((u) => u.active && u.userRole === 'user').length;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -205,7 +206,7 @@ export default function AdminUserManagement() {
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>
-              {users.filter((u) => u.active).length}
+              {activeRegularUsers}
             </Text>
             <Text style={styles.statLabel}>Active Users</Text>
           </View>
@@ -229,7 +230,7 @@ export default function AdminUserManagement() {
               <View style={styles.userHeader}>
                 <View style={[
                   styles.userAvatar,
-                  { backgroundColor: user.isSuperAdmin ? '#FF6B35' : user.isAdmin ? '#9B59B6' : colors.primary }
+                  { backgroundColor: user.userRole === 'super_admin' ? '#FF6B35' : user.userRole === 'admin' ? '#9B59B6' : colors.primary }
                 ]}>
                   <Text style={styles.userInitials}>
                     {user.name
@@ -241,12 +242,12 @@ export default function AdminUserManagement() {
                 <View style={styles.userInfo}>
                   <View style={styles.userNameRow}>
                     <Text style={styles.userName}>{user.name}</Text>
-                    {user.isSuperAdmin && (
+                    {user.userRole === 'super_admin' && (
                       <View style={styles.superAdminBadge}>
                         <Text style={styles.badgeText}>Super Admin</Text>
                       </View>
                     )}
-                    {user.isAdmin && !user.isSuperAdmin && (
+                    {user.userRole === 'admin' && (
                       <View style={styles.adminBadge}>
                         <Text style={styles.badgeText}>Admin</Text>
                       </View>
@@ -288,14 +289,14 @@ export default function AdminUserManagement() {
                   Joined: {new Date(user.joinDate).toLocaleDateString()}
                 </Text>
                 <View style={styles.userActions}>
-                  {userProfile?.isSuperAdmin && !user.isSuperAdmin && (
+                  {userProfile?.userRole === 'super_admin' && user.userRole !== 'super_admin' && (
                     <Pressable
                       style={[
                         styles.actionButton,
-                        user.isAdmin && styles.revokeButton,
+                        user.userRole === 'admin' && styles.revokeButton,
                       ]}
                       onPress={() => {
-                        if (user.isAdmin) {
+                        if (user.userRole === 'admin') {
                           handleRevokeAdmin(user.id, user.name);
                         } else {
                           handlePromoteToAdmin(user.id, user.name);
@@ -303,17 +304,17 @@ export default function AdminUserManagement() {
                       }}
                     >
                       <IconSymbol
-                        name={user.isAdmin ? 'remove-circle' : 'admin-panel-settings'}
+                        name={user.userRole === 'admin' ? 'remove-circle' : 'admin-panel-settings'}
                         size={16}
-                        color={user.isAdmin ? '#FF6B6B' : colors.primary}
+                        color={user.userRole === 'admin' ? '#FF6B6B' : colors.primary}
                       />
                       <Text
                         style={[
                           styles.actionButtonText,
-                          user.isAdmin && styles.revokeButtonText,
+                          user.userRole === 'admin' && styles.revokeButtonText,
                         ]}
                       >
-                        {user.isAdmin ? 'Revoke Admin' : 'Make Admin'}
+                        {user.userRole === 'admin' ? 'Revoke Admin' : 'Make Admin'}
                       </Text>
                     </Pressable>
                   )}
