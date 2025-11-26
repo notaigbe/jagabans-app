@@ -7,15 +7,42 @@ This guide explains how to set up and use Square payments in the Jagabans LA foo
 
 The app integrates Square Checkout for secure payment processing. Square handles all payment data, ensuring PCI-DSS compliance and bank-level encryption.
 
+**✅ IMPORTANT: All Square API calls are made from the backend (Supabase Edge Functions), NOT from the frontend. This ensures your API keys remain secure.**
+
 ## Features
 
 - **Secure Payment Processing**: All payment data is handled by Square's secure infrastructure
+- **Backend-Only API Calls**: Square API credentials never exposed to the frontend
 - **Multiple Payment Options**: 
   - Saved card payments (using tokenized cards)
   - Web checkout (redirect to Square's hosted checkout page)
 - **Payment Tracking**: All transactions are stored in the database for record-keeping
 - **Receipt Generation**: Square provides receipt URLs for each transaction
 - **Sandbox Testing**: Test payments in sandbox mode before going live
+- **Comprehensive Logging**: Detailed logs for debugging authentication and payment issues
+
+## Architecture
+
+### Backend (Supabase Edge Functions)
+
+The app uses two Edge Functions to handle Square payments:
+
+1. **`create-square-checkout`**: Creates a Square payment link for web-based checkout
+2. **`process-square-payment`**: Processes payments using Square's Payments API
+
+Both functions:
+- Run on Supabase's secure backend infrastructure
+- Verify user authentication before processing
+- Store payment records in the database
+- Never expose Square API credentials to the frontend
+
+### Frontend (React Native App)
+
+The frontend (`app/checkout.tsx`):
+- Collects order and delivery information
+- Authenticates the user with Supabase
+- Calls the Edge Functions with the user's auth token
+- Displays payment results to the user
 
 ## Setup Instructions
 
@@ -52,6 +79,8 @@ To set these in Supabase:
 2. Navigate to Edge Functions → Secrets
 3. Add each secret with its corresponding value
 
+**⚠️ CRITICAL**: These secrets must be set in Supabase. The Edge Functions will not work without them.
+
 ### 4. Test in Sandbox Mode
 
 Square provides test card numbers for sandbox testing:
@@ -79,20 +108,24 @@ When ready for production:
 ### Saved Card Payment
 
 1. User selects a saved payment method
-2. App calls `process-square-payment` Edge Function
-3. Edge Function creates payment with Square API
-4. Payment record is stored in `square_payments` table
-5. Order is created and linked to payment
-6. User receives confirmation
+2. Frontend gets fresh Supabase auth session
+3. Frontend calls `process-square-payment` Edge Function with auth token
+4. Edge Function verifies user authentication
+5. Edge Function creates payment with Square API
+6. Payment record is stored in `square_payments` table
+7. Order is created and linked to payment
+8. User receives confirmation
 
 ### Web Checkout Payment
 
 1. User selects "Web Checkout" option
-2. App calls `create-square-checkout` Edge Function
-3. Edge Function creates a Square payment link
-4. User is redirected to Square's hosted checkout page
-5. After payment, user is redirected back to the app
-6. Webhook (optional) confirms payment completion
+2. Frontend gets fresh Supabase auth session
+3. Frontend calls `create-square-checkout` Edge Function with auth token
+4. Edge Function verifies user authentication
+5. Edge Function creates a Square payment link
+6. User is redirected to Square's hosted checkout page
+7. After payment, user is redirected back to the app
+8. Webhook (optional) confirms payment completion
 
 ## Database Schema
 
@@ -184,12 +217,106 @@ Creates a Square payment link for web checkout.
 
 ## Security Best Practices
 
-1. **Never store Square API keys in the app**: Always use Edge Functions
-2. **Use HTTPS**: All API calls must use HTTPS
-3. **Validate amounts**: Always verify payment amounts on the server
-4. **Implement idempotency**: Use unique idempotency keys for each payment
-5. **Handle errors gracefully**: Provide clear error messages to users
-6. **Log transactions**: Keep detailed logs for debugging and auditing
+1. **Never store Square API keys in the app**: Always use Edge Functions ✅
+2. **Use HTTPS**: All API calls must use HTTPS ✅
+3. **Validate amounts**: Always verify payment amounts on the server ✅
+4. **Implement idempotency**: Use unique idempotency keys for each payment ✅
+5. **Handle errors gracefully**: Provide clear error messages to users ✅
+6. **Log transactions**: Keep detailed logs for debugging and auditing ✅
+7. **Verify authentication**: Always check user auth before processing payments ✅
+
+## Troubleshooting
+
+### Common Issues
+
+#### Error: "Not authenticated"
+
+**Cause**: The user's Supabase session is invalid or expired.
+
+**Solutions**:
+1. Check that the user is logged in
+2. Verify the auth token is being passed correctly in the Authorization header
+3. Try logging out and logging back in
+4. Check the Edge Function logs for more details
+
+**How to check**:
+```typescript
+// In your frontend code
+const { data: { session }, error } = await supabase.auth.getSession();
+console.log('Session:', session);
+console.log('Error:', error);
+```
+
+#### Error: "Square configuration is missing"
+
+**Cause**: `SQUARE_ACCESS_TOKEN` or `SQUARE_LOCATION_ID` environment variables are not set in Supabase.
+
+**Solutions**:
+1. Go to Supabase Dashboard → Edge Functions → Secrets
+2. Add `SQUARE_ACCESS_TOKEN` with your Square access token
+3. Add `SQUARE_LOCATION_ID` with your Square location ID
+4. Add `SQUARE_ENVIRONMENT` with either `sandbox` or `production`
+
+#### Error: "Payment failed"
+
+**Cause**: Square API rejected the payment.
+
+**Solutions**:
+1. Check Square API logs in the developer dashboard
+2. Verify the access token is valid and not expired
+3. Ensure you're using the correct environment (sandbox vs production)
+4. Check that the source ID (card nonce) is valid
+5. Verify the location ID is correct
+
+#### Error: "Unauthorized"
+
+**Cause**: The authorization header is missing or invalid.
+
+**Solutions**:
+1. Verify the user is authenticated
+2. Check that the authorization header is being passed correctly
+3. Ensure the session hasn't expired
+4. Try refreshing the session
+
+### Debugging Steps
+
+1. **Check Frontend Logs**:
+   - Open the app's console
+   - Look for authentication and API call logs
+   - Verify the session is valid
+
+2. **Check Edge Function Logs**:
+   - Go to Supabase Dashboard → Edge Functions
+   - Select the function (create-square-checkout or process-square-payment)
+   - View the logs for detailed error messages
+
+3. **Check Square Dashboard**:
+   - Go to Square Developer Dashboard
+   - View API logs for your application
+   - Check for any rejected requests
+
+4. **Test Authentication**:
+   ```typescript
+   const { data: { session } } = await supabase.auth.getSession();
+   console.log('Session valid:', !!session);
+   console.log('Access token:', session?.access_token?.substring(0, 20) + '...');
+   ```
+
+5. **Test Edge Function Directly**:
+   ```bash
+   curl -X POST https://your-project.supabase.co/functions/v1/create-square-checkout \
+     -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"items":[{"name":"Test","quantity":1,"price":10}],"deliveryAddress":"123 Test St"}'
+   ```
+
+### Support Resources
+
+- [Square Developer Documentation](https://developer.squareup.com/docs)
+- [Square API Reference](https://developer.squareup.com/reference/square)
+- [Square Community Forum](https://developer.squareup.com/forums)
+- [Supabase Edge Functions Docs](https://supabase.com/docs/guides/functions)
+- [Supabase Auth Docs](https://supabase.com/docs/guides/auth)
 
 ## Testing Checklist
 
@@ -202,30 +329,9 @@ Creates a Square payment link for web checkout.
 - [ ] Verify payment records are created correctly
 - [ ] Verify orders are linked to payments
 - [ ] Test receipt URL generation
-- [ ] Test refund process (if implemented)
-
-## Troubleshooting
-
-### Common Issues
-
-**Error: "Square configuration is missing"**
-- Ensure `SQUARE_ACCESS_TOKEN` and `SQUARE_LOCATION_ID` are set in Edge Function secrets
-
-**Error: "Payment failed"**
-- Check Square API logs in the developer dashboard
-- Verify the access token is valid and not expired
-- Ensure you're using the correct environment (sandbox vs production)
-
-**Error: "Unauthorized"**
-- Verify the user is authenticated
-- Check that the authorization header is being passed correctly
-
-### Support Resources
-
-- [Square Developer Documentation](https://developer.squareup.com/docs)
-- [Square API Reference](https://developer.squareup.com/reference/square)
-- [Square Community Forum](https://developer.squareup.com/forums)
-- [Supabase Edge Functions Docs](https://supabase.com/docs/guides/functions)
+- [ ] Test authentication error handling
+- [ ] Test expired session handling
+- [ ] Verify Edge Function logs show detailed information
 
 ## Future Enhancements
 
@@ -247,4 +353,4 @@ This integration follows:
 - GDPR data protection requirements
 - Industry-standard encryption protocols
 
-All sensitive payment data is handled exclusively by Square's secure infrastructure.
+All sensitive payment data is handled exclusively by Square's secure infrastructure. API credentials are stored securely in Supabase Edge Function secrets and never exposed to the frontend.

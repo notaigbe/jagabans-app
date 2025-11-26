@@ -78,13 +78,27 @@ export default function CheckoutScreen() {
   // Process Square payment with saved card
   const processSquarePayment = async () => {
     try {
+      console.log('Starting Square payment process...');
+      
       const savedCard = userProfile?.paymentMethods.find(pm => pm.id === selectedCardId);
       if (!savedCard) {
         throw new Error('Selected card not found');
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      // Get fresh session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Failed to get authentication session. Please try logging in again.');
+      }
+      
+      if (!session) {
+        console.error('No active session found');
+        throw new Error('You are not logged in. Please log in and try again.');
+      }
+
+      console.log('Session obtained, calling Edge Function...');
 
       // In a real implementation, you would tokenize the card with Square Web Payments SDK
       // For now, we'll use a test source ID for sandbox
@@ -107,7 +121,23 @@ export default function CheckoutScreen() {
         }
       );
 
+      console.log('Edge Function response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Edge Function error response:', errorText);
+        
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.error || 'Payment processing failed');
+        } catch (parseError) {
+          throw new Error(`Payment failed with status ${response.status}`);
+        }
+      }
+
       const result = await response.json();
+      console.log('Payment result:', result);
+
       if (!result.success) {
         throw new Error(result.error || 'Payment failed');
       }
@@ -122,8 +152,22 @@ export default function CheckoutScreen() {
   // Create Square web checkout
   const createSquareCheckout = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      console.log('Starting Square checkout creation...');
+
+      // Get fresh session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Failed to get authentication session. Please try logging in again.');
+      }
+      
+      if (!session) {
+        console.error('No active session found');
+        throw new Error('You are not logged in. Please log in and try again.');
+      }
+
+      console.log('Session obtained, calling Edge Function...');
 
       const response = await fetch(
         `${SUPABASE_URL}/functions/v1/create-square-checkout`,
@@ -146,7 +190,23 @@ export default function CheckoutScreen() {
         }
       );
 
+      console.log('Edge Function response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Edge Function error response:', errorText);
+        
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.error || 'Checkout creation failed');
+        } catch (parseError) {
+          throw new Error(`Checkout creation failed with status ${response.status}`);
+        }
+      }
+
       const result = await response.json();
+      console.log('Checkout result:', result);
+
       if (!result.success) {
         throw new Error(result.error || 'Checkout creation failed');
       }
@@ -208,6 +268,15 @@ export default function CheckoutScreen() {
           }
           
           showToast('info', 'Redirecting to Square checkout...');
+          setProcessing(false);
+          return;
+        } else {
+          // Handle error
+          const errorMessage = paymentResult.error instanceof Error 
+            ? paymentResult.error.message 
+            : 'Failed to create checkout';
+          showToast('error', errorMessage);
+          setProcessing(false);
           return;
         }
       } else {
@@ -216,7 +285,11 @@ export default function CheckoutScreen() {
       }
 
       if (!paymentResult.success) {
-        showToast('error', 'There was an issue processing your payment. Please try again.');
+        const errorMessage = paymentResult.error instanceof Error 
+          ? paymentResult.error.message 
+          : 'There was an issue processing your payment. Please try again.';
+        showToast('error', errorMessage);
+        setProcessing(false);
         return;
       }
 
@@ -238,7 +311,10 @@ export default function CheckoutScreen() {
       );
     } catch (error) {
       console.error('Order placement error:', error);
-      showToast('error', 'Failed to place order. Please try again.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to place order. Please try again.';
+      showToast('error', errorMessage);
     } finally {
       setProcessing(false);
     }
@@ -515,14 +591,14 @@ export default function CheckoutScreen() {
           }}
           style={styles.backButton}
         >
-          <IconSymbol name="chevron.left" size={24} color={currentColors.primary} />
+          <IconSymbol name="chevron-left" size={24} color={currentColors.primary} />
         </Pressable>
       </View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={[styles.infoBanner, { backgroundColor: currentColors.highlight + '20' }]}>
-            <IconSymbol name="info.circle.fill" size={20} color={currentColors.primary} />
+            <IconSymbol name="info" size={20} color={currentColors.primary} />
             <Text style={[styles.infoText, { color: currentColors.text }]}>
               Secure checkout powered by Square. Your payment information is encrypted and protected.
             </Text>
@@ -579,7 +655,7 @@ export default function CheckoutScreen() {
                 disabled={processing}
               >
                 <IconSymbol 
-                  name="creditcard.fill" 
+                  name="credit-card" 
                   size={20} 
                   color={paymentMethod === 'card' ? currentColors.card : currentColors.text} 
                 />
@@ -608,7 +684,7 @@ export default function CheckoutScreen() {
                 disabled={processing}
               >
                 <IconSymbol 
-                  name="globe" 
+                  name="web-stories" 
                   size={20} 
                   color={paymentMethod === 'web' ? currentColors.card : currentColors.text} 
                 />
@@ -644,7 +720,7 @@ export default function CheckoutScreen() {
                         disabled={processing}
                       >
                         <IconSymbol 
-                          name={card.type === 'credit' ? 'creditcard.fill' : 'banknote.fill'} 
+                          name={card.type === 'credit' ? 'credit-card' : 'banknote.fill'} 
                           size={24} 
                           color={selectedCardId === card.id ? currentColors.primary : currentColors.textSecondary} 
                         />
@@ -662,7 +738,7 @@ export default function CheckoutScreen() {
                           )}
                         </View>
                         {selectedCardId === card.id && (
-                          <IconSymbol name="checkmark.circle.fill" size={24} color={currentColors.primary} />
+                          <IconSymbol name="check-circle" size={24} color={currentColors.primary} />
                         )}
                       </Pressable>
                     ))}
@@ -681,15 +757,15 @@ export default function CheckoutScreen() {
                     }}
                     disabled={processing}
                   >
-                    <IconSymbol name="creditcard" size={20} color={currentColors.primary} />
+                    <IconSymbol name="credit-card" size={20} color={currentColors.primary} />
                     <Text style={[styles.manageCardsText, { color: currentColors.primary }]}>
                       Manage Payment Methods
                     </Text>
-                    <IconSymbol name="chevron.right" size={16} color={currentColors.textSecondary} />
+                    <IconSymbol name="chevron-right" size={16} color={currentColors.textSecondary} />
                   </Pressable>
 
                   <View style={styles.secureLabel}>
-                    <IconSymbol name="lock.fill" size={14} color={currentColors.primary} />
+                    <IconSymbol name="lock" size={14} color={currentColors.primary} />
                     <Text style={[styles.secureLabelText, { color: currentColors.textSecondary }]}>
                       Secured by Square • Your payment info is encrypted
                     </Text>
@@ -697,7 +773,7 @@ export default function CheckoutScreen() {
                 </View>
               ) : (
                 <View style={[styles.noCardsContainer, { backgroundColor: currentColors.card }]}>
-                  <IconSymbol name="creditcard" size={48} color={currentColors.textSecondary} />
+                  <IconSymbol name="credit-card" size={48} color={currentColors.textSecondary} />
                   <Text style={[styles.noCardsText, { color: currentColors.text }]}>
                     No Payment Methods Saved
                   </Text>
@@ -714,7 +790,7 @@ export default function CheckoutScreen() {
                       router.push('/payment-methods');
                     }}
                   >
-                    <IconSymbol name="plus.circle.fill" size={20} color={currentColors.card} />
+                    <IconSymbol name="add-circle" size={20} color={currentColors.card} />
                     <Text style={[styles.addCardButtonText, { color: currentColors.card }]}>
                       Add Payment Method
                     </Text>
@@ -723,7 +799,7 @@ export default function CheckoutScreen() {
               )
             ) : (
               <View style={[styles.noCardsContainer, { backgroundColor: currentColors.card }]}>
-                <IconSymbol name="globe" size={48} color={currentColors.textSecondary} />
+                <IconSymbol name="web" size={48} color={currentColors.textSecondary} />
                 <Text style={[styles.noCardsText, { color: currentColors.text }]}>
                   Square Web Checkout
                 </Text>
@@ -731,7 +807,7 @@ export default function CheckoutScreen() {
                   You&apos;ll be redirected to Square&apos;s secure checkout page to complete your payment
                 </Text>
                 <View style={styles.secureLabel}>
-                  <IconSymbol name="lock.fill" size={14} color={currentColors.primary} />
+                  <IconSymbol name="lock" size={14} color={currentColors.primary} />
                   <Text style={[styles.secureLabelText, { color: currentColors.textSecondary }]}>
                     PCI-DSS Compliant • Bank-level encryption
                   </Text>
@@ -761,7 +837,7 @@ export default function CheckoutScreen() {
                 </View>
               </View>
               <View style={[styles.checkbox, { borderColor: currentColors.textSecondary }, usePoints && { backgroundColor: currentColors.primary, borderColor: currentColors.primary }]}>
-                {usePoints && <IconSymbol name="checkmark" size={16} color={currentColors.card} />}
+                {usePoints && <IconSymbol name="check-circle" size={16} color={currentColors.card} />}
               </View>
             </Pressable>
           </View>
@@ -821,7 +897,7 @@ export default function CheckoutScreen() {
             </>
           ) : (
             <>
-              <IconSymbol name="lock.fill" size={20} color={currentColors.card} />
+              <IconSymbol name="lock" size={20} color={currentColors.card} />
               <Text style={[styles.placeOrderButtonText, { color: currentColors.card }]}>
                 Pay ${total.toFixed(2)}
               </Text>
