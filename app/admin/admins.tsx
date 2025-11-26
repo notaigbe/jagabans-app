@@ -10,24 +10,22 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import * as Haptics from 'expo-haptics';
-import { supabase } from '@/app/integrations/supabase/client';
 import { userService } from '@/services/supabaseService';
 import { useApp } from '@/contexts/AppContext';
+import { UserRole } from '@/types';
 
 interface AdminUser {
   id: string;
   name: string;
   email: string;
   phone: string;
-  is_admin: boolean;
-  is_super_admin: boolean;
+  user_role: UserRole;
   created_at: string;
 }
 
@@ -37,12 +35,10 @@ export default function AdminManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     // Check if user is super admin
-    if (!userProfile?.isSuperAdmin) {
+    if (userProfile?.userRole !== 'super_admin') {
       Alert.alert(
         'Access Denied',
         'Only super-admins can access this page.',
@@ -67,14 +63,13 @@ export default function AdminManagement() {
 
       // Filter to show only admin and super-admin users
       const adminUsers = (data || [])
-        .filter((user: any) => user.is_admin || user.is_super_admin)
+        .filter((user: any) => user.user_role === 'admin' || user.user_role === 'super_admin')
         .map((user: any) => ({
           id: user.id,
           name: user.name,
           email: user.email,
           phone: user.phone || 'N/A',
-          is_admin: user.is_admin || false,
-          is_super_admin: user.is_super_admin || false,
+          user_role: user.user_role as UserRole,
           created_at: user.created_at,
         }));
 
@@ -88,41 +83,14 @@ export default function AdminManagement() {
     }
   };
 
-  const handleToggleAdminStatus = async (userId: string, currentStatus: boolean) => {
+  const handleUpdateRole = async (userId: string, newRole: UserRole) => {
     try {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-
-      const newStatus = !currentStatus;
-      const { error } = await userService.updateUserAdminStatus(userId, newStatus);
-
-      if (error) throw error;
-
-      Alert.alert(
-        'Success',
-        `Admin status ${newStatus ? 'granted' : 'revoked'} successfully`
-      );
-      fetchAdmins();
-    } catch (error) {
-      console.error('Error updating admin status:', error);
-      Alert.alert('Error', 'Failed to update admin status');
-    }
-  };
-
-  const handleToggleSuperAdminStatus = async (
-    userId: string,
-    currentStatus: boolean
-  ) => {
-    try {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-
-      const newStatus = !currentStatus;
 
       // Confirm before granting super-admin
-      if (newStatus) {
+      if (newRole === 'super_admin') {
         Alert.alert(
           'Confirm Super-Admin',
           'Are you sure you want to grant super-admin privileges? This will give full control over all admin functions.',
@@ -132,33 +100,27 @@ export default function AdminManagement() {
               text: 'Confirm',
               style: 'destructive',
               onPress: async () => {
-                const { error } = await userService.updateUserSuperAdminStatus(
-                  userId,
-                  newStatus
-                );
+                const { error } = await userService.updateUserRole(userId, newRole);
 
                 if (error) throw error;
 
-                Alert.alert('Success', 'Super-admin status granted successfully');
+                Alert.alert('Success', 'User role updated successfully');
                 fetchAdmins();
               },
             },
           ]
         );
       } else {
-        const { error } = await userService.updateUserSuperAdminStatus(
-          userId,
-          newStatus
-        );
+        const { error } = await userService.updateUserRole(userId, newRole);
 
         if (error) throw error;
 
-        Alert.alert('Success', 'Super-admin status revoked successfully');
+        Alert.alert('Success', 'User role updated successfully');
         fetchAdmins();
       }
     } catch (error) {
-      console.error('Error updating super-admin status:', error);
-      Alert.alert('Error', 'Failed to update super-admin status');
+      console.error('Error updating user role:', error);
+      Alert.alert('Error', 'Failed to update user role');
     }
   };
 
@@ -216,7 +178,7 @@ export default function AdminManagement() {
       admin.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!userProfile?.isSuperAdmin) {
+  if (userProfile?.userRole !== 'super_admin') {
     return null;
   }
 
@@ -259,13 +221,13 @@ export default function AdminManagement() {
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>
-              {admins.filter((a) => a.is_super_admin).length}
+              {admins.filter((a) => a.user_role === 'super_admin').length}
             </Text>
             <Text style={styles.statLabel}>Super Admins</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>
-              {admins.filter((a) => a.is_admin && !a.is_super_admin).length}
+              {admins.filter((a) => a.user_role === 'admin').length}
             </Text>
             <Text style={styles.statLabel}>Admins</Text>
           </View>
@@ -289,7 +251,7 @@ export default function AdminManagement() {
                     style={[
                       styles.adminAvatar,
                       {
-                        backgroundColor: admin.is_super_admin
+                        backgroundColor: admin.user_role === 'super_admin'
                           ? '#FF6B35'
                           : colors.primary,
                       },
@@ -305,7 +267,7 @@ export default function AdminManagement() {
                   <View style={styles.adminInfo}>
                     <View style={styles.adminNameRow}>
                       <Text style={styles.adminName}>{admin.name}</Text>
-                      {admin.is_super_admin && (
+                      {admin.user_role === 'super_admin' && (
                         <View style={styles.superAdminBadge}>
                           <IconSymbol
                             name="verified"
@@ -317,7 +279,7 @@ export default function AdminManagement() {
                           </Text>
                         </View>
                       )}
-                      {admin.is_admin && !admin.is_super_admin && (
+                      {admin.user_role === 'admin' && (
                         <View style={styles.adminBadge}>
                           <IconSymbol
                             name="admin-panel-settings"
@@ -337,21 +299,41 @@ export default function AdminManagement() {
                   <Pressable
                     style={[
                       styles.actionButton,
-                      admin.is_admin && styles.actionButtonActive,
+                      admin.user_role === 'user' && styles.actionButtonInactive,
                     ]}
-                    onPress={() =>
-                      handleToggleAdminStatus(admin.id, admin.is_admin)
-                    }
+                    onPress={() => handleUpdateRole(admin.id, 'user')}
                   >
                     <IconSymbol
-                      name={admin.is_admin ? 'check-circle' : 'radio-button-unchecked'}
+                      name={admin.user_role === 'user' ? 'check-circle' : 'radio-button-unchecked'}
                       size={20}
-                      color={admin.is_admin ? '#4CAF50' : colors.textSecondary}
+                      color={admin.user_role === 'user' ? '#9E9E9E' : colors.textSecondary}
                     />
                     <Text
                       style={[
                         styles.actionButtonText,
-                        admin.is_admin && styles.actionButtonTextActive,
+                        admin.user_role === 'user' && styles.actionButtonTextActive,
+                      ]}
+                    >
+                      User
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[
+                      styles.actionButton,
+                      admin.user_role === 'admin' && styles.actionButtonActive,
+                    ]}
+                    onPress={() => handleUpdateRole(admin.id, 'admin')}
+                  >
+                    <IconSymbol
+                      name={admin.user_role === 'admin' ? 'check-circle' : 'radio-button-unchecked'}
+                      size={20}
+                      color={admin.user_role === 'admin' ? '#4CAF50' : colors.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.actionButtonText,
+                        admin.user_role === 'admin' && styles.actionButtonTextActive,
                       ]}
                     >
                       Admin
@@ -361,30 +343,25 @@ export default function AdminManagement() {
                   <Pressable
                     style={[
                       styles.actionButton,
-                      admin.is_super_admin && styles.actionButtonActive,
+                      admin.user_role === 'super_admin' && styles.actionButtonActive,
                     ]}
-                    onPress={() =>
-                      handleToggleSuperAdminStatus(
-                        admin.id,
-                        admin.is_super_admin
-                      )
-                    }
+                    onPress={() => handleUpdateRole(admin.id, 'super_admin')}
                   >
                     <IconSymbol
                       name={
-                        admin.is_super_admin
+                        admin.user_role === 'super_admin'
                           ? 'check-circle'
                           : 'radio-button-unchecked'
                       }
                       size={20}
                       color={
-                        admin.is_super_admin ? '#FF6B35' : colors.textSecondary
+                        admin.user_role === 'super_admin' ? '#FF6B35' : colors.textSecondary
                       }
                     />
                     <Text
                       style={[
                         styles.actionButtonText,
-                        admin.is_super_admin && styles.actionButtonTextActive,
+                        admin.user_role === 'super_admin' && styles.actionButtonTextActive,
                       ]}
                     >
                       Super Admin
@@ -597,17 +574,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.background,
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: 8,
-    gap: 6,
+    gap: 4,
     borderWidth: 1,
     borderColor: colors.border,
   },
   actionButtonActive: {
     backgroundColor: colors.card,
   },
+  actionButtonInactive: {
+    backgroundColor: colors.background,
+    opacity: 0.6,
+  },
   actionButtonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: colors.textSecondary,
   },
