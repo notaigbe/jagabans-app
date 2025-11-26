@@ -95,6 +95,7 @@ export interface Database {
           status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
           delivery_address: string | null
           pickup_notes: string | null
+          payment_id: string | null
           created_at: string
           updated_at: string
         }
@@ -106,6 +107,7 @@ export interface Database {
           status?: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
           delivery_address?: string | null
           pickup_notes?: string | null
+          payment_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -117,6 +119,7 @@ export interface Database {
           status?: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
           delivery_address?: string | null
           pickup_notes?: string | null
+          payment_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -148,6 +151,56 @@ export interface Database {
           price?: number
           quantity?: number
           created_at?: string
+        }
+      }
+      square_payments: {
+        Row: {
+          id: string
+          user_id: string
+          order_id: string | null
+          square_payment_id: string
+          square_order_id: string | null
+          amount: number
+          currency: string
+          status: 'pending' | 'completed' | 'failed' | 'refunded' | 'cancelled'
+          payment_method: string | null
+          receipt_url: string | null
+          error_message: string | null
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          order_id?: string | null
+          square_payment_id: string
+          square_order_id?: string | null
+          amount: number
+          currency?: string
+          status: 'pending' | 'completed' | 'failed' | 'refunded' | 'cancelled'
+          payment_method?: string | null
+          receipt_url?: string | null
+          error_message?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          order_id?: string | null
+          square_payment_id?: string
+          square_order_id?: string | null
+          amount?: number
+          currency?: string
+          status?: 'pending' | 'completed' | 'failed' | 'refunded' | 'cancelled'
+          payment_method?: string | null
+          receipt_url?: string | null
+          error_message?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
         }
       }
       gift_cards: {

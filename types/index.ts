@@ -24,6 +24,7 @@ export interface Order {
   status: 'pending' | 'preparing' | 'ready' | 'completed';
   deliveryAddress?: string;
   pickupNotes?: string;
+  paymentId?: string;
 }
 
 export interface MerchItem {
@@ -66,6 +67,23 @@ export interface PaymentMethod {
   cardholderName: string;
   expiryDate: string;
   isDefault: boolean;
+}
+
+export interface SquarePayment {
+  id: string;
+  userId: string;
+  orderId?: string;
+  squarePaymentId: string;
+  squareOrderId?: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded' | 'cancelled';
+  paymentMethod?: string;
+  receiptUrl?: string;
+  errorMessage?: string;
+  metadata?: any;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AppNotification {

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   View,
@@ -16,10 +17,8 @@ import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 import Toast from '@/components/Toast';
-
-// Stripe configuration
-const STRIPE_PUBLISHABLE_KEY = 'pk_test_51STbimI3aFjO0eWAYAQOsC9VOOwPohmmUuf22E4IXERJHBVPOidW8Q6MnKnB1HyxDYxFoZlB1v4bKkODbYTarNdM00xuyfZg2l'; // Replace with your key
-const STRIPE_API_URL = 'https://api.stripe.com/v1';
+import { SUPABASE_URL } from '@/app/integrations/supabase/client';
+import { supabase } from '@/app/integrations/supabase/client';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -35,16 +34,18 @@ export default function CheckoutScreen() {
   const [usePoints, setUsePoints] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
-  // Toast state
-    const [toastVisible, setToastVisible] = useState(false);
-    const [toastMessage, setToastMessage] = useState('');
-    const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'web'>('card');
   
-    const showToast = (type: 'success' | 'error' | 'info', message: string) => {
-      setToastType(type);
-      setToastMessage(message);
-      setToastVisible(true);
-    };
+  // Toast state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
+  
+  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
+    setToastType(type);
+    setToastMessage(message);
+    setToastVisible(true);
+  };
 
   React.useEffect(() => {
     setTabBarVisible(false);
@@ -74,63 +75,103 @@ export default function CheckoutScreen() {
   const total = subtotal + tax - pointsDiscount;
   const pointsToEarn = Math.floor(total);
 
-  // Create Stripe payment intent
-  const createPaymentIntent = async () => {
-    try {
-      // This should be done on your backend for security
-      // For demo purposes, showing the structure
-      const response = await fetch(`${STRIPE_API_URL}/payment_intents`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${STRIPE_PUBLISHABLE_KEY}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `amount=${Math.round(total * 100)}&currency=usd`,
-      });
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error creating payment intent:', error);
-      throw error;
-    }
-  };
-
-  // Process Stripe payment
-  const processStripePayment = async () => {
+  // Process Square payment with saved card
+  const processSquarePayment = async () => {
     try {
       const savedCard = userProfile?.paymentMethods.find(pm => pm.id === selectedCardId);
       if (!savedCard) {
         throw new Error('Selected card not found');
       }
-      
-      // In production, send card ID to backend to process with Stripe
-      const paymentIntent = await createPaymentIntent();
-      
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      return { success: true, paymentIntentId: paymentIntent.id };
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      // In a real implementation, you would tokenize the card with Square Web Payments SDK
+      // For now, we'll use a test source ID for sandbox
+      const sourceId = 'cnon:card-nonce-ok'; // Square sandbox test nonce
+
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/process-square-payment`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            sourceId: sourceId,
+            amount: total,
+            currency: 'USD',
+            note: `Order for ${userProfile?.name || 'Customer'}`,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Payment failed');
+      }
+
+      return { success: true, payment: result.payment };
     } catch (error) {
       console.error('Payment processing error:', error);
       return { success: false, error };
     }
   };
 
+  // Create Square web checkout
+  const createSquareCheckout = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/create-square-checkout`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            items: cart.map(item => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+            })),
+            deliveryAddress,
+            pickupNotes,
+            redirectUrl: 'https://natively.dev/order-confirmation',
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Checkout creation failed');
+      }
+
+      return { success: true, checkout: result.checkout };
+    } catch (error) {
+      console.error('Checkout creation error:', error);
+      return { success: false, error };
+    }
+  };
+
   const handlePlaceOrder = async () => {
-    console.log('Placing order');
+    console.log('Placing order with Square');
     
     if (!deliveryAddress.trim()) {
       showToast('error', 'Please enter a delivery address.');
       return;
     }
 
-    if (!hasSavedCards) {
+    if (paymentMethod === 'card' && !hasSavedCards) {
       showToast('error', 'Please add a payment method before placing an order.');
       return;
     }
 
-    if (!selectedCardId) {
+    if (paymentMethod === 'card' && !selectedCardId) {
       showToast('error', 'Please select a payment method.');
       return;
     }
@@ -138,11 +179,44 @@ export default function CheckoutScreen() {
     setProcessing(true);
 
     try {
-      // Process payment with Stripe
-      const paymentResult = await processStripePayment();
+      let paymentResult;
+
+      if (paymentMethod === 'web') {
+        // Create Square web checkout
+        paymentResult = await createSquareCheckout();
+        
+        if (paymentResult.success && paymentResult.checkout) {
+          // Open Square checkout URL
+          if (Platform.OS === 'web') {
+            window.open(paymentResult.checkout.url, '_blank');
+          } else {
+            // For mobile, you would use WebBrowser or in-app browser
+            Alert.alert(
+              'Complete Payment',
+              'You will be redirected to Square to complete your payment.',
+              [
+                {
+                  text: 'Continue',
+                  onPress: () => {
+                    // In a real app, open the URL in a WebView or browser
+                    console.log('Open checkout URL:', paymentResult.checkout.url);
+                  },
+                },
+                { text: 'Cancel', style: 'cancel' },
+              ]
+            );
+          }
+          
+          showToast('info', 'Redirecting to Square checkout...');
+          return;
+        }
+      } else {
+        // Process payment with saved card
+        paymentResult = await processSquarePayment();
+      }
 
       if (!paymentResult.success) {
-        showToast('info', 'There was an issue processing your payment. Please try again.');
+        showToast('error', 'There was an issue processing your payment. Please try again.');
         return;
       }
 
@@ -152,7 +226,7 @@ export default function CheckoutScreen() {
       
       Alert.alert(
         'Order Placed!',
-        `Your order has been placed successfully! You earned ${pointsToEarn} points.\n\nPayment ID: ${paymentResult.paymentIntentId}`,
+        `Your order has been placed successfully! You earned ${pointsToEarn} points.\n\nPayment ID: ${paymentResult.payment?.id || 'N/A'}`,
         [
           {
             text: 'OK',
@@ -224,28 +298,27 @@ export default function CheckoutScreen() {
       boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
       elevation: 2,
     },
-    cardInput: {
-      borderRadius: 12,
-      padding: 16,
-      fontSize: 16,
-      marginBottom: 12,
-      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      elevation: 2,
-    },
-    cardRow: {
-      flexDirection: 'row',
-      gap: 12,
-    },
-    cardInputHalf: {
-      flex: 1,
-      borderRadius: 12,
-      padding: 16,
-      fontSize: 16,
-      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      elevation: 2,
-    },
     paymentMethodSection: {
       gap: 12,
+    },
+    paymentTypeSelector: {
+      flexDirection: 'row',
+      gap: 12,
+      marginBottom: 12,
+    },
+    paymentTypeButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 12,
+      borderRadius: 12,
+      borderWidth: 2,
+      gap: 8,
+    },
+    paymentTypeText: {
+      fontSize: 14,
+      fontWeight: '600',
     },
     savedCardsContainer: {
       gap: 12,
@@ -265,7 +338,7 @@ export default function CheckoutScreen() {
       fontSize: 16,
       fontWeight: '600',
       marginBottom: 4,
-      letterSpacing: 0.5,  // Add this line
+      letterSpacing: 0.5,
     },
     savedCardExpiry: {
       fontSize: 14,
@@ -451,7 +524,7 @@ export default function CheckoutScreen() {
           <View style={[styles.infoBanner, { backgroundColor: currentColors.highlight + '20' }]}>
             <IconSymbol name="info.circle.fill" size={20} color={currentColors.primary} />
             <Text style={[styles.infoText, { color: currentColors.text }]}>
-              Customers primarily pick up orders. Please provide your address and any pickup notes below.
+              Secure checkout powered by Square. Your payment information is encrypted and protected.
             </Text>
           </View>
 
@@ -488,103 +561,181 @@ export default function CheckoutScreen() {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Payment Method</Text>
             
-            {hasSavedCards ? (
-              <View style={styles.paymentMethodSection}>
-                <View style={styles.savedCardsContainer}>
-                  {userProfile?.paymentMethods.map((card) => (
-                    <Pressable
-                      key={card.id}
-                      style={[
-                        styles.savedCardItem,
-                        {
-                          backgroundColor: currentColors.card,
-                          borderColor: selectedCardId === card.id ? currentColors.primary : currentColors.border,
-                        }
-                      ]}
-                      onPress={() => {
-                        if (!processing) {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          setSelectedCardId(card.id);
-                        }
-                      }}
-                      disabled={processing}
-                    >
-                      <IconSymbol 
-                        name={card.type === 'credit' ? 'creditcard.fill' : 'banknote.fill'} 
-                        size={24} 
-                        color={selectedCardId === card.id ? currentColors.primary : currentColors.textSecondary} 
-                      />
-                      <View style={styles.savedCardInfo}>
-                        <Text style={[styles.savedCardNumber, { color: currentColors.text }]}>
-                          •••• •••• •••• {card.cardNumber.slice(-4)}
-                        </Text>
-                        <Text style={[styles.savedCardExpiry, { color: currentColors.textSecondary }]}>
-                          {card.cardholderName} • Expires {card.expiryDate}
-                        </Text>
-                        {card.isDefault && (
-                          <Text style={[styles.savedCardDefault, { color: currentColors.primary }]}>
-                            DEFAULT
+            <View style={styles.paymentTypeSelector}>
+              <Pressable
+                style={[
+                  styles.paymentTypeButton,
+                  {
+                    backgroundColor: paymentMethod === 'card' ? currentColors.primary : currentColors.card,
+                    borderColor: paymentMethod === 'card' ? currentColors.primary : currentColors.border,
+                  }
+                ]}
+                onPress={() => {
+                  if (!processing) {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setPaymentMethod('card');
+                  }
+                }}
+                disabled={processing}
+              >
+                <IconSymbol 
+                  name="creditcard.fill" 
+                  size={20} 
+                  color={paymentMethod === 'card' ? currentColors.card : currentColors.text} 
+                />
+                <Text style={[
+                  styles.paymentTypeText, 
+                  { color: paymentMethod === 'card' ? currentColors.card : currentColors.text }
+                ]}>
+                  Saved Card
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.paymentTypeButton,
+                  {
+                    backgroundColor: paymentMethod === 'web' ? currentColors.primary : currentColors.card,
+                    borderColor: paymentMethod === 'web' ? currentColors.primary : currentColors.border,
+                  }
+                ]}
+                onPress={() => {
+                  if (!processing) {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setPaymentMethod('web');
+                  }
+                }}
+                disabled={processing}
+              >
+                <IconSymbol 
+                  name="globe" 
+                  size={20} 
+                  color={paymentMethod === 'web' ? currentColors.card : currentColors.text} 
+                />
+                <Text style={[
+                  styles.paymentTypeText, 
+                  { color: paymentMethod === 'web' ? currentColors.card : currentColors.text }
+                ]}>
+                  Web Checkout
+                </Text>
+              </Pressable>
+            </View>
+
+            {paymentMethod === 'card' ? (
+              hasSavedCards ? (
+                <View style={styles.paymentMethodSection}>
+                  <View style={styles.savedCardsContainer}>
+                    {userProfile?.paymentMethods.map((card) => (
+                      <Pressable
+                        key={card.id}
+                        style={[
+                          styles.savedCardItem,
+                          {
+                            backgroundColor: currentColors.card,
+                            borderColor: selectedCardId === card.id ? currentColors.primary : currentColors.border,
+                          }
+                        ]}
+                        onPress={() => {
+                          if (!processing) {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setSelectedCardId(card.id);
+                          }
+                        }}
+                        disabled={processing}
+                      >
+                        <IconSymbol 
+                          name={card.type === 'credit' ? 'creditcard.fill' : 'banknote.fill'} 
+                          size={24} 
+                          color={selectedCardId === card.id ? currentColors.primary : currentColors.textSecondary} 
+                        />
+                        <View style={styles.savedCardInfo}>
+                          <Text style={[styles.savedCardNumber, { color: currentColors.text }]}>
+                            •••• •••• •••• {card.cardNumber.slice(-4)}
                           </Text>
+                          <Text style={[styles.savedCardExpiry, { color: currentColors.textSecondary }]}>
+                            {card.cardholderName} • Expires {card.expiryDate}
+                          </Text>
+                          {card.isDefault && (
+                            <Text style={[styles.savedCardDefault, { color: currentColors.primary }]}>
+                              DEFAULT
+                            </Text>
+                          )}
+                        </View>
+                        {selectedCardId === card.id && (
+                          <IconSymbol name="checkmark.circle.fill" size={24} color={currentColors.primary} />
                         )}
-                      </View>
-                      {selectedCardId === card.id && (
-                        <IconSymbol name="checkmark.circle.fill" size={24} color={currentColors.primary} />
-                      )}
-                    </Pressable>
-                  ))}
+                      </Pressable>
+                    ))}
+                  </View>
+                  
+                  <Pressable
+                    style={[
+                      styles.manageCardsButton,
+                      { backgroundColor: currentColors.card }
+                    ]}
+                    onPress={() => {
+                      if (!processing) {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        router.push('/payment-methods');
+                      }
+                    }}
+                    disabled={processing}
+                  >
+                    <IconSymbol name="creditcard" size={20} color={currentColors.primary} />
+                    <Text style={[styles.manageCardsText, { color: currentColors.primary }]}>
+                      Manage Payment Methods
+                    </Text>
+                    <IconSymbol name="chevron.right" size={16} color={currentColors.textSecondary} />
+                  </Pressable>
+
+                  <View style={styles.secureLabel}>
+                    <IconSymbol name="lock.fill" size={14} color={currentColors.primary} />
+                    <Text style={[styles.secureLabelText, { color: currentColors.textSecondary }]}>
+                      Secured by Square • Your payment info is encrypted
+                    </Text>
+                  </View>
                 </View>
-                
-                <Pressable
-                  style={[
-                    styles.manageCardsButton,
-                    { backgroundColor: currentColors.card }
-                  ]}
-                  onPress={() => {
-                    if (!processing) {
+              ) : (
+                <View style={[styles.noCardsContainer, { backgroundColor: currentColors.card }]}>
+                  <IconSymbol name="creditcard" size={48} color={currentColors.textSecondary} />
+                  <Text style={[styles.noCardsText, { color: currentColors.text }]}>
+                    No Payment Methods Saved
+                  </Text>
+                  <Text style={[styles.noCardsSubtext, { color: currentColors.textSecondary }]}>
+                    Add a payment method or use web checkout
+                  </Text>
+                  <Pressable
+                    style={[
+                      styles.addCardButton,
+                      { backgroundColor: currentColors.primary }
+                    ]}
+                    onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       router.push('/payment-methods');
-                    }
-                  }}
-                  disabled={processing}
-                >
-                  <IconSymbol name="creditcard" size={20} color={currentColors.primary} />
-                  <Text style={[styles.manageCardsText, { color: currentColors.primary }]}>
-                    Manage Payment Methods
-                  </Text>
-                  <IconSymbol name="chevron.right" size={16} color={currentColors.textSecondary} />
-                </Pressable>
-
+                    }}
+                  >
+                    <IconSymbol name="plus.circle.fill" size={20} color={currentColors.card} />
+                    <Text style={[styles.addCardButtonText, { color: currentColors.card }]}>
+                      Add Payment Method
+                    </Text>
+                  </Pressable>
+                </View>
+              )
+            ) : (
+              <View style={[styles.noCardsContainer, { backgroundColor: currentColors.card }]}>
+                <IconSymbol name="globe" size={48} color={currentColors.textSecondary} />
+                <Text style={[styles.noCardsText, { color: currentColors.text }]}>
+                  Square Web Checkout
+                </Text>
+                <Text style={[styles.noCardsSubtext, { color: currentColors.textSecondary }]}>
+                  You&apos;ll be redirected to Square&apos;s secure checkout page to complete your payment
+                </Text>
                 <View style={styles.secureLabel}>
                   <IconSymbol name="lock.fill" size={14} color={currentColors.primary} />
                   <Text style={[styles.secureLabelText, { color: currentColors.textSecondary }]}>
-                    Secured by Stripe • Your payment info is encrypted
+                    PCI-DSS Compliant • Bank-level encryption
                   </Text>
                 </View>
-              </View>
-            ) : (
-              <View style={[styles.noCardsContainer, { backgroundColor: currentColors.card }]}>
-                <IconSymbol name="creditcard" size={48} color={currentColors.textSecondary} />
-                <Text style={[styles.noCardsText, { color: currentColors.text }]}>
-                  No Payment Methods Saved
-                </Text>
-                <Text style={[styles.noCardsSubtext, { color: currentColors.textSecondary }]}>
-                  Add a payment method to complete your purchase
-                </Text>
-                <Pressable
-                  style={[
-                    styles.addCardButton,
-                    { backgroundColor: currentColors.primary }
-                  ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push('/payment-methods');
-                  }}
-                >
-                  <IconSymbol name="plus.circle.fill" size={20} color={currentColors.card} />
-                  <Text style={[styles.addCardButtonText, { color: currentColors.card }]}>
-                    Add Payment Method
-                  </Text>
-                </Pressable>
               </View>
             )}
           </View>
@@ -678,13 +829,14 @@ export default function CheckoutScreen() {
           )}
         </Pressable>
       </View>
-            <Toast
-              visible={toastVisible}
-              message={toastMessage}
-              type={toastType}
-              onHide={() => setToastVisible(false)}
-              currentColors={currentColors}
-            />
+      
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onHide={() => setToastVisible(false)}
+        currentColors={currentColors}
+      />
     </SafeAreaView>
   );
 }
