@@ -11,6 +11,7 @@ import {
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
+  Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -35,9 +36,14 @@ export default function AdminDashboard() {
     activeUsers: 0,
     revenue: 0,
   });
+  const [viewAsAdmin, setViewAsAdmin] = useState(false);
 
   const isAdmin = userProfile?.userRole === 'admin' || userProfile?.userRole === 'super_admin';
   const isSuperAdmin = userProfile?.userRole === 'super_admin';
+  
+  // Effective role based on the toggle
+  const effectiveRole = isSuperAdmin && viewAsAdmin ? 'admin' : userProfile?.userRole;
+  const isEffectivelyAdmin = effectiveRole === 'admin';
 
   const handleLogin = async () => {
     console.log("Admin login attempt");
@@ -79,14 +85,14 @@ export default function AdminDashboard() {
       const ordersResponse = await orderService.getAllOrders();
       const orders = ordersResponse.data || [];
 
-      // Fetch users based on role
+      // Fetch users based on effective role
       let usersQuery = (supabase as any).from("user_profiles").select("*");
       
-      // If regular admin, only count users with user_role = 'user'
-      if (!isSuperAdmin) {
+      // If viewing as admin (or is regular admin), only count users with user_role = 'user'
+      if (isEffectivelyAdmin) {
         usersQuery = usersQuery.eq('user_role', 'user');
       }
-      // If super_admin, count all users (no filter)
+      // If super_admin (and not viewing as admin), count all users (no filter)
 
       const usersResponse = await usersQuery;
       const users = usersResponse.data || [];
@@ -119,7 +125,7 @@ export default function AdminDashboard() {
     if (isAuthenticated && isAdmin) {
       fetchStats();
     }
-  }, [isAuthenticated, isAdmin]);
+  }, [isAuthenticated, isAdmin, viewAsAdmin]);
 
   const allAdminSections = [
     {
@@ -214,9 +220,9 @@ export default function AdminDashboard() {
     },
   ];
 
-  // Filter sections based on user role
+  // Filter sections based on effective role
   const adminSections = allAdminSections.filter(
-    (section) => !section.superAdminOnly || isSuperAdmin
+    (section) => !section.superAdminOnly || (isSuperAdmin && !viewAsAdmin)
   );
 
   const handleSectionPress = (route: string) => {
@@ -233,6 +239,13 @@ export default function AdminDashboard() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     router.push("/(tabs)/profile" as any);
+  };
+
+  const handleToggleViewMode = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setViewAsAdmin(!viewAsAdmin);
   };
 
   if (!isAuthenticated || !isAdmin) {
@@ -332,28 +345,29 @@ export default function AdminDashboard() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerLeft}>
             <Text style={styles.title}>Admin Dashboard</Text>
             <View style={styles.subtitleRow}>
               <Text style={styles.subtitle}>Jagabans LA Management</Text>
-              {isSuperAdmin && (
+              {isSuperAdmin && !viewAsAdmin && (
                 <View style={styles.superAdminBadge}>
                   <IconSymbol name="verified" size={12} color="#FFFFFF" />
                   <Text style={styles.superAdminBadgeText}>Super Admin</Text>
                 </View>
               )}
-              {isAdmin && !isSuperAdmin && (
+              {(isAdmin && !isSuperAdmin) || (isSuperAdmin && viewAsAdmin) ? (
                 <View style={styles.adminBadge}>
                   <IconSymbol name="admin-panel-settings" size={12} color="#FFFFFF" />
                   <Text style={styles.adminBadgeText}>Admin</Text>
                 </View>
-              )}
+              ) : null}
             </View>
           </View>
           <View style={styles.headerButtons}>
@@ -361,13 +375,42 @@ export default function AdminDashboard() {
               style={styles.userProfileIconButton}
               onPress={handleUserProfilePress}
             >
-              <IconSymbol name="person-circle" size={28} color={colors.primary} />
+              <IconSymbol name="person-2" size={24} color={colors.primary} />
             </Pressable>
             <Pressable style={styles.logoutButton} onPress={handleLogout}>
               <IconSymbol name="logout" size={24} color={colors.primary} />
             </Pressable>
           </View>
         </View>
+
+        {isSuperAdmin && (
+          <View style={styles.roleSwitcherContainer}>
+            <View style={styles.roleSwitcher}>
+              <View style={styles.roleSwitcherLeft}>
+                <IconSymbol 
+                  name={viewAsAdmin ? "admin-panel-settings" : "verified"} 
+                  size={20} 
+                  color={colors.primary} 
+                />
+                <Text style={styles.roleSwitcherLabel}>
+                  {viewAsAdmin ? "Viewing as Admin" : "Viewing as Super Admin"}
+                </Text>
+              </View>
+              <Switch
+                value={viewAsAdmin}
+                onValueChange={handleToggleViewMode}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor="#FFFFFF"
+                ios_backgroundColor={colors.border}
+              />
+            </View>
+            <Text style={styles.roleSwitcherHint}>
+              {viewAsAdmin 
+                ? "Toggle to view super admin features" 
+                : "Toggle to preview admin view"}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
@@ -393,7 +436,7 @@ export default function AdminDashboard() {
               <Text style={styles.statValue}>{stats.activeUsers}</Text>
             )}
             <Text style={styles.statLabel}>
-              {isSuperAdmin ? 'Total Users' : 'Active Users'}
+              {isEffectivelyAdmin ? 'Active Users' : 'Total Users'}
             </Text>
           </View>
           <View style={styles.statCard}>
@@ -469,6 +512,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 40,
   },
   loginScrollContent: {
     flexGrow: 1,
@@ -550,11 +596,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    padding: 24,
+    alignItems: "flex-start",
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  headerLeft: {
+    flex: 1,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "bold",
     color: colors.text,
   },
@@ -563,9 +614,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 4,
+    flexWrap: 'wrap',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
   },
   superAdminBadge: {
@@ -599,13 +651,51 @@ const styles = StyleSheet.create({
   headerButtons: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
   },
   userProfileIconButton: {
     padding: 8,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   logoutButton: {
     padding: 8,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  roleSwitcherContainer: {
+    marginHorizontal: 24,
+    marginBottom: 16,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  roleSwitcher: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  roleSwitcherLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  roleSwitcherLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  roleSwitcherHint: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 8,
   },
   statsContainer: {
     flexDirection: "row",
