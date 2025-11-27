@@ -29,9 +29,9 @@ export default function Toast({
       case 'success':
         return 'checkmark.circle.fill';
       case 'error':
-        return 'xmark.circle.fill';
+        return 'error';
       case 'info':
-        return 'info.circle.fill';
+        return 'info';
       default:
         return 'checkmark.circle.fill';
     }

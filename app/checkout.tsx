@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,23 @@ import Toast from '@/components/Toast';
 import { SUPABASE_URL } from '@/app/integrations/supabase/client';
 import { supabase } from '@/app/integrations/supabase/client';
 
+interface AddressValidationResult {
+  success: boolean;
+  isValid: boolean;
+  formattedAddress?: string;
+  addressComponents?: {
+    streetNumber?: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  confidence?: 'high' | 'medium' | 'low';
+  suggestions?: string[];
+  error?: string;
+}
+
 export default function CheckoutScreen() {
   const router = useRouter();
   const { 
@@ -35,6 +52,12 @@ export default function CheckoutScreen() {
   const [processing, setProcessing] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'web'>('card');
+  
+  // Address validation state
+  const [addressValidation, setAddressValidation] = useState<AddressValidationResult | null>(null);
+  const [isValidatingAddress, setIsValidatingAddress] = useState(false);
+  const [addressTouched, setAddressTouched] = useState(false);
+  const [validatedAddress, setValidatedAddress] = useState<string>('');
   
   // Toast state
   const [toastVisible, setToastVisible] = useState(false);
@@ -74,6 +97,74 @@ export default function CheckoutScreen() {
   const pointsDiscount = usePoints ? Math.min(availablePoints * 0.01, subtotal * 0.2) : 0;
   const total = subtotal + tax - pointsDiscount;
   const pointsToEarn = Math.floor(total);
+
+  // Debounced address validation
+  const validateAddress = useCallback(async (address: string) => {
+    if (!address || address.trim().length < 5) {
+      setAddressValidation(null);
+      return;
+    }
+
+    setIsValidatingAddress(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/verify-address`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ address }),
+        }
+      );
+
+      const result: AddressValidationResult = await response.json();
+      console.log('Address validation result:', result);
+      
+      setAddressValidation(result);
+      
+      // Auto-fill with formatted address if validation is successful
+      if (result.isValid && result.formattedAddress && result.confidence === 'high') {
+        setValidatedAddress(result.formattedAddress);
+      }
+    } catch (error) {
+      console.error('Address validation error:', error);
+      setAddressValidation({
+        success: false,
+        isValid: false,
+        error: 'Failed to validate address',
+      });
+    } finally {
+      setIsValidatingAddress(false);
+    }
+  }, []);
+
+  // Debounce address validation
+  useEffect(() => {
+    if (!addressTouched) return;
+
+    const timeoutId = setTimeout(() => {
+      validateAddress(deliveryAddress);
+    }, 1000); // Wait 1 second after user stops typing
+
+    return () => clearTimeout(timeoutId);
+  }, [deliveryAddress, addressTouched, validateAddress]);
+
+  // Use formatted address suggestion
+  const useFormattedAddress = () => {
+    if (addressValidation?.formattedAddress) {
+      setDeliveryAddress(addressValidation.formattedAddress);
+      setValidatedAddress(addressValidation.formattedAddress);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  };
 
   // Process Square payment with saved card
   const processSquarePayment = async () => {
@@ -226,6 +317,38 @@ export default function CheckoutScreen() {
       return;
     }
 
+    // Check address validation
+    if (addressTouched && addressValidation) {
+      if (!addressValidation.isValid) {
+        Alert.alert(
+          'Address Verification',
+          'The address you entered could not be verified. Please check and correct your address before continuing.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      if (addressValidation.confidence === 'low') {
+        Alert.alert(
+          'Address Verification',
+          'The address you entered has low confidence. We recommend reviewing it for accuracy.',
+          [
+            { text: 'Review Address', style: 'cancel' },
+            { 
+              text: 'Continue Anyway', 
+              onPress: () => proceedWithOrder(),
+              style: 'destructive'
+            }
+          ]
+        );
+        return;
+      }
+    }
+
+    await proceedWithOrder();
+  };
+
+  const proceedWithOrder = async () => {
     if (paymentMethod === 'card' && !hasSavedCards) {
       showToast('error', 'Please add a payment method before placing an order.');
       return;
@@ -293,9 +416,12 @@ export default function CheckoutScreen() {
         return;
       }
 
+      // Use validated address if available, otherwise use user input
+      const finalAddress = validatedAddress || deliveryAddress;
+
       // Place order after successful payment
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await placeOrder(deliveryAddress, pickupNotes || undefined);
+      await placeOrder(finalAddress, pickupNotes || undefined);
       
       Alert.alert(
         'Order Placed!',
@@ -318,6 +444,32 @@ export default function CheckoutScreen() {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const getAddressValidationColor = () => {
+    if (!addressValidation) return currentColors.textSecondary;
+    if (!addressValidation.isValid) return '#EF4444';
+    if (addressValidation.confidence === 'high') return '#10B981';
+    if (addressValidation.confidence === 'medium') return '#F59E0B';
+    return '#EF4444';
+  };
+
+  const getAddressValidationIcon = () => {
+    if (isValidatingAddress) return 'hourglass';
+    if (!addressValidation) return 'location-pin';
+    if (!addressValidation.isValid) return 'xmark.circle.fill';
+    if (addressValidation.confidence === 'high') return 'checkmark.circle.fill';
+    if (addressValidation.confidence === 'medium') return 'exclamationmark.triangle.fill';
+    return 'xmark.circle.fill';
+  };
+
+  const getAddressValidationMessage = () => {
+    if (isValidatingAddress) return 'Validating address...';
+    if (!addressValidation) return '';
+    if (!addressValidation.isValid) return 'Address could not be verified. Please check for errors.';
+    if (addressValidation.confidence === 'high') return 'Address verified ✓';
+    if (addressValidation.confidence === 'medium') return 'Address partially verified. Please review.';
+    return 'Address verification failed.';
   };
 
   const styles = StyleSheet.create({
@@ -366,6 +518,9 @@ export default function CheckoutScreen() {
       fontWeight: 'bold',
       marginBottom: 12,
     },
+    inputContainer: {
+      position: 'relative',
+    },
     input: {
       borderRadius: 12,
       padding: 16,
@@ -373,6 +528,59 @@ export default function CheckoutScreen() {
       minHeight: 80,
       boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
       elevation: 2,
+      paddingRight: 48,
+    },
+    inputWithValidation: {
+      borderWidth: 2,
+    },
+    validationIconContainer: {
+      position: 'absolute',
+      right: 16,
+      top: 16,
+    },
+    validationMessage: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 8,
+      gap: 8,
+      paddingHorizontal: 4,
+    },
+    validationMessageText: {
+      fontSize: 13,
+      flex: 1,
+    },
+    formattedAddressSuggestion: {
+      marginTop: 12,
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+    },
+    suggestionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 8,
+    },
+    suggestionTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    suggestionAddress: {
+      fontSize: 14,
+      marginBottom: 8,
+      lineHeight: 20,
+    },
+    useSuggestionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 8,
+      borderRadius: 6,
+      gap: 6,
+    },
+    useSuggestionButtonText: {
+      fontSize: 13,
+      fontWeight: '600',
     },
     paymentMethodSection: {
       gap: 12,
@@ -606,17 +814,90 @@ export default function CheckoutScreen() {
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Delivery Address *</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
-              placeholder="Enter your delivery address"
-              placeholderTextColor={currentColors.textSecondary}
-              value={deliveryAddress}
-              onChangeText={setDeliveryAddress}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              editable={!processing}
-            />
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.inputWithValidation,
+                  { 
+                    backgroundColor: currentColors.card, 
+                    color: currentColors.text,
+                    borderColor: addressTouched && addressValidation 
+                      ? getAddressValidationColor()
+                      : currentColors.border,
+                  }
+                ]}
+                placeholder="Enter your full delivery address (street, city, state, ZIP)"
+                placeholderTextColor={currentColors.textSecondary}
+                value={deliveryAddress}
+                onChangeText={(text) => {
+                  setDeliveryAddress(text);
+                  setAddressTouched(true);
+                }}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                editable={!processing}
+              />
+              {addressTouched && (
+                <View style={styles.validationIconContainer}>
+                  {isValidatingAddress ? (
+                    <ActivityIndicator size="small" color={currentColors.primary} />
+                  ) : (
+                    <IconSymbol 
+                      name={getAddressValidationIcon()} 
+                      size={24} 
+                      color={getAddressValidationColor()} 
+                    />
+                  )}
+                </View>
+              )}
+            </View>
+            
+            {addressTouched && addressValidation && (
+              <View style={styles.validationMessage}>
+                <Text style={[
+                  styles.validationMessageText, 
+                  { color: getAddressValidationColor() }
+                ]}>
+                  {getAddressValidationMessage()}
+                </Text>
+              </View>
+            )}
+
+            {addressValidation?.isValid && 
+             addressValidation.formattedAddress && 
+             addressValidation.formattedAddress !== deliveryAddress && (
+              <View style={[
+                styles.formattedAddressSuggestion,
+                { 
+                  backgroundColor: currentColors.card,
+                  borderColor: currentColors.primary + '40',
+                }
+              ]}>
+                <View style={styles.suggestionHeader}>
+                  <IconSymbol name="lightbulb.fill" size={16} color={currentColors.primary} />
+                  <Text style={[styles.suggestionTitle, { color: currentColors.text }]}>
+                    Suggested Address
+                  </Text>
+                </View>
+                <Text style={[styles.suggestionAddress, { color: currentColors.textSecondary }]}>
+                  {addressValidation.formattedAddress}
+                </Text>
+                <Pressable
+                  style={[
+                    styles.useSuggestionButton,
+                    { backgroundColor: currentColors.primary }
+                  ]}
+                  onPress={useFormattedAddress}
+                >
+                  <IconSymbol name="checkmark" size={14} color={currentColors.card} />
+                  <Text style={[styles.useSuggestionButtonText, { color: currentColors.card }]}>
+                    Use This Address
+                  </Text>
+                </Pressable>
+              </View>
+            )}
           </View>
 
           <View style={styles.section}>
