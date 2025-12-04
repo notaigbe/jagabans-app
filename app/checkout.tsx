@@ -44,7 +44,9 @@ export default function CheckoutScreen() {
     placeOrder, 
     userProfile, 
     currentColors, 
-    setTabBarVisible
+    setTabBarVisible,
+    clearCart,
+    loadUserProfile
   } = useApp();
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [pickupNotes, setPickupNotes] = useState('');
@@ -166,14 +168,36 @@ export default function CheckoutScreen() {
     }
   };
 
-  // Process Square payment with saved card
+  // Parse address into components for Square
+  const parseAddress = (address: string) => {
+    // Simple address parsing - in production, use the validated address components
+    const parts = address.split(',').map(p => p.trim());
+    
+    if (addressValidation?.addressComponents) {
+      return {
+        address: `${addressValidation.addressComponents.streetNumber || ''} ${addressValidation.addressComponents.street || ''}`.trim(),
+        city: addressValidation.addressComponents.city || '',
+        state: addressValidation.addressComponents.state || '',
+        zip: addressValidation.addressComponents.postalCode || '',
+      };
+    }
+    
+    // Fallback parsing
+    return {
+      address: parts[0] || '',
+      city: parts[1] || '',
+      state: parts[2]?.split(' ')[0] || '',
+      zip: parts[2]?.split(' ')[1] || '',
+    };
+  };
+
+  // Process Square payment
   const processSquarePayment = async () => {
     try {
       console.log('Starting Square payment process...');
       
-      const savedCard = userProfile?.paymentMethods.find(pm => pm.id === selectedCardId);
-      if (!savedCard) {
-        throw new Error('Selected card not found');
+      if (!userProfile) {
+        throw new Error('User profile not found');
       }
 
       // Get fresh session
@@ -191,9 +215,15 @@ export default function CheckoutScreen() {
 
       console.log('Session obtained, calling Edge Function...');
 
+      // Parse address
+      const addressParts = parseAddress(validatedAddress || deliveryAddress);
+
       // In a real implementation, you would tokenize the card with Square Web Payments SDK
       // For now, we'll use a test source ID for sandbox
       const sourceId = 'cnon:card-nonce-ok'; // Square sandbox test nonce
+
+      // Convert amount to cents
+      const amountInCents = Math.round(total * 100);
 
       const response = await fetch(
         `${SUPABASE_URL}/functions/v1/process-square-payment`,
@@ -205,9 +235,23 @@ export default function CheckoutScreen() {
           },
           body: JSON.stringify({
             sourceId: sourceId,
-            amount: total,
+            amount: amountInCents,
             currency: 'USD',
-            note: `Order for ${userProfile?.name || 'Customer'}`,
+            customer: {
+              name: userProfile.name,
+              email: userProfile.email,
+              phone: userProfile.phone,
+              address: addressParts.address,
+              city: addressParts.city,
+              state: addressParts.state,
+              zip: addressParts.zip,
+            },
+            items: cart.map(item => ({
+              id: item.id,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+            })),
           }),
         }
       );
@@ -233,7 +277,7 @@ export default function CheckoutScreen() {
         throw new Error(result.error || 'Payment failed');
       }
 
-      return { success: true, payment: result.payment };
+      return { success: true, payment: result };
     } catch (error) {
       console.error('Payment processing error:', error);
       return { success: false, error };
@@ -416,16 +460,19 @@ export default function CheckoutScreen() {
         return;
       }
 
-      // Use validated address if available, otherwise use user input
-      const finalAddress = validatedAddress || deliveryAddress;
-
-      // Place order after successful payment
+      // Payment was successful - the edge function already created the order
+      // Clear cart and reload user profile
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await placeOrder(finalAddress, pickupNotes || undefined);
+      
+      // Clear the cart
+      clearCart();
+      
+      // Reload user profile to get updated points and orders
+      await loadUserProfile();
       
       Alert.alert(
         'Order Placed!',
-        `Your order has been placed successfully! You earned ${pointsToEarn} points.\n\nPayment ID: ${paymentResult.payment?.id || 'N/A'}`,
+        `Your order has been placed successfully!\n\nOrder #${paymentResult.payment.orderNumber || 'N/A'}\nPayment ID: ${paymentResult.payment.paymentId || 'N/A'}\n\nYou earned ${paymentResult.payment.pointsEarned || 0} points!`,
         [
           {
             text: 'OK',

@@ -22,11 +22,14 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const menuCategories = [
   "All",
-  "Appetizers",
-  "Main Dishes",
-  "Sides",
-  "Desserts",
-  "Drinks",
+  "Online Appetizers",
+  "Online Beverages",
+  "Online Desserts",
+  "Online Jollof Combos",
+  "Online White Rice Combos",
+	"Online Soups x Dips",
+	"Online Special",
+	"Online Sides",
 ];
 
 // Responsive font size calculation
