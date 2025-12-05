@@ -25,15 +25,22 @@ let SQIPCore: any = null;
 
 if (Platform.OS !== 'web') {
   try {
-    const SquareSDK = require('react-native-square-in-app-payments');
-    SQIPCardEntry = SquareSDK.SQIPCardEntry;
-    SQIPCore = SquareSDK.SQIPCore;
+    // Using dynamic import instead of require
+    import('react-native-square-in-app-payments').then((SquareSDK) => {
+      SQIPCardEntry = SquareSDK.SQIPCardEntry;
+      SQIPCore = SquareSDK.SQIPCore;
+    }).catch((error) => {
+      console.warn('Square SDK not available:', error);
+    });
   } catch (error) {
     console.warn('Square SDK not available:', error);
   }
 }
 
-// Types
+// ============================================================================
+// TYPES
+// ============================================================================
+
 interface AddressValidationResult {
   success: boolean;
   isValid: boolean;
@@ -75,6 +82,10 @@ interface StoredCard {
 type OrderType = 'delivery' | 'pickup';
 type PaymentMethodType = 'new-card' | 'stored-card';
 
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 export default function CheckoutScreen() {
   const router = useRouter();
   const { 
@@ -86,7 +97,11 @@ export default function CheckoutScreen() {
     loadUserProfile
   } = useApp();
 
-  // State
+  // ============================================================================
+  // STATE
+  // ============================================================================
+
+  // Order state
   const [orderType, setOrderType] = useState<OrderType>('delivery');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [pickupNotes, setPickupNotes] = useState('');
@@ -98,7 +113,6 @@ export default function CheckoutScreen() {
   const [selectedCardId, setSelectedCardId] = useState<string>('');
   const [storedCards, setStoredCards] = useState<StoredCard[]>([]);
   const [loadingCards, setLoadingCards] = useState(false);
-  const [showCardEntry, setShowCardEntry] = useState(false);
   const [cardNonce, setCardNonce] = useState<string>('');
   const [saveCard, setSaveCard] = useState(true);
   const [squareAvailable, setSquareAvailable] = useState(false);
@@ -114,7 +128,10 @@ export default function CheckoutScreen() {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
 
-  // Computed values
+  // ============================================================================
+  // COMPUTED VALUES
+  // ============================================================================
+
   const availablePoints = userProfile?.points || 0;
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.0875;
@@ -122,56 +139,104 @@ export default function CheckoutScreen() {
   const total = subtotal + tax - pointsDiscount;
   const pointsToEarn = Math.floor(total);
 
-  // Effects
-  useEffect(() => {
-    setTabBarVisible(false);
-    return () => setTabBarVisible(true);
-  }, [setTabBarVisible]);
+  // ============================================================================
+  // HELPER FUNCTIONS
+  // ============================================================================
 
-  useEffect(() => {
-    if (userProfile) {
-      loadStoredCards();
-      initializeSquare();
+  const showToast = useCallback((type: 'success' | 'error' | 'info', message: string) => {
+    setToastType(type);
+    setToastMessage(message);
+    setToastVisible(true);
+  }, []);
+
+  const parseAddress = useCallback((address: string) => {
+    if (addressValidation?.addressComponents) {
+      return {
+        address: `${addressValidation.addressComponents.streetNumber || ''} ${addressValidation.addressComponents.street || ''}`.trim(),
+        city: addressValidation.addressComponents.city || '',
+        state: addressValidation.addressComponents.state || '',
+        zip: addressValidation.addressComponents.postalCode || '',
+      };
     }
-  }, [userProfile]);
+    
+    const parts = address.split(',').map(p => p.trim());
+    return {
+      address: parts[0] || '',
+      city: parts[1] || '',
+      state: parts[2]?.split(' ')[0] || '',
+      zip: parts[2]?.split(' ')[1] || '',
+    };
+  }, [addressValidation]);
 
-  useEffect(() => {
-    // Only validate address if delivery is selected
-    if (orderType !== 'delivery' || !addressTouched) return;
-    const timeoutId = setTimeout(() => validateAddress(deliveryAddress), 1000);
-    return () => clearTimeout(timeoutId);
-  }, [deliveryAddress, addressTouched, orderType]);
+  const getAddressValidationColor = useCallback(() => {
+    if (!addressValidation) return currentColors.textSecondary;
+    if (!addressValidation.isValid) return '#EF4444';
+    if (addressValidation.confidence === 'high') return '#10B981';
+    if (addressValidation.confidence === 'medium') return '#F59E0B';
+    return '#EF4444';
+  }, [addressValidation, currentColors.textSecondary]);
 
-  // Initialize Square In-App Payments SDK
-  const initializeSquare = async () => {
-    // Check if we're on web
+  const getAddressValidationIcon = useCallback(() => {
+    if (isValidatingAddress) return 'hourglass';
+    if (!addressValidation) return 'location-pin';
+    if (!addressValidation.isValid) return 'xmark.circle.fill';
+    if (addressValidation.confidence === 'high') return 'checkmark.circle.fill';
+    if (addressValidation.confidence === 'medium') return 'exclamationmark.triangle.fill';
+    return 'xmark.circle.fill';
+  }, [isValidatingAddress, addressValidation]);
+
+  const getAddressValidationMessage = useCallback(() => {
+    if (isValidatingAddress) return 'Validating address...';
+    if (!addressValidation) return '';
+    if (!addressValidation.isValid) return 'Address could not be verified. Please check for errors.';
+    if (addressValidation.confidence === 'high') return 'Address verified ✓';
+    if (addressValidation.confidence === 'medium') return 'Address partially verified. Please review.';
+    return 'Address verification failed.';
+  }, [isValidatingAddress, addressValidation]);
+
+  const getCardBrandIcon = useCallback((brand: string) => {
+    const brandLower = brand.toLowerCase();
+    if (brandLower.includes('visa')) return 'creditcard.fill';
+    if (brandLower.includes('mastercard')) return 'creditcard.fill';
+    if (brandLower.includes('amex') || brandLower.includes('american')) return 'creditcard.fill';
+    if (brandLower.includes('discover')) return 'creditcard.fill';
+    return 'creditcard';
+  }, []);
+
+  // ============================================================================
+  // SQUARE SDK INITIALIZATION
+  // ============================================================================
+
+  const initializeSquare = useCallback(async () => {
     if (Platform.OS === 'web') {
       console.log('Square In-App Payments SDK is not available on web');
       setSquareAvailable(false);
       return;
     }
 
-    // Check if SDK is loaded
     if (!SQIPCore || !SQIPCardEntry) {
       console.error('Square SDK not loaded');
       setSquareAvailable(false);
-      showToast('info', 'Card entry not available. Please use saved cards or contact support.');
       return;
     }
 
     try {
-      // TODO: Replace with your actual Square Application ID
-      // Get it from: https://developer.squareup.com/apps
-      // For sandbox testing: sandbox-sq0idb-YOUR_APP_ID
-      // For production: sq0idp-YOUR_APP_ID
-      const applicationId = 'sandbox-sq0idb-YOUR_APP_ID_HERE';
+      const applicationId = 'CONFIGURE_YOUR_SQUARE_APP_ID';
       
-      if (applicationId === 'sandbox-sq0idb-YOUR_APP_ID_HERE') {
+      if (!applicationId || applicationId === 'CONFIGURE_YOUR_SQUARE_APP_ID') {
         console.warn('⚠️ Square Application ID not configured!');
-        console.warn('Please update the applicationId in checkout.tsx');
-        console.warn('Get your Application ID from: https://developer.squareup.com/apps');
+        console.warn('To enable card entry:');
+        console.warn('1. Go to https://developer.squareup.com/apps');
+        console.warn('2. Create or select your application');
+        console.warn('3. Copy your Application ID from the Credentials page');
+        console.warn('4. Update the applicationId in app/checkout.tsx');
         setSquareAvailable(false);
-        showToast('info', 'Payment system not configured. Please use saved cards or contact support.');
+        return;
+      }
+      
+      if (!applicationId.startsWith('sandbox-sq0idb-') && !applicationId.startsWith('sq0idp-')) {
+        console.error('Invalid Square Application ID format');
+        setSquareAvailable(false);
         return;
       }
       
@@ -181,12 +246,14 @@ export default function CheckoutScreen() {
     } catch (error) {
       console.error('Failed to initialize Square SDK:', error);
       setSquareAvailable(false);
-      showToast('info', 'Card entry not available. Please use saved cards or contact support.');
     }
-  };
+  }, []);
 
-  // Load stored cards from database
-  const loadStoredCards = async () => {
+  // ============================================================================
+  // STORED CARDS
+  // ============================================================================
+
+  const loadStoredCards = useCallback(async () => {
     if (!userProfile) return;
     
     setLoadingCards(true);
@@ -202,10 +269,11 @@ export default function CheckoutScreen() {
 
       if (error) {
         console.error('Error loading stored cards:', error);
-        // If table doesn't exist, show helpful message
-        if (error.code === 'PGRST205' || error.message?.includes('square_cards')) {
-          console.warn('square_cards table does not exist. Please run the migration.');
-          showToast('info', 'Payment methods not available. Please contact support.');
+        if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('square_cards')) {
+          console.warn('⚠️ square_cards table does not exist in the database.');
+          setStoredCards([]);
+          setLoadingCards(false);
+          return;
         }
         throw error;
       }
@@ -228,7 +296,6 @@ export default function CheckoutScreen() {
         console.log('Processed cards:', cards);
         setStoredCards(cards);
         
-        // Auto-select default card if available
         const defaultCard = cards.find(c => c.isDefault);
         if (defaultCard) {
           setSelectedCardId(defaultCard.id);
@@ -238,85 +305,21 @@ export default function CheckoutScreen() {
       } else {
         console.log('No stored cards found');
         setStoredCards([]);
-        // If no cards and Square is available, show card entry by default
-        if (squareAvailable) {
-          setPaymentMethod('new-card');
-          setShowCardEntry(true);
-        }
+        setPaymentMethod('new-card');
       }
     } catch (error) {
       console.error('Error loading stored cards:', error);
-      // Don't show error toast if it's just a missing table
-      if (!(error as any)?.code?.includes('PGRST205')) {
-        showToast('error', 'Failed to load saved cards');
-      }
+      setStoredCards([]);
+      setPaymentMethod('new-card');
     } finally {
       setLoadingCards(false);
     }
-  };
+  }, [userProfile]);
 
-  // Helper functions
-  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
-    setToastType(type);
-    setToastMessage(message);
-    setToastVisible(true);
-  };
+  // ============================================================================
+  // ADDRESS VALIDATION
+  // ============================================================================
 
-  const parseAddress = (address: string) => {
-    if (addressValidation?.addressComponents) {
-      return {
-        address: `${addressValidation.addressComponents.streetNumber || ''} ${addressValidation.addressComponents.street || ''}`.trim(),
-        city: addressValidation.addressComponents.city || '',
-        state: addressValidation.addressComponents.state || '',
-        zip: addressValidation.addressComponents.postalCode || '',
-      };
-    }
-    
-    const parts = address.split(',').map(p => p.trim());
-    return {
-      address: parts[0] || '',
-      city: parts[1] || '',
-      state: parts[2]?.split(' ')[0] || '',
-      zip: parts[2]?.split(' ')[1] || '',
-    };
-  };
-
-  const getAddressValidationColor = () => {
-    if (!addressValidation) return currentColors.textSecondary;
-    if (!addressValidation.isValid) return '#EF4444';
-    if (addressValidation.confidence === 'high') return '#10B981';
-    if (addressValidation.confidence === 'medium') return '#F59E0B';
-    return '#EF4444';
-  };
-
-  const getAddressValidationIcon = () => {
-    if (isValidatingAddress) return 'hourglass';
-    if (!addressValidation) return 'location-pin';
-    if (!addressValidation.isValid) return 'xmark.circle.fill';
-    if (addressValidation.confidence === 'high') return 'checkmark.circle.fill';
-    if (addressValidation.confidence === 'medium') return 'exclamationmark.triangle.fill';
-    return 'xmark.circle.fill';
-  };
-
-  const getAddressValidationMessage = () => {
-    if (isValidatingAddress) return 'Validating address...';
-    if (!addressValidation) return '';
-    if (!addressValidation.isValid) return 'Address could not be verified. Please check for errors.';
-    if (addressValidation.confidence === 'high') return 'Address verified ✓';
-    if (addressValidation.confidence === 'medium') return 'Address partially verified. Please review.';
-    return 'Address verification failed.';
-  };
-
-  const getCardBrandIcon = (brand: string) => {
-    const brandLower = brand.toLowerCase();
-    if (brandLower.includes('visa')) return 'creditcard.fill';
-    if (brandLower.includes('mastercard')) return 'creditcard.fill';
-    if (brandLower.includes('amex') || brandLower.includes('american')) return 'creditcard.fill';
-    if (brandLower.includes('discover')) return 'creditcard.fill';
-    return 'creditcard';
-  };
-
-  // Address validation
   const validateAddress = useCallback(async (address: string) => {
     if (!address || address.trim().length < 5) {
       setAddressValidation(null);
@@ -358,17 +361,21 @@ export default function CheckoutScreen() {
     }
   }, []);
 
-  const useFormattedAddress = () => {
+  const useFormattedAddress = useCallback(() => {
     if (addressValidation?.formattedAddress) {
       setDeliveryAddress(addressValidation.formattedAddress);
       setValidatedAddress(addressValidation.formattedAddress);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     }
-  };
+  }, [addressValidation]);
 
-  // Handle card entry
-  const handleCardEntry = async () => {
-    // Check if Square SDK is available
+  // ============================================================================
+  // CARD ENTRY
+  // ============================================================================
+
+  const handleCardEntry = useCallback(async () => {
     if (!squareAvailable || !SQIPCardEntry) {
       Alert.alert(
         'Card Entry Not Available',
@@ -381,28 +388,23 @@ export default function CheckoutScreen() {
     try {
       setProcessing(true);
       
-      // Request card nonce from Square
       await SQIPCardEntry.startCardEntryFlow(
         {
           collectPostalCode: true,
           skipCardHolderName: false,
         },
         async (cardDetails: any) => {
-          // Success callback
           console.log('Card nonce received:', cardDetails.nonce);
           setCardNonce(cardDetails.nonce);
-          setShowCardEntry(false);
           showToast('success', 'Card information captured successfully');
           setProcessing(false);
         },
         (error: any) => {
-          // Error callback
           console.error('Card entry error:', error);
           showToast('error', error.message || 'Failed to capture card information');
           setProcessing(false);
         },
         () => {
-          // Cancel callback
           console.log('Card entry cancelled');
           setProcessing(false);
         }
@@ -412,10 +414,13 @@ export default function CheckoutScreen() {
       showToast('error', 'Failed to open card entry form');
       setProcessing(false);
     }
-  };
+  }, [squareAvailable, showToast]);
 
-  // Payment processing using Square Payments API
-  const processSquarePayment = async (): Promise<PaymentResult> => {
+  // ============================================================================
+  // PAYMENT PROCESSING
+  // ============================================================================
+
+  const processSquarePayment = useCallback(async (): Promise<PaymentResult> => {
     try {
       console.log('Starting Square payment process...');
       
@@ -423,14 +428,8 @@ export default function CheckoutScreen() {
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Failed to get authentication session. Please try logging in again.');
-      }
-      
-      if (!session) {
-        console.error('No active session found');
-        throw new Error('You are not logged in. Please log in and try again.');
+      if (sessionError || !session) {
+        throw new Error('Authentication required. Please log in and try again.');
       }
 
       console.log('Session obtained, calling process-square-payment Edge Function...');
@@ -439,13 +438,11 @@ export default function CheckoutScreen() {
         ? parseAddress(validatedAddress || deliveryAddress)
         : { address: '', city: '', state: '', zip: '' };
       
-      // Determine source ID based on payment method
       let sourceId: string;
       let shouldSaveCard = false;
       let customerId: string | undefined;
       
       if (paymentMethod === 'stored-card' && selectedCardId) {
-        // Use stored card - find the card and use its Square card ID
         const selectedCard = storedCards.find(c => c.id === selectedCardId);
         if (!selectedCard) throw new Error('Selected card not found');
         
@@ -453,7 +450,6 @@ export default function CheckoutScreen() {
         customerId = selectedCard.squareCustomerId;
         console.log('Using stored card:', { sourceId, customerId });
       } else if (paymentMethod === 'new-card' && cardNonce) {
-        // Use new card nonce from Square In-App Payments SDK
         sourceId = cardNonce;
         shouldSaveCard = saveCard;
         console.log('Using new card nonce:', sourceId);
@@ -519,7 +515,6 @@ export default function CheckoutScreen() {
 
       if (!result.success) throw new Error(result.error || 'Payment failed');
 
-      // Reload stored cards if a new card was saved
       if (shouldSaveCard) {
         await loadStoredCards();
       }
@@ -535,13 +530,58 @@ export default function CheckoutScreen() {
       console.error('Payment processing error:', error);
       return { success: false, error };
     }
-  };
+  }, [userProfile, orderType, parseAddress, validatedAddress, deliveryAddress, paymentMethod, selectedCardId, storedCards, cardNonce, saveCard, total, cart, pickupNotes, loadStoredCards]);
 
-  // Order handling
-  const handlePlaceOrder = async () => {
+  // ============================================================================
+  // ORDER HANDLING
+  // ============================================================================
+
+  const proceedWithOrder = useCallback(async () => {
+    setProcessing(true);
+
+    try {
+      const paymentResult = await processSquarePayment();
+
+      if (!paymentResult.success) {
+        const errorMessage = paymentResult.error instanceof Error 
+          ? paymentResult.error.message 
+          : 'There was an issue processing your payment. Please try again.';
+        showToast('error', errorMessage);
+        setProcessing(false);
+        return;
+      }
+
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      clearCart();
+      await loadUserProfile();
+      
+      const orderTypeText = orderType === 'delivery' ? 'delivery' : 'pickup';
+      Alert.alert(
+        'Order Placed!',
+        `Your ${orderTypeText} order has been placed successfully!\n\nOrder #${paymentResult.orderNumber || 'N/A'}\nPayment ID: ${paymentResult.paymentId || 'N/A'}\n\nYou earned ${paymentResult.pointsEarned || 0} points!`,
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/(tabs)/(home)'),
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Order placement error:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to place order. Please try again.';
+      showToast('error', errorMessage);
+    } finally {
+      setProcessing(false);
+    }
+  }, [processSquarePayment, showToast, clearCart, loadUserProfile, orderType, router]);
+
+  const handlePlaceOrder = useCallback(async () => {
     console.log('Placing order with Square Payments API');
     
-    // Validate based on order type
     if (orderType === 'delivery') {
       if (!deliveryAddress.trim()) {
         showToast('error', 'Please enter a delivery address.');
@@ -576,7 +616,6 @@ export default function CheckoutScreen() {
       }
     }
 
-    // Validate payment method
     if (paymentMethod === 'stored-card' && !selectedCardId) {
       showToast('error', 'Please select a payment method.');
       return;
@@ -588,52 +627,40 @@ export default function CheckoutScreen() {
     }
 
     await proceedWithOrder();
-  };
+  }, [orderType, deliveryAddress, addressTouched, addressValidation, paymentMethod, selectedCardId, cardNonce, showToast, proceedWithOrder]);
 
-  const proceedWithOrder = async () => {
-    setProcessing(true);
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
 
-    try {
-      const paymentResult = await processSquarePayment();
+  useEffect(() => {
+    setTabBarVisible(false);
+    return () => setTabBarVisible(true);
+  }, [setTabBarVisible]);
 
-      if (!paymentResult.success) {
-        const errorMessage = paymentResult.error instanceof Error 
-          ? paymentResult.error.message 
-          : 'There was an issue processing your payment. Please try again.';
-        showToast('error', errorMessage);
-        setProcessing(false);
-        return;
-      }
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      clearCart();
-      await loadUserProfile();
-      
-      const orderTypeText = orderType === 'delivery' ? 'delivery' : 'pickup';
-      Alert.alert(
-        'Order Placed!',
-        `Your ${orderTypeText} order has been placed successfully!\n\nOrder #${paymentResult.orderNumber || 'N/A'}\nPayment ID: ${paymentResult.paymentId || 'N/A'}\n\nYou earned ${paymentResult.pointsEarned || 0} points!`,
-        [
-          {
-            text: 'OK',
-            onPress: () => router.replace('/(tabs)/(home)'),
-          },
-        ]
-      );
-    } catch (error) {
-      console.error('Order placement error:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Failed to place order. Please try again.';
-      showToast('error', errorMessage);
-    } finally {
-      setProcessing(false);
+  useEffect(() => {
+    if (userProfile) {
+      loadStoredCards();
+      initializeSquare();
     }
-  };
+  }, [userProfile, loadStoredCards, initializeSquare]);
+
+  useEffect(() => {
+    if (orderType !== 'delivery' || !addressTouched || !deliveryAddress.trim()) {
+      return;
+    }
+    const timeoutId = setTimeout(() => validateAddress(deliveryAddress), 1000);
+    return () => clearTimeout(timeoutId);
+  }, [deliveryAddress, addressTouched, orderType, validateAddress]);
+
+  // ============================================================================
+  // STYLES
+  // ============================================================================
 
   const styles = StyleSheet.create({
     safeArea: {
       flex: 1,
+      backgroundColor: currentColors.background,
     },
     container: {
       flex: 1,
@@ -663,11 +690,13 @@ export default function CheckoutScreen() {
       borderRadius: 12,
       marginBottom: 20,
       gap: 12,
+      backgroundColor: currentColors.highlight + '20',
     },
     infoText: {
       flex: 1,
       fontSize: 14,
       lineHeight: 20,
+      color: currentColors.text,
     },
     section: {
       marginBottom: 24,
@@ -676,6 +705,7 @@ export default function CheckoutScreen() {
       fontSize: 18,
       fontWeight: 'bold',
       marginBottom: 12,
+      color: currentColors.text,
     },
     orderTypeSelector: {
       flexDirection: 'row',
@@ -707,6 +737,8 @@ export default function CheckoutScreen() {
       boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
       elevation: 2,
       paddingRight: 48,
+      backgroundColor: currentColors.card,
+      color: currentColors.text,
     },
     inputWithValidation: {
       borderWidth: 2,
@@ -732,6 +764,8 @@ export default function CheckoutScreen() {
       padding: 12,
       borderRadius: 8,
       borderWidth: 1,
+      backgroundColor: currentColors.card,
+      borderColor: currentColors.primary + '40',
     },
     suggestionHeader: {
       flexDirection: 'row',
@@ -742,11 +776,13 @@ export default function CheckoutScreen() {
     suggestionTitle: {
       fontSize: 14,
       fontWeight: '600',
+      color: currentColors.text,
     },
     suggestionAddress: {
       fontSize: 14,
       marginBottom: 8,
       lineHeight: 20,
+      color: currentColors.textSecondary,
     },
     useSuggestionButton: {
       flexDirection: 'row',
@@ -755,10 +791,12 @@ export default function CheckoutScreen() {
       padding: 8,
       borderRadius: 6,
       gap: 6,
+      backgroundColor: currentColors.primary,
     },
     useSuggestionButtonText: {
       fontSize: 13,
       fontWeight: '600',
+      color: currentColors.card,
     },
     paymentMethodSelector: {
       gap: 12,
@@ -781,6 +819,7 @@ export default function CheckoutScreen() {
     paymentMethodSubtitle: {
       fontSize: 14,
       marginTop: 2,
+      color: currentColors.textSecondary,
     },
     radioButton: {
       width: 20,
@@ -794,6 +833,7 @@ export default function CheckoutScreen() {
       width: 10,
       height: 10,
       borderRadius: 5,
+      backgroundColor: currentColors.primary,
     },
     storedCardsList: {
       gap: 12,
@@ -817,6 +857,7 @@ export default function CheckoutScreen() {
     storedCardDetails: {
       fontSize: 14,
       marginTop: 2,
+      color: currentColors.textSecondary,
     },
     defaultBadge: {
       paddingHorizontal: 8,
@@ -824,10 +865,12 @@ export default function CheckoutScreen() {
       borderRadius: 6,
       marginTop: 4,
       alignSelf: 'flex-start',
+      backgroundColor: currentColors.primary,
     },
     defaultBadgeText: {
       fontSize: 12,
       fontWeight: '600',
+      color: currentColors.card,
     },
     addCardButton: {
       flexDirection: 'row',
@@ -839,10 +882,13 @@ export default function CheckoutScreen() {
       borderStyle: 'dashed',
       gap: 8,
       marginTop: 12,
+      backgroundColor: currentColors.card,
+      borderColor: currentColors.primary,
     },
     addCardButtonText: {
       fontSize: 16,
       fontWeight: '600',
+      color: currentColors.primary,
     },
     saveCardToggle: {
       flexDirection: 'row',
@@ -851,10 +897,12 @@ export default function CheckoutScreen() {
       borderRadius: 8,
       marginTop: 12,
       gap: 12,
+      backgroundColor: currentColors.card,
     },
     saveCardText: {
       flex: 1,
       fontSize: 14,
+      color: currentColors.text,
     },
     checkbox: {
       width: 24,
@@ -863,6 +911,7 @@ export default function CheckoutScreen() {
       borderWidth: 2,
       justifyContent: 'center',
       alignItems: 'center',
+      borderColor: currentColors.textSecondary,
     },
     pointsToggle: {
       borderRadius: 12,
@@ -872,6 +921,7 @@ export default function CheckoutScreen() {
       justifyContent: 'space-between',
       boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
       elevation: 2,
+      backgroundColor: currentColors.card,
     },
     pointsToggleLeft: {
       flexDirection: 'row',
@@ -885,21 +935,25 @@ export default function CheckoutScreen() {
     pointsToggleTitle: {
       fontSize: 16,
       fontWeight: '600',
+      color: currentColors.text,
     },
     pointsToggleSubtitle: {
       fontSize: 14,
       marginTop: 2,
+      color: currentColors.textSecondary,
     },
     summaryCard: {
       borderRadius: 12,
       padding: 20,
       boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
       elevation: 3,
+      backgroundColor: currentColors.card,
     },
     summaryTitle: {
       fontSize: 18,
       fontWeight: 'bold',
       marginBottom: 16,
+      color: currentColors.text,
     },
     summaryRow: {
       flexDirection: 'row',
@@ -908,22 +962,27 @@ export default function CheckoutScreen() {
     },
     summaryLabel: {
       fontSize: 16,
+      color: currentColors.textSecondary,
     },
     summaryValue: {
       fontSize: 16,
+      color: currentColors.text,
     },
     summaryRowTotal: {
       borderTopWidth: 1,
       paddingTop: 12,
       marginTop: 4,
+      borderTopColor: currentColors.background,
     },
     summaryLabelTotal: {
       fontSize: 18,
       fontWeight: 'bold',
+      color: currentColors.text,
     },
     summaryValueTotal: {
       fontSize: 18,
       fontWeight: 'bold',
+      color: currentColors.primary,
     },
     pointsEarnCard: {
       flexDirection: 'row',
@@ -932,15 +991,19 @@ export default function CheckoutScreen() {
       borderRadius: 8,
       marginTop: 16,
       gap: 8,
+      backgroundColor: currentColors.background,
     },
     pointsEarnText: {
       flex: 1,
       fontSize: 14,
       fontWeight: '600',
+      color: currentColors.text,
     },
     footer: {
       padding: 20,
       borderTopWidth: 1,
+      backgroundColor: currentColors.card,
+      borderTopColor: currentColors.background,
     },
     placeOrderButton: {
       paddingVertical: 16,
@@ -955,6 +1018,7 @@ export default function CheckoutScreen() {
     placeOrderButtonText: {
       fontSize: 18,
       fontWeight: 'bold',
+      color: currentColors.card,
     },
     warningBanner: {
       flexDirection: 'row',
@@ -971,8 +1035,12 @@ export default function CheckoutScreen() {
     },
   });
 
+  // ============================================================================
+  // RENDER
+  // ============================================================================
+
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <View style={styles.header}>
         <Pressable
           onPress={() => {
@@ -989,15 +1057,17 @@ export default function CheckoutScreen() {
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          <View style={[styles.infoBanner, { backgroundColor: currentColors.highlight + '20' }]}>
+          {/* Info Banner */}
+          <View style={styles.infoBanner}>
             <IconSymbol name="info" size={20} color={currentColors.primary} />
-            <Text style={[styles.infoText, { color: currentColors.text }]}>
+            <Text style={styles.infoText}>
               Secure checkout powered by Square. Your payment information is encrypted and protected.
             </Text>
           </View>
 
+          {/* Order Type Selection */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Order Type</Text>
+            <Text style={styles.sectionTitle}>Order Type</Text>
             <View style={styles.orderTypeSelector}>
               <Pressable
                 style={[
@@ -1009,7 +1079,9 @@ export default function CheckoutScreen() {
                 ]}
                 onPress={() => {
                   if (!processing) {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (Platform.OS !== 'web') {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
                     setOrderType('delivery');
                   }
                 }}
@@ -1038,7 +1110,9 @@ export default function CheckoutScreen() {
                 ]}
                 onPress={() => {
                   if (!processing) {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (Platform.OS !== 'web') {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
                     setOrderType('pickup');
                   }
                 }}
@@ -1059,17 +1133,16 @@ export default function CheckoutScreen() {
             </View>
           </View>
 
+          {/* Delivery Address (conditional) */}
           {orderType === 'delivery' && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Delivery Address *</Text>
+              <Text style={styles.sectionTitle}>Delivery Address *</Text>
               <View style={styles.inputContainer}>
                 <TextInput
                   style={[
                     styles.input,
                     styles.inputWithValidation,
                     { 
-                      backgroundColor: currentColors.card, 
-                      color: currentColors.text,
                       borderColor: addressTouched && addressValidation 
                         ? getAddressValidationColor()
                         : currentColors.border,
@@ -1116,31 +1189,22 @@ export default function CheckoutScreen() {
               {addressValidation?.isValid && 
                addressValidation.formattedAddress && 
                addressValidation.formattedAddress !== deliveryAddress && (
-                <View style={[
-                  styles.formattedAddressSuggestion,
-                  { 
-                    backgroundColor: currentColors.card,
-                    borderColor: currentColors.primary + '40',
-                  }
-                ]}>
+                <View style={styles.formattedAddressSuggestion}>
                   <View style={styles.suggestionHeader}>
                     <IconSymbol name="lightbulb.fill" size={16} color={currentColors.primary} />
-                    <Text style={[styles.suggestionTitle, { color: currentColors.text }]}>
+                    <Text style={styles.suggestionTitle}>
                       Suggested Address
                     </Text>
                   </View>
-                  <Text style={[styles.suggestionAddress, { color: currentColors.textSecondary }]}>
+                  <Text style={styles.suggestionAddress}>
                     {addressValidation.formattedAddress}
                   </Text>
                   <Pressable
-                    style={[
-                      styles.useSuggestionButton,
-                      { backgroundColor: currentColors.primary }
-                    ]}
+                    style={styles.useSuggestionButton}
                     onPress={useFormattedAddress}
                   >
                     <IconSymbol name="checkmark" size={14} color={currentColors.card} />
-                    <Text style={[styles.useSuggestionButtonText, { color: currentColors.card }]}>
+                    <Text style={styles.useSuggestionButtonText}>
                       Use This Address
                     </Text>
                   </Pressable>
@@ -1149,12 +1213,13 @@ export default function CheckoutScreen() {
             </View>
           )}
 
+          {/* Notes */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>
+            <Text style={styles.sectionTitle}>
               {orderType === 'pickup' ? 'Pickup Notes (Optional)' : 'Delivery Notes (Optional)'}
             </Text>
             <TextInput
-              style={[styles.input, { backgroundColor: currentColors.card, color: currentColors.text }]}
+              style={styles.input}
               placeholder={orderType === 'pickup' 
                 ? 'Add any special instructions for pickup...' 
                 : 'Add any special instructions for delivery...'}
@@ -1168,8 +1233,9 @@ export default function CheckoutScreen() {
             />
           </View>
 
+          {/* Payment Method */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Payment Method *</Text>
+            <Text style={styles.sectionTitle}>Payment Method *</Text>
             
             {loadingCards ? (
               <View style={{ padding: 20, alignItems: 'center' }}>
@@ -1192,9 +1258,10 @@ export default function CheckoutScreen() {
                       ]}
                       onPress={() => {
                         if (!processing) {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          if (Platform.OS !== 'web') {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          }
                           setPaymentMethod('stored-card');
-                          setShowCardEntry(false);
                         }
                       }}
                       disabled={processing}
@@ -1211,10 +1278,7 @@ export default function CheckoutScreen() {
                         ]}>
                           Saved Card
                         </Text>
-                        <Text style={[
-                          styles.paymentMethodSubtitle, 
-                          { color: currentColors.textSecondary }
-                        ]}>
+                        <Text style={styles.paymentMethodSubtitle}>
                           Use a saved payment method
                         </Text>
                       </View>
@@ -1223,7 +1287,7 @@ export default function CheckoutScreen() {
                         { borderColor: paymentMethod === 'stored-card' ? currentColors.primary : currentColors.textSecondary }
                       ]}>
                         {paymentMethod === 'stored-card' && (
-                          <View style={[styles.radioButtonInner, { backgroundColor: currentColors.primary }]} />
+                          <View style={styles.radioButtonInner} />
                         )}
                       </View>
                     </Pressable>
@@ -1242,7 +1306,9 @@ export default function CheckoutScreen() {
                             ]}
                             onPress={() => {
                               if (!processing) {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                if (Platform.OS !== 'web') {
+                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                }
                                 setSelectedCardId(card.id);
                               }
                             }}
@@ -1260,12 +1326,12 @@ export default function CheckoutScreen() {
                               ]}>
                                 {card.cardBrand} •••• {card.last4}
                               </Text>
-                              <Text style={[styles.storedCardDetails, { color: currentColors.textSecondary }]}>
+                              <Text style={styles.storedCardDetails}>
                                 Expires {card.expMonth}/{card.expYear}
                               </Text>
                               {card.isDefault && (
-                                <View style={[styles.defaultBadge, { backgroundColor: currentColors.primary }]}>
-                                  <Text style={[styles.defaultBadgeText, { color: currentColors.card }]}>
+                                <View style={styles.defaultBadge}>
+                                  <Text style={styles.defaultBadgeText}>
                                     Default
                                   </Text>
                                 </View>
@@ -1276,7 +1342,7 @@ export default function CheckoutScreen() {
                               { borderColor: selectedCardId === card.id ? currentColors.primary : currentColors.textSecondary }
                             ]}>
                               {selectedCardId === card.id && (
-                                <View style={[styles.radioButtonInner, { backgroundColor: currentColors.primary }]} />
+                                <View style={styles.radioButtonInner} />
                               )}
                             </View>
                           </Pressable>
@@ -1297,9 +1363,10 @@ export default function CheckoutScreen() {
                     ]}
                     onPress={() => {
                       if (!processing) {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        if (Platform.OS !== 'web') {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }
                         setPaymentMethod('new-card');
-                        setShowCardEntry(true);
                       }
                     }}
                     disabled={processing}
@@ -1316,10 +1383,7 @@ export default function CheckoutScreen() {
                       ]}>
                         New Card
                       </Text>
-                      <Text style={[
-                        styles.paymentMethodSubtitle, 
-                        { color: currentColors.textSecondary }
-                      ]}>
+                      <Text style={styles.paymentMethodSubtitle}>
                         {cardNonce ? 'Card added ✓' : 'Add a new payment method'}
                       </Text>
                     </View>
@@ -1328,7 +1392,7 @@ export default function CheckoutScreen() {
                       { borderColor: paymentMethod === 'new-card' ? currentColors.primary : currentColors.textSecondary }
                     ]}>
                       {paymentMethod === 'new-card' && (
-                        <View style={[styles.radioButtonInner, { backgroundColor: currentColors.primary }]} />
+                        <View style={styles.radioButtonInner} />
                       )}
                     </View>
                   </Pressable>
@@ -1337,42 +1401,34 @@ export default function CheckoutScreen() {
                 {paymentMethod === 'new-card' && !cardNonce && squareAvailable && (
                   <>
                     <Pressable
-                      style={[
-                        styles.addCardButton,
-                        { 
-                          backgroundColor: currentColors.card,
-                          borderColor: currentColors.primary,
-                        }
-                      ]}
+                      style={styles.addCardButton}
                       onPress={handleCardEntry}
                       disabled={processing}
                     >
                       <IconSymbol name="creditcard" size={20} color={currentColors.primary} />
-                      <Text style={[styles.addCardButtonText, { color: currentColors.primary }]}>
+                      <Text style={styles.addCardButtonText}>
                         Enter Card Details
                       </Text>
                     </Pressable>
 
                     <Pressable
-                      style={[
-                        styles.saveCardToggle,
-                        { backgroundColor: currentColors.card }
-                      ]}
+                      style={styles.saveCardToggle}
                       onPress={() => {
                         if (!processing) {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          if (Platform.OS !== 'web') {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          }
                           setSaveCard(!saveCard);
                         }
                       }}
                       disabled={processing}
                     >
                       <IconSymbol name="lock.fill" size={20} color={currentColors.textSecondary} />
-                      <Text style={[styles.saveCardText, { color: currentColors.text }]}>
+                      <Text style={styles.saveCardText}>
                         Save card for future purchases
                       </Text>
                       <View style={[
                         styles.checkbox, 
-                        { borderColor: currentColors.textSecondary }, 
                         saveCard && { backgroundColor: currentColors.primary, borderColor: currentColors.primary }
                       ]}>
                         {saveCard && <IconSymbol name="check-circle" size={16} color={currentColors.card} />}
@@ -1393,12 +1449,15 @@ export default function CheckoutScreen() {
             )}
           </View>
 
+          {/* Points Toggle */}
           <View style={styles.section}>
             <Pressable
-              style={[styles.pointsToggle, { backgroundColor: currentColors.card }]}
+              style={styles.pointsToggle}
               onPress={() => {
                 if (!processing) {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
                   setUsePoints(!usePoints);
                 }
               }}
@@ -1407,27 +1466,31 @@ export default function CheckoutScreen() {
               <View style={styles.pointsToggleLeft}>
                 <IconSymbol name="star.fill" size={24} color={currentColors.highlight} />
                 <View style={styles.pointsToggleInfo}>
-                  <Text style={[styles.pointsToggleTitle, { color: currentColors.text }]}>Use Reward Points</Text>
-                  <Text style={[styles.pointsToggleSubtitle, { color: currentColors.textSecondary }]}>
+                  <Text style={styles.pointsToggleTitle}>Use Reward Points</Text>
+                  <Text style={styles.pointsToggleSubtitle}>
                     You have {availablePoints} points available
                   </Text>
                 </View>
               </View>
-              <View style={[styles.checkbox, { borderColor: currentColors.textSecondary }, usePoints && { backgroundColor: currentColors.primary, borderColor: currentColors.primary }]}>
+              <View style={[
+                styles.checkbox, 
+                usePoints && { backgroundColor: currentColors.primary, borderColor: currentColors.primary }
+              ]}>
                 {usePoints && <IconSymbol name="check-circle" size={16} color={currentColors.card} />}
               </View>
             </Pressable>
           </View>
 
-          <View style={[styles.summaryCard, { backgroundColor: currentColors.card }]}>
-            <Text style={[styles.summaryTitle, { color: currentColors.text }]}>Order Summary</Text>
+          {/* Order Summary */}
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>Order Summary</Text>
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Subtotal</Text>
-              <Text style={[styles.summaryValue, { color: currentColors.text }]}>${subtotal.toFixed(2)}</Text>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Tax (8.75%)</Text>
-              <Text style={[styles.summaryValue, { color: currentColors.text }]}>${tax.toFixed(2)}</Text>
+              <Text style={styles.summaryLabel}>Tax (8.75%)</Text>
+              <Text style={styles.summaryValue}>${tax.toFixed(2)}</Text>
             </View>
             {usePoints && pointsDiscount > 0 && (
               <View style={styles.summaryRow}>
@@ -1439,13 +1502,13 @@ export default function CheckoutScreen() {
                 </Text>
               </View>
             )}
-            <View style={[styles.summaryRow, styles.summaryRowTotal, { borderTopColor: currentColors.background }]}>
-              <Text style={[styles.summaryLabelTotal, { color: currentColors.text }]}>Total</Text>
-              <Text style={[styles.summaryValueTotal, { color: currentColors.primary }]}>${total.toFixed(2)}</Text>
+            <View style={[styles.summaryRow, styles.summaryRowTotal]}>
+              <Text style={styles.summaryLabelTotal}>Total</Text>
+              <Text style={styles.summaryValueTotal}>${total.toFixed(2)}</Text>
             </View>
-            <View style={[styles.pointsEarnCard, { backgroundColor: currentColors.background }]}>
+            <View style={styles.pointsEarnCard}>
               <IconSymbol name="star.fill" size={20} color={currentColors.highlight} />
-              <Text style={[styles.pointsEarnText, { color: currentColors.text }]}>
+              <Text style={styles.pointsEarnText}>
                 You&apos;ll earn {pointsToEarn} points with this order!
               </Text>
             </View>
@@ -1453,7 +1516,8 @@ export default function CheckoutScreen() {
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { backgroundColor: currentColors.card, borderTopColor: currentColors.background }]}>
+      {/* Footer with Place Order Button */}
+      <View style={styles.footer}>
         <Pressable 
           style={[
             styles.placeOrderButton, 
@@ -1468,14 +1532,14 @@ export default function CheckoutScreen() {
           {processing ? (
             <>
               <ActivityIndicator color={currentColors.card} />
-              <Text style={[styles.placeOrderButtonText, { color: currentColors.card }]}>
+              <Text style={styles.placeOrderButtonText}>
                 Processing...
               </Text>
             </>
           ) : (
             <>
               <IconSymbol name="lock" size={20} color={currentColors.card} />
-              <Text style={[styles.placeOrderButtonText, { color: currentColors.card }]}>
+              <Text style={styles.placeOrderButtonText}>
                 Pay ${total.toFixed(2)}
               </Text>
             </>
