@@ -18,10 +18,20 @@ import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 import Toast from '@/components/Toast';
 import { SUPABASE_URL, supabase } from '@/app/integrations/supabase/client';
-import {
-  SQIPCardEntry,
-  SQIPCore,
-} from 'react-native-square-in-app-payments';
+
+// Conditionally import Square SDK only on native platforms
+let SQIPCardEntry: any = null;
+let SQIPCore: any = null;
+
+if (Platform.OS !== 'web') {
+  try {
+    const SquareSDK = require('react-native-square-in-app-payments');
+    SQIPCardEntry = SquareSDK.SQIPCardEntry;
+    SQIPCore = SquareSDK.SQIPCore;
+  } catch (error) {
+    console.warn('Square SDK not available:', error);
+  }
+}
 
 // Types
 interface AddressValidationResult {
@@ -91,6 +101,7 @@ export default function CheckoutScreen() {
   const [showCardEntry, setShowCardEntry] = useState(false);
   const [cardNonce, setCardNonce] = useState<string>('');
   const [saveCard, setSaveCard] = useState(true);
+  const [squareAvailable, setSquareAvailable] = useState(false);
   
   // Address validation state
   const [addressValidation, setAddressValidation] = useState<AddressValidationResult | null>(null);
@@ -133,15 +144,44 @@ export default function CheckoutScreen() {
 
   // Initialize Square In-App Payments SDK
   const initializeSquare = async () => {
+    // Check if we're on web
+    if (Platform.OS === 'web') {
+      console.log('Square In-App Payments SDK is not available on web');
+      setSquareAvailable(false);
+      return;
+    }
+
+    // Check if SDK is loaded
+    if (!SQIPCore || !SQIPCardEntry) {
+      console.error('Square SDK not loaded');
+      setSquareAvailable(false);
+      showToast('info', 'Card entry not available. Please use saved cards or contact support.');
+      return;
+    }
+
     try {
-      // Get Square application ID from environment or use sandbox
-      const applicationId = 'sandbox-sq0idb-YOUR_APP_ID'; // Replace with actual app ID
+      // TODO: Replace with your actual Square Application ID
+      // Get it from: https://developer.squareup.com/apps
+      // For sandbox testing: sandbox-sq0idb-YOUR_APP_ID
+      // For production: sq0idp-YOUR_APP_ID
+      const applicationId = 'sandbox-sq0idb-YOUR_APP_ID_HERE';
+      
+      if (applicationId === 'sandbox-sq0idb-YOUR_APP_ID_HERE') {
+        console.warn('⚠️ Square Application ID not configured!');
+        console.warn('Please update the applicationId in checkout.tsx');
+        console.warn('Get your Application ID from: https://developer.squareup.com/apps');
+        setSquareAvailable(false);
+        showToast('info', 'Payment system not configured. Please use saved cards or contact support.');
+        return;
+      }
       
       await SQIPCore.setSquareApplicationId(applicationId);
       console.log('Square SDK initialized successfully');
+      setSquareAvailable(true);
     } catch (error) {
       console.error('Failed to initialize Square SDK:', error);
-      showToast('error', 'Payment system initialization failed');
+      setSquareAvailable(false);
+      showToast('info', 'Card entry not available. Please use saved cards or contact support.');
     }
   };
 
@@ -162,6 +202,11 @@ export default function CheckoutScreen() {
 
       if (error) {
         console.error('Error loading stored cards:', error);
+        // If table doesn't exist, show helpful message
+        if (error.code === 'PGRST205' || error.message?.includes('square_cards')) {
+          console.warn('square_cards table does not exist. Please run the migration.');
+          showToast('info', 'Payment methods not available. Please contact support.');
+        }
         throw error;
       }
 
@@ -193,13 +238,18 @@ export default function CheckoutScreen() {
       } else {
         console.log('No stored cards found');
         setStoredCards([]);
-        // If no cards, show card entry by default
-        setPaymentMethod('new-card');
-        setShowCardEntry(true);
+        // If no cards and Square is available, show card entry by default
+        if (squareAvailable) {
+          setPaymentMethod('new-card');
+          setShowCardEntry(true);
+        }
       }
     } catch (error) {
       console.error('Error loading stored cards:', error);
-      showToast('error', 'Failed to load saved cards');
+      // Don't show error toast if it's just a missing table
+      if (!(error as any)?.code?.includes('PGRST205')) {
+        showToast('error', 'Failed to load saved cards');
+      }
     } finally {
       setLoadingCards(false);
     }
@@ -318,6 +368,16 @@ export default function CheckoutScreen() {
 
   // Handle card entry
   const handleCardEntry = async () => {
+    // Check if Square SDK is available
+    if (!squareAvailable || !SQIPCardEntry) {
+      Alert.alert(
+        'Card Entry Not Available',
+        'The card entry feature is not available on this platform. Please use a saved card or contact support.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       setProcessing(true);
       
@@ -327,7 +387,7 @@ export default function CheckoutScreen() {
           collectPostalCode: true,
           skipCardHolderName: false,
         },
-        async (cardDetails) => {
+        async (cardDetails: any) => {
           // Success callback
           console.log('Card nonce received:', cardDetails.nonce);
           setCardNonce(cardDetails.nonce);
@@ -335,7 +395,7 @@ export default function CheckoutScreen() {
           showToast('success', 'Card information captured successfully');
           setProcessing(false);
         },
-        (error) => {
+        (error: any) => {
           // Error callback
           console.error('Card entry error:', error);
           showToast('error', error.message || 'Failed to capture card information');
@@ -896,6 +956,19 @@ export default function CheckoutScreen() {
       fontSize: 18,
       fontWeight: 'bold',
     },
+    warningBanner: {
+      flexDirection: 'row',
+      padding: 12,
+      borderRadius: 8,
+      marginTop: 12,
+      gap: 8,
+      backgroundColor: '#FEF3C7',
+    },
+    warningText: {
+      flex: 1,
+      fontSize: 13,
+      color: '#92400E',
+    },
   });
 
   return (
@@ -1213,53 +1286,55 @@ export default function CheckoutScreen() {
                   </>
                 )}
 
-                <Pressable
-                  style={[
-                    styles.paymentMethodButton,
-                    {
-                      backgroundColor: paymentMethod === 'new-card' ? currentColors.primary + '20' : currentColors.card,
-                      borderColor: paymentMethod === 'new-card' ? currentColors.primary : currentColors.border,
-                    }
-                  ]}
-                  onPress={() => {
-                    if (!processing) {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setPaymentMethod('new-card');
-                      setShowCardEntry(true);
-                    }
-                  }}
-                  disabled={processing}
-                >
-                  <IconSymbol 
-                    name="plus.circle.fill" 
-                    size={24} 
-                    color={paymentMethod === 'new-card' ? currentColors.primary : currentColors.text} 
-                  />
-                  <View style={styles.paymentMethodInfo}>
-                    <Text style={[
-                      styles.paymentMethodTitle, 
-                      { color: paymentMethod === 'new-card' ? currentColors.primary : currentColors.text }
+                {squareAvailable && (
+                  <Pressable
+                    style={[
+                      styles.paymentMethodButton,
+                      {
+                        backgroundColor: paymentMethod === 'new-card' ? currentColors.primary + '20' : currentColors.card,
+                        borderColor: paymentMethod === 'new-card' ? currentColors.primary : currentColors.border,
+                      }
+                    ]}
+                    onPress={() => {
+                      if (!processing) {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setPaymentMethod('new-card');
+                        setShowCardEntry(true);
+                      }
+                    }}
+                    disabled={processing}
+                  >
+                    <IconSymbol 
+                      name="plus.circle.fill" 
+                      size={24} 
+                      color={paymentMethod === 'new-card' ? currentColors.primary : currentColors.text} 
+                    />
+                    <View style={styles.paymentMethodInfo}>
+                      <Text style={[
+                        styles.paymentMethodTitle, 
+                        { color: paymentMethod === 'new-card' ? currentColors.primary : currentColors.text }
+                      ]}>
+                        New Card
+                      </Text>
+                      <Text style={[
+                        styles.paymentMethodSubtitle, 
+                        { color: currentColors.textSecondary }
+                      ]}>
+                        {cardNonce ? 'Card added ✓' : 'Add a new payment method'}
+                      </Text>
+                    </View>
+                    <View style={[
+                      styles.radioButton,
+                      { borderColor: paymentMethod === 'new-card' ? currentColors.primary : currentColors.textSecondary }
                     ]}>
-                      New Card
-                    </Text>
-                    <Text style={[
-                      styles.paymentMethodSubtitle, 
-                      { color: currentColors.textSecondary }
-                    ]}>
-                      {cardNonce ? 'Card added ✓' : 'Add a new payment method'}
-                    </Text>
-                  </View>
-                  <View style={[
-                    styles.radioButton,
-                    { borderColor: paymentMethod === 'new-card' ? currentColors.primary : currentColors.textSecondary }
-                  ]}>
-                    {paymentMethod === 'new-card' && (
-                      <View style={[styles.radioButtonInner, { backgroundColor: currentColors.primary }]} />
-                    )}
-                  </View>
-                </Pressable>
+                      {paymentMethod === 'new-card' && (
+                        <View style={[styles.radioButtonInner, { backgroundColor: currentColors.primary }]} />
+                      )}
+                    </View>
+                  </Pressable>
+                )}
 
-                {paymentMethod === 'new-card' && !cardNonce && (
+                {paymentMethod === 'new-card' && !cardNonce && squareAvailable && (
                   <>
                     <Pressable
                       style={[
@@ -1304,6 +1379,15 @@ export default function CheckoutScreen() {
                       </View>
                     </Pressable>
                   </>
+                )}
+
+                {!squareAvailable && storedCards.length === 0 && (
+                  <View style={styles.warningBanner}>
+                    <IconSymbol name="exclamationmark.triangle.fill" size={20} color="#92400E" />
+                    <Text style={styles.warningText}>
+                      Card entry is not available on this platform. Please contact support to add a payment method.
+                    </Text>
+                  </View>
                 )}
               </View>
             )}
