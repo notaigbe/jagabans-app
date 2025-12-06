@@ -93,6 +93,7 @@ export interface Database {
           total: number
           points_earned: number
           status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+          payment_status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'canceled'
           delivery_address: string | null
           pickup_notes: string | null
           payment_id: string | null
@@ -105,6 +106,7 @@ export interface Database {
           total: number
           points_earned?: number
           status?: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+          payment_status?: 'pending' | 'processing' | 'succeeded' | 'failed' | 'canceled'
           delivery_address?: string | null
           pickup_notes?: string | null
           payment_id?: string | null
@@ -117,6 +119,7 @@ export interface Database {
           total?: number
           points_earned?: number
           status?: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+          payment_status?: 'pending' | 'processing' | 'succeeded' | 'failed' | 'canceled'
           delivery_address?: string | null
           pickup_notes?: string | null
           payment_id?: string | null
@@ -151,6 +154,53 @@ export interface Database {
           price?: number
           quantity?: number
           created_at?: string
+        }
+      }
+      stripe_payments: {
+        Row: {
+          id: string
+          user_id: string
+          order_id: string | null
+          stripe_payment_intent_id: string
+          amount: number
+          currency: string
+          status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'canceled'
+          payment_method: string | null
+          receipt_url: string | null
+          error_message: string | null
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          order_id?: string | null
+          stripe_payment_intent_id: string
+          amount: number
+          currency?: string
+          status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'canceled'
+          payment_method?: string | null
+          receipt_url?: string | null
+          error_message?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          order_id?: string | null
+          stripe_payment_intent_id?: string
+          amount?: number
+          currency?: string
+          status?: 'pending' | 'processing' | 'succeeded' | 'failed' | 'canceled'
+          payment_method?: string | null
+          receipt_url?: string | null
+          error_message?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
         }
       }
       square_payments: {
