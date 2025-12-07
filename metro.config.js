@@ -16,13 +16,13 @@ module.exports = (() => {
   // Do NOT override platforms — Expo owns this
 
   // Safe blockList override (preserves Expo defaults)
-  const nativeBlock = /\.native\.(tsx?|jsx?)$/;
+  // const nativeBlock = /\.native\.(tsx)$/;
 
-  if (config.resolver.blockList) {
-    config.resolver.blockList.push(nativeBlock);
-  } else {
-    config.resolver.blockList = [nativeBlock];
-  }
+  // if (config.resolver.blockList) {
+  //   config.resolver.blockList.push(nativeBlock);
+  // } else {
+  //   config.resolver.blockList = [nativeBlock];
+  // }
 
   return config;
 })();

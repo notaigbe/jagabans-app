@@ -67,7 +67,7 @@ export default function PaymentMethodsScreen() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('square_cards')
+        .from('payment_methods')
         .select('*')
         .eq('user_id', userProfile.id)
         .order('is_default', { ascending: false })
@@ -78,14 +78,14 @@ export default function PaymentMethodsScreen() {
       if (data && data.length > 0) {
         const cards: StoredCard[] = data.map((card: any) => ({
           id: card.id,
-          cardBrand: card.card_brand,
-          last4: card.last_4,
-          expMonth: card.exp_month,
-          expYear: card.exp_year,
+          cardBrand: card.type,
+          last4: card.card_number.slice(-4),
+          expMonth: card.expiry_date.slice(0, 2),
+          expYear: card.expiry_date.slice(2, 4),
           cardholderName: card.cardholder_name,
           isDefault: card.is_default,
-          squareCardId: card.square_card_id,
-          squareCustomerId: card.square_customer_id,
+          // squareCardId: card.square_card_id,
+          // squareCustomerId: card.square_customer_id,
         }));
         
         setStoredCards(cards);

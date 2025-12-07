@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -40,20 +41,6 @@ interface AddressValidationResult {
 }
 
 type OrderType = 'delivery' | 'pickup';
-
-interface Order {
-  id: string;
-  user_id: string;
-  total: number;
-  points_earned: number;
-  status: string;
-  payment_status: string;
-  delivery_address: string | null;
-  pickup_notes: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
 
 // ============================================================================
 // STRIPE PUBLISHABLE KEY
@@ -132,7 +119,7 @@ function CheckoutContent() {
     return '#EF4444';
   }, [addressValidation, currentColors.textSecondary]);
 
-  const getAddressValidationIcon = useCallback((): string => {
+  const getAddressValidationIcon = useCallback(() => {
     if (isValidatingAddress) return 'hourglass';
     if (!addressValidation) return 'location-pin';
     if (!addressValidation.isValid) return 'xmark.circle.fill';
@@ -207,7 +194,7 @@ function CheckoutContent() {
   // ORDER CREATION
   // ============================================================================
 
-  const createOrder = useCallback(async (): Promise<string> => {
+  const createOrder = useCallback(async () => {
     if (!userProfile) throw new Error('User profile not found');
 
     console.log('Creating order in Supabase...');
@@ -225,7 +212,7 @@ function CheckoutContent() {
         pickup_notes: orderType === 'pickup' ? pickupNotes : null,
       })
       .select()
-      .single<Order>();
+      .single();
 
     if (orderError || !order) {
       console.error('Error creating order:', orderError);
@@ -364,66 +351,51 @@ function CheckoutContent() {
   // ============================================================================
 
   useEffect(() => {
-  if (!currentOrderId) return;
+    if (!currentOrderId) return;
 
-  console.log('Setting up realtime subscription for order:', currentOrderId);
-  let isSubscribed = true;
+    console.log('Setting up realtime subscription for order:', currentOrderId);
 
-  const channel = supabase
-    .channel(`order-${currentOrderId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'orders',
-        filter: `id=eq.${currentOrderId}`,
-      },
-      (payload) => {
-        if (!isSubscribed) return; // Guard against stale updates
-        
-        console.log('Order updated:', payload);
-        const updatedOrder = payload.new as Order;
+    const channel = supabase
+      .channel(`order-${currentOrderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${currentOrderId}`,
+        },
+        (payload) => {
+          console.log('Order updated:', payload);
+          const updatedOrder = payload.new as any;
 
-        if (updatedOrder.payment_status === 'succeeded') {
-          console.log('Payment succeeded! Order confirmed.');
-          
-          // Unsubscribe immediately
-          isSubscribed = false;
-          supabase.removeChannel(channel);
-          
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-          clearCart();
-          loadUserProfile();
-
-          // Navigate after cleanup
-          setTimeout(() => {
-            setProcessing(false);
-            setCurrentOrderId(null);
+          if (updatedOrder.payment_status === 'succeeded') {
+            console.log('Payment succeeded! Order confirmed.');
             
-            router.push({
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+            clearCart();
+            loadUserProfile();
+
+            // Navigate to order confirmation screen
+            router.replace({
               pathname: '/order-confirmation',
               params: { orderId: currentOrderId },
             });
-          }, 100);
-          
-        } else if (updatedOrder.payment_status === 'failed') {
-          console.log('Payment failed');
-          showToast('error', 'Payment failed. Please try again.');
-          setProcessing(false);
-          setCurrentOrderId(null);
+          } else if (updatedOrder.payment_status === 'failed') {
+            console.log('Payment failed');
+            showToast('error', 'Payment failed. Please try again.');
+            setProcessing(false);
+          }
         }
-      }
-    )
-    .subscribe();
+      )
+      .subscribe();
 
-  return () => {
-    console.log('Cleaning up realtime subscription');
-    isSubscribed = false;
-    supabase.removeChannel(channel);
-  };
-}, [currentOrderId, clearCart, loadUserProfile, router, showToast]);
+    return () => {
+      console.log('Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [currentOrderId, orderType, pointsToEarn, clearCart, loadUserProfile, router, showToast]);
 
   // ============================================================================
   // ORDER PLACEMENT
@@ -549,10 +521,7 @@ function CheckoutContent() {
       backgroundColor: currentColors.card,
       justifyContent: 'center',
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
+      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
       elevation: 2,
     },
     infoBanner: {
@@ -605,10 +574,7 @@ function CheckoutContent() {
       padding: 16,
       fontSize: 16,
       minHeight: 80,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
+      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
       elevation: 2,
       paddingRight: 48,
       backgroundColor: currentColors.card,
@@ -678,10 +644,7 @@ function CheckoutContent() {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
+      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
       elevation: 2,
       backgroundColor: currentColors.card,
     },
@@ -716,10 +679,7 @@ function CheckoutContent() {
     summaryCard: {
       borderRadius: 12,
       padding: 20,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
+      boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
       elevation: 3,
       backgroundColor: currentColors.card,
     },
@@ -783,10 +743,7 @@ function CheckoutContent() {
       paddingVertical: 16,
       borderRadius: 12,
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
+      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
       elevation: 4,
       flexDirection: 'row',
       justifyContent: 'center',
@@ -1049,7 +1006,7 @@ function CheckoutContent() {
             <View style={styles.pointsEarnCard}>
               <IconSymbol name="star.fill" size={20} color={currentColors.highlight} />
               <Text style={styles.pointsEarnText}>
-                You'll earn {pointsToEarn} points with this order!
+                You&apos;ll earn {pointsToEarn} points with this order!
               </Text>
             </View>
           </View>
