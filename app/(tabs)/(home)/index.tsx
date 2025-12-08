@@ -123,24 +123,23 @@ export default function HomeScreen() {
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >
-      {/* Header with Gradient */}
-      <LinearGradient
-        colors={['#0D1A2B', '#1A2838', '#2A3848', '#3A4858', '#D4AF37']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
+      {/* Header with Dark Green Background */}
+      <View style={styles.headerBackground}>
         <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
           <View style={styles.header}>
             <View style={styles.headerContent}>
               {headerImage ? (
-                <Image source={{ uri: headerImage }} style={styles.logo} />
+                <Image 
+                  source={{ uri: headerImage }} 
+                  style={styles.logo}
+                  tintColor="#5FE8D0"
+                />
               ) : (
                 <View style={styles.logoPlaceholder}>
-                  <Text style={[styles.logoText, { color: currentColors.primary }]}>
+                  <Text style={styles.logoText}>
                     Jagabans
                   </Text>
-                  <Text style={[styles.logoSubtext, { color: currentColors.text }]}>
+                  <Text style={styles.logoSubtext}>
                     LOS ANGELES
                   </Text>
                 </View>
@@ -150,12 +149,12 @@ export default function HomeScreen() {
               onPress={() => router.push("/notifications")}
               style={styles.menuButton}
             >
-              <View style={[styles.hamburgerLine, { backgroundColor: currentColors.secondary }]} />
-              <View style={[styles.hamburgerLine, { backgroundColor: currentColors.secondary }]} />
-              <View style={[styles.hamburgerLine, { backgroundColor: currentColors.secondary }]} />
+              <View style={styles.hamburgerLine} />
+              <View style={styles.hamburgerLine} />
+              <View style={styles.hamburgerLine} />
               {unreadCount > 0 && (
-                <View style={[styles.notificationBadge, { backgroundColor: currentColors.secondary }]}>
-                  <Text style={[styles.notificationBadgeText, { color: currentColors.background }]}>
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Text>
                 </View>
@@ -163,7 +162,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -211,22 +210,17 @@ export default function HomeScreen() {
 
         {/* Online Special Section */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: currentColors.primary }]}>
+          <Text style={styles.sectionTitle}>
             Online Special
           </Text>
-          <View style={[styles.divider, { backgroundColor: currentColors.primary }]} />
+          <View style={styles.divider} />
         </View>
 
         {/* Menu Items */}
         {loading || menuItems.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={currentColors.secondary} />
-            <Text
-              style={[
-                styles.loadingText,
-                { color: currentColors.textSecondary },
-              ]}
-            >
+            <ActivityIndicator size="large" color="#5FE8D0" />
+            <Text style={styles.loadingText}>
               Loading menu...
             </Text>
           </View>
@@ -252,53 +246,31 @@ export default function HomeScreen() {
               filteredItems.map((item) => (
                 <Pressable
                   key={item.id}
-                  style={[
-                    styles.menuItem,
-                    { 
-                      backgroundColor: currentColors.card,
-                      borderColor: currentColors.border,
-                    },
-                  ]}
+                  style={styles.menuItem}
                   onPress={() => handleItemPress(item.id)}
                 >
-                  <View style={[styles.imageContainer, { borderColor: currentColors.border }]}>
+                  <View style={styles.imageContainer}>
                     <Image
                       source={{ uri: item.image }}
                       style={styles.menuItemImage}
                     />
                   </View>
                   <View style={styles.menuItemInfo}>
-                    <Text
-                      style={[
-                        styles.menuItemName,
-                        { color: currentColors.text },
-                      ]}
-                    >
+                    <Text style={styles.menuItemName}>
                       {item.name}
                     </Text>
                     <Text
-                      style={[
-                        styles.menuItemDescription,
-                        { color: currentColors.textSecondary },
-                      ]}
+                      style={styles.menuItemDescription}
                       numberOfLines={2}
                     >
                       {item.description}
                     </Text>
                     <View style={styles.menuItemFooter}>
-                      <Text
-                        style={[
-                          styles.menuItemPrice,
-                          { color: currentColors.text },
-                        ]}
-                      >
+                      <Text style={styles.menuItemPrice}>
                         ${item.price.toFixed(2)}
                       </Text>
                       <Pressable
-                        style={[
-                          styles.addButton,
-                          { backgroundColor: currentColors.secondary },
-                        ]}
+                        style={styles.addButton}
                         onPress={(e) => {
                           e.stopPropagation();
                           handleAddToCart(item);
@@ -307,7 +279,7 @@ export default function HomeScreen() {
                         <IconSymbol
                           name="plus"
                           size={20}
-                          color={currentColors.background}
+                          color="#5FE8D0"
                         />
                       </Pressable>
                     </View>
@@ -333,7 +305,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerGradient: {
+  headerBackground: {
+    backgroundColor: '#0D1A2B',
     paddingBottom: 20,
   },
   headerSafeArea: {
@@ -364,12 +337,14 @@ const styles = StyleSheet.create({
     fontFamily: 'PlayfairDisplay_900Black',
     letterSpacing: 3,
     fontStyle: 'italic',
+    color: '#5FE8D0',
   },
   logoSubtext: {
     fontSize: 10,
     fontFamily: 'Inter_400Regular',
     letterSpacing: 5,
     marginTop: -2,
+    color: '#5FE8D0',
   },
   menuButton: {
     position: 'relative',
@@ -384,6 +359,7 @@ const styles = StyleSheet.create({
     height: 3,
     marginVertical: 3,
     borderRadius: 0,
+    backgroundColor: '#FFFFFF',
   },
   notificationBadge: {
     position: 'absolute',
@@ -395,11 +371,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    backgroundColor: '#D4AF37',
   },
   notificationBadgeText: {
     fontSize: 10,
     fontWeight: 'bold',
     fontFamily: 'Inter_700Bold',
+    color: '#0D1A2B',
   },
   scrollView: {
     flex: 1,
@@ -441,10 +419,12 @@ const styles = StyleSheet.create({
     fontFamily: 'PlayfairDisplay_700Bold',
     letterSpacing: 1,
     marginBottom: 16,
+    color: '#5FE8D0',
   },
   divider: {
     width: 100,
     height: 2,
+    backgroundColor: '#5FE8D0',
   },
   loadingContainer: {
     flex: 1,
@@ -456,6 +436,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
+    color: '#B0B8C1',
   },
   emptyContainer: {
     flex: 1,
@@ -476,16 +457,15 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     marginBottom: 28,
     overflow: "hidden",
-    boxShadow: "0px 6px 20px rgba(212, 175, 55, 0.2)",
+    boxShadow: "0px 6px 20px rgba(95, 232, 208, 0.2)",
     elevation: 6,
-    borderWidth: 2,
+    backgroundColor: '#1A3A2E',
   },
   imageContainer: {
     width: "100%",
     height: 260,
     borderRadius: 0,
     overflow: 'hidden',
-    borderBottomWidth: 3,
     position: 'relative',
   },
   menuItemImage: {
@@ -495,18 +475,21 @@ const styles = StyleSheet.create({
   },
   menuItemInfo: {
     padding: 24,
+    backgroundColor: '#1A3A2E',
   },
   menuItemName: {
     fontSize: 26,
     fontFamily: 'PlayfairDisplay_700Bold',
     marginBottom: 10,
     letterSpacing: 0.5,
+    color: '#FFFFFF',
   },
   menuItemDescription: {
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
     marginBottom: 18,
     lineHeight: 24,
+    color: '#FFFFFF',
   },
   menuItemFooter: {
     flexDirection: "row",
@@ -516,6 +499,7 @@ const styles = StyleSheet.create({
   menuItemPrice: {
     fontSize: 24,
     fontFamily: 'Inter_700Bold',
+    color: '#5FE8D0',
   },
   addButton: {
     width: 44,
@@ -523,7 +507,10 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     justifyContent: "center",
     alignItems: "center",
-    boxShadow: "0px 3px 10px rgba(212, 175, 55, 0.4)",
+    boxShadow: "0px 3px 10px rgba(95, 232, 208, 0.4)",
     elevation: 4,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#5FE8D0',
   },
 });
