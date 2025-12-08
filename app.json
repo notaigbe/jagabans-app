@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Ooosum Foods LLC",
@@ -46,6 +47,5 @@
         "projectId": "94e71267-25cb-411f-88e6-37bafccde801"
       }
     }
-  },
-  "scheme": "Ooosum Foods LLC"
+  }
 }
