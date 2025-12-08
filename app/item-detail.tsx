@@ -210,7 +210,7 @@ export default function ItemDetailScreen() {
           <IconSymbol
             name="chevron.left"
             size={24}
-            color={currentColors.primary}
+            color={currentColors.secondary}
           />
           <Text style={[styles.backButtonText, { color: currentColors.text }]}>
             Back
@@ -224,7 +224,7 @@ export default function ItemDetailScreen() {
           style={[
             styles.notification,
             {
-              backgroundColor: currentColors.primary,
+              backgroundColor: currentColors.secondary,
               opacity: notificationOpacity,
               transform: [{ translateY: notificationTranslateY }],
             },
@@ -240,7 +240,7 @@ export default function ItemDetailScreen() {
               <IconSymbol
                 name="checkmark.circle.fill"
                 size={24}
-                color={currentColors.primary}
+                color={currentColors.secondary}
               />
             </View>
             <View style={styles.notificationText}>
@@ -284,7 +284,7 @@ export default function ItemDetailScreen() {
                 <View
                   style={[
                     styles.popularBadge,
-                    { backgroundColor: currentColors.primary },
+                    { backgroundColor: currentColors.secondary },
                   ]}
                 >
                   <IconSymbol
@@ -300,7 +300,7 @@ export default function ItemDetailScreen() {
                 </View>
               )}
             </View>
-            <Text style={[styles.price, { color: currentColors.primary }]}>
+            <Text style={[styles.price, { color: currentColors.secondary }]}>
               ${item.price.toFixed(2)}
             </Text>
           </View>
@@ -355,7 +355,7 @@ export default function ItemDetailScreen() {
                 <IconSymbol
                   name="minus"
                   size={20}
-                  color={currentColors.primary}
+                  color={currentColors.secondary}
                 />
               </Pressable>
               <Text
@@ -373,7 +373,7 @@ export default function ItemDetailScreen() {
                 <IconSymbol
                   name="plus"
                   size={20}
-                  color={currentColors.primary}
+                  color={currentColors.secondary}
                 />
               </Pressable>
             </View>
@@ -401,7 +401,7 @@ export default function ItemDetailScreen() {
           </Text>
         </View>
         <Pressable
-          style={[styles.addButton, { backgroundColor: currentColors.primary }]}
+          style={[styles.addButton, { backgroundColor: currentColors.secondary }]}
           onPress={handleAddToCart}
         >
           <IconSymbol name="cart.fill" size={20} color={currentColors.background} />
@@ -564,11 +564,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 0,
     gap: 12,
     marginBottom: 24,
     borderWidth: 1,
-    boxShadow: "0px 2px 8px rgba(74, 215, 194, 0.15)",
+    boxShadow: "0px 2px 8px rgba(212, 175, 55, 0.15)",
     elevation: 2,
   },
   infoText: {
@@ -578,9 +578,9 @@ const styles = StyleSheet.create({
   },
   quantitySection: {
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 0,
     borderWidth: 1,
-    boxShadow: "0px 2px 8px rgba(74, 215, 194, 0.15)",
+    boxShadow: "0px 2px 8px rgba(212, 175, 55, 0.15)",
     elevation: 2,
   },
   quantityLabel: {
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 25,
     gap: 8,
-    boxShadow: "0px 4px 12px rgba(74, 215, 194, 0.3)",
+    boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.3)",
     elevation: 4,
   },
   addButtonText: {

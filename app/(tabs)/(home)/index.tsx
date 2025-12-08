@@ -151,7 +151,7 @@ export default function HomeScreen() {
               <View style={styles.hamburgerLine} />
               <View style={styles.hamburgerLine} />
               {unreadCount > 0 && (
-                <View style={[styles.notificationBadge, { backgroundColor: currentColors.primary }]}>
+                <View style={[styles.notificationBadge, { backgroundColor: currentColors.secondary }]}>
                   <Text style={[styles.notificationBadgeText, { color: currentColors.background }]}>
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Text>
@@ -172,7 +172,7 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, { color: currentColors.primary }]}>
             Online Special
           </Text>
-          <View style={[styles.divider, { backgroundColor: currentColors.primary }]} />
+          <View style={[styles.divider, { backgroundColor: currentColors.secondary }]} />
         </View>
 
         {/* Categories */}
@@ -194,8 +194,8 @@ export default function HomeScreen() {
                   paddingVertical: getResponsivePadding(10),
                 },
                 selectedCategory === category && {
-                  backgroundColor: currentColors.primary,
-                  borderColor: currentColors.primary,
+                  backgroundColor: currentColors.secondary,
+                  borderColor: currentColors.secondary,
                 },
               ]}
               onPress={() => handleCategoryPress(category)}
@@ -224,7 +224,7 @@ export default function HomeScreen() {
         {/* Menu Items */}
         {loading || menuItems.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={currentColors.primary} />
+            <ActivityIndicator size="large" color={currentColors.secondary} />
             <Text
               style={[
                 styles.loadingText,
@@ -291,7 +291,7 @@ export default function HomeScreen() {
                       <Text
                         style={[
                           styles.menuItemPrice,
-                          { color: currentColors.primary },
+                          { color: currentColors.secondary },
                         ]}
                       >
                         ${item.price.toFixed(2)}
@@ -299,7 +299,7 @@ export default function HomeScreen() {
                       <Pressable
                         style={[
                           styles.addButton,
-                          { backgroundColor: currentColors.primary },
+                          { backgroundColor: currentColors.secondary },
                         ]}
                         onPress={(e) => {
                           e.stopPropagation();
@@ -474,16 +474,16 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   menuItem: {
-    borderRadius: 16,
+    borderRadius: 0,
     marginBottom: 24,
     overflow: "hidden",
-    boxShadow: "0px 4px 16px rgba(74, 215, 194, 0.15)",
+    boxShadow: "0px 4px 16px rgba(212, 175, 55, 0.15)",
     elevation: 5,
   },
   imageContainer: {
     width: "100%",
     height: 240,
-    borderRadius: 16,
+    borderRadius: 0,
     overflow: 'hidden',
     borderWidth: 2,
     position: 'relative',
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    boxShadow: "0px 2px 8px rgba(74, 215, 194, 0.3)",
+    boxShadow: "0px 2px 8px rgba(212, 175, 55, 0.3)",
     elevation: 3,
   },
 });

@@ -91,10 +91,10 @@ export default function FloatingTabBar({
                   <IconSymbol
                     name={tab.icon as any}
                     size={24}
-                    color={active ? currentColors.primary : currentColors.textSecondary}
+                    color={active ? currentColors.secondary : currentColors.textSecondary}
                   />
                   {isCartTab && cartItemCount > 0 && (
-                    <View style={[styles.badge, { backgroundColor: currentColors.primary }]}>
+                    <View style={[styles.badge, { backgroundColor: currentColors.secondary }]}>
                       <Text style={[styles.badgeText, { color: currentColors.background }]}>
                         {cartItemCount > 99 ? '99+' : cartItemCount}
                       </Text>
@@ -104,7 +104,7 @@ export default function FloatingTabBar({
                 <Text
                   style={[
                     styles.label,
-                    { color: active ? currentColors.primary : currentColors.textSecondary },
+                    { color: active ? currentColors.secondary : currentColors.textSecondary },
                   ]}
                 >
                   {tab.label}
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     width: '90%',
     justifyContent: 'space-around',
     alignItems: 'center',
-    boxShadow: '0px 4px 16px rgba(74, 215, 194, 0.2)',
+    boxShadow: '0px 4px 16px rgba(212, 175, 55, 0.2)',
     elevation: 8,
     borderWidth: 1,
   },

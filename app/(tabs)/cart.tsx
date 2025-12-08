@@ -84,7 +84,7 @@ export default function CartScreen() {
               Add some delicious items to get started!
             </Text>
             <Pressable
-              style={[styles.browseButton, { backgroundColor: currentColors.primary }]}
+              style={[styles.browseButton, { backgroundColor: currentColors.secondary }]}
               onPress={() => router.push('/')}
             >
               <Text style={[styles.browseButtonText, { color: currentColors.background }]}>
@@ -106,7 +106,7 @@ export default function CartScreen() {
                   </View>
                   <View style={styles.itemDetails}>
                     <Text style={[styles.itemName, { color: currentColors.text }]}>{item.name}</Text>
-                    <Text style={[styles.itemPrice, { color: currentColors.primary }]}>
+                    <Text style={[styles.itemPrice, { color: currentColors.secondary }]}>
                       ${item.price.toFixed(2)}
                     </Text>
                     <View style={styles.quantityContainer}>
@@ -114,14 +114,14 @@ export default function CartScreen() {
                         style={[styles.quantityButton, { backgroundColor: currentColors.background, borderColor: currentColors.border }]}
                         onPress={() => handleQuantityChange(item.id, -1)}
                       >
-                        <IconSymbol name="minus" size={16} color={currentColors.primary} />
+                        <IconSymbol name="minus" size={16} color={currentColors.secondary} />
                       </Pressable>
                       <Text style={[styles.quantity, { color: currentColors.text }]}>{item.quantity}</Text>
                       <Pressable
                         style={[styles.quantityButton, { backgroundColor: currentColors.background, borderColor: currentColors.border }]}
                         onPress={() => handleQuantityChange(item.id, 1)}
                       >
-                        <IconSymbol name="plus" size={16} color={currentColors.primary} />
+                        <IconSymbol name="plus" size={16} color={currentColors.secondary} />
                       </Pressable>
                     </View>
                   </View>
@@ -147,10 +147,10 @@ export default function CartScreen() {
               </View>
               <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: currentColors.border }]}>
                 <Text style={[styles.totalLabel, { color: currentColors.text }]}>Total</Text>
-                <Text style={[styles.totalValue, { color: currentColors.primary }]}>${total.toFixed(2)}</Text>
+                <Text style={[styles.totalValue, { color: currentColors.secondary }]}>${total.toFixed(2)}</Text>
               </View>
               <Pressable
-                style={[styles.checkoutButton, { backgroundColor: currentColors.primary }]}
+                style={[styles.checkoutButton, { backgroundColor: currentColors.secondary }]}
                 onPress={handleCheckout}
               >
                 <Text style={[styles.checkoutButtonText, { color: currentColors.background }]}>
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(74, 215, 194, 0.2)',
+    borderBottomColor: 'rgba(212, 175, 55, 0.2)',
   },
   headerTitle: {
     fontSize: 32,
@@ -262,22 +262,22 @@ const styles = StyleSheet.create({
   },
   cartItem: {
     flexDirection: 'row',
-    borderRadius: 16,
+    borderRadius: 0,
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    boxShadow: '0px 4px 12px rgba(74, 215, 194, 0.1)',
+    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.1)',
     elevation: 3,
   },
   imageContainer: {
-    borderRadius: 12,
+    borderRadius: 0,
     overflow: 'hidden',
     borderWidth: 2,
   },
   itemImage: {
     width: 80,
     height: 80,
-    borderRadius: 10,
+    borderRadius: 0,
   },
   itemDetails: {
     flex: 1,
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginTop: 20,
     gap: 8,
-    boxShadow: '0px 4px 12px rgba(74, 215, 194, 0.3)',
+    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.3)',
     elevation: 4,
   },
   checkoutButtonText: {

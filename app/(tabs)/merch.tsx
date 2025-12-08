@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -126,7 +127,7 @@ export default function MerchScreen() {
             <IconSymbol
               name="star.fill"
               size={20}
-              color={currentColors.primary}
+              color={currentColors.secondary}
             />
             <Text style={[styles.pointsText, { color: currentColors.text }]}>
               {userProfile?.points || 0} pts
@@ -136,7 +137,7 @@ export default function MerchScreen() {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={currentColors.primary} />
+            <ActivityIndicator size="large" color={currentColors.secondary} />
             <Text
               style={[
                 styles.loadingText,
@@ -219,12 +220,12 @@ export default function MerchScreen() {
                           <IconSymbol
                             name="star.fill"
                             size={16}
-                            color={currentColors.primary}
+                            color={currentColors.secondary}
                           />
                           <Text
                             style={[
                               styles.pointsCost,
-                              { color: currentColors.primary },
+                              { color: currentColors.secondary },
                             ]}
                           >
                             {item.pointsCost}
@@ -234,7 +235,7 @@ export default function MerchScreen() {
                           <Pressable
                             style={[
                               styles.redeemButton,
-                              { backgroundColor: currentColors.primary },
+                              { backgroundColor: currentColors.secondary },
                             ]}
                             onPress={(e) => handleRedeemPress(item, e)}
                           >
@@ -333,7 +334,7 @@ const styles = StyleSheet.create({
   },
   merchCard: {
     width: "100%",
-    borderRadius: 16,
+    borderRadius: 0,
     overflow: "hidden",
     boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
     elevation: 3,

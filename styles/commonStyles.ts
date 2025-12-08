@@ -11,10 +11,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1', // Light gray for descriptions
       primary: '#4AD7C2', // Turquoise/teal accent
       secondary: '#D4AF37', // Gold accent
-      accent: '#4AD7C2', // Turquoise
+      accent: '#D4AF37', // Gold accent (changed from turquoise)
       card: '#1A2838', // Dark navy card
-      highlight: '#5FE3CE', // Lighter turquoise
-      border: '#4AD7C2', // Turquoise border
+      highlight: '#E5C158', // Lighter gold
+      border: '#D4AF37', // Gold border (changed from turquoise)
     },
     dark: {
       background: '#0D1A2B', // Deep navy (almost black-blue)
@@ -22,10 +22,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1', // Light gray for descriptions
       primary: '#4AD7C2', // Turquoise/teal accent
       secondary: '#D4AF37', // Gold accent
-      accent: '#4AD7C2', // Turquoise
+      accent: '#D4AF37', // Gold accent (changed from turquoise)
       card: '#1A2838', // Dark navy card
-      highlight: '#5FE3CE', // Lighter turquoise
-      border: '#4AD7C2', // Turquoise border
+      highlight: '#E5C158', // Lighter gold
+      border: '#D4AF37', // Gold border (changed from turquoise)
     },
   },
   warm: {
@@ -35,10 +35,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1',
       primary: '#4AD7C2',
       secondary: '#D4AF37',
-      accent: '#4AD7C2',
+      accent: '#D4AF37',
       card: '#1A2838',
-      highlight: '#5FE3CE',
-      border: '#4AD7C2',
+      highlight: '#E5C158',
+      border: '#D4AF37',
     },
     dark: {
       background: '#0D1A2B',
@@ -46,10 +46,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1',
       primary: '#4AD7C2',
       secondary: '#D4AF37',
-      accent: '#4AD7C2',
+      accent: '#D4AF37',
       card: '#1A2838',
-      highlight: '#5FE3CE',
-      border: '#4AD7C2',
+      highlight: '#E5C158',
+      border: '#D4AF37',
     },
   },
   cool: {
@@ -59,10 +59,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1',
       primary: '#4AD7C2',
       secondary: '#D4AF37',
-      accent: '#4AD7C2',
+      accent: '#D4AF37',
       card: '#1A2838',
-      highlight: '#5FE3CE',
-      border: '#4AD7C2',
+      highlight: '#E5C158',
+      border: '#D4AF37',
     },
     dark: {
       background: '#0D1A2B',
@@ -70,10 +70,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1',
       primary: '#4AD7C2',
       secondary: '#D4AF37',
-      accent: '#4AD7C2',
+      accent: '#D4AF37',
       card: '#1A2838',
-      highlight: '#5FE3CE',
-      border: '#4AD7C2',
+      highlight: '#E5C158',
+      border: '#D4AF37',
     },
   },
   vibrant: {
@@ -83,10 +83,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1',
       primary: '#4AD7C2',
       secondary: '#D4AF37',
-      accent: '#4AD7C2',
+      accent: '#D4AF37',
       card: '#1A2838',
-      highlight: '#5FE3CE',
-      border: '#4AD7C2',
+      highlight: '#E5C158',
+      border: '#D4AF37',
     },
     dark: {
       background: '#0D1A2B',
@@ -94,10 +94,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1',
       primary: '#4AD7C2',
       secondary: '#D4AF37',
-      accent: '#4AD7C2',
+      accent: '#D4AF37',
       card: '#1A2838',
-      highlight: '#5FE3CE',
-      border: '#4AD7C2',
+      highlight: '#E5C158',
+      border: '#D4AF37',
     },
   },
   minimal: {
@@ -107,10 +107,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1',
       primary: '#4AD7C2',
       secondary: '#D4AF37',
-      accent: '#4AD7C2',
+      accent: '#D4AF37',
       card: '#1A2838',
-      highlight: '#5FE3CE',
-      border: '#4AD7C2',
+      highlight: '#E5C158',
+      border: '#D4AF37',
     },
     dark: {
       background: '#0D1A2B',
@@ -118,10 +118,10 @@ const colorSchemes = {
       textSecondary: '#B0B8C1',
       primary: '#4AD7C2',
       secondary: '#D4AF37',
-      accent: '#4AD7C2',
+      accent: '#D4AF37',
       card: '#1A2838',
-      highlight: '#5FE3CE',
-      border: '#4AD7C2',
+      highlight: '#E5C158',
+      border: '#D4AF37',
     },
   },
 };
