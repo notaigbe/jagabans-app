@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useApp } from "@/contexts/AppContext";
 import * as Haptics from "expo-haptics";
 import { IconSymbol } from "@/components/IconSymbol";
+import { LinearGradient } from "expo-linear-gradient";
 
 const giftCardAmounts = [25, 50, 75, 100, 150, 200];
 const pointsAmounts = [100, 250, 500, 750, 1000, 1500];
@@ -114,400 +115,434 @@ export default function GiftCardsScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: currentColors.background }]}
-      edges={["top"]}
+    <LinearGradient
+      colors={[currentColors.gradientStart || currentColors.background, currentColors.gradientMid || currentColors.background, currentColors.gradientEnd || currentColors.background]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.gradientContainer}
     >
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: currentColors.border }]}>
-          <Text style={[styles.headerTitle, { color: currentColors.text }]}>
-            Gift Cards
-          </Text>
-          <View style={styles.headerRight}>
-            <IconSymbol
-              name="gift.fill"
-              size={28}
-              color={currentColors.primary}
-            />
-            <View
-              style={[
-                styles.pointsBadge,
-                { backgroundColor: currentColors.secondary },
-              ]}
-            >
-              <IconSymbol
-                name="star.fill"
-                size={14}
-                color={currentColors.background}
-              />
-              <Text style={[styles.pointsText, { color: currentColors.background }]}>
-                {userPoints}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <Text
-            style={[
-              styles.sectionTitle,
-              { color: currentColors.textSecondary },
-            ]}
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={["top"]}
+      >
+        <View style={styles.container}>
+          {/* Header with Gradient */}
+          <LinearGradient
+            colors={[currentColors.headerGradientStart || currentColors.card, currentColors.headerGradientEnd || currentColors.card]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.header, { borderBottomColor: currentColors.border }]}
           >
-            Share the love of authentic Nigerian cuisine
-          </Text>
-
-          {/* Gift Type Selection */}
-          <View style={styles.typeSelector}>
-            <Pressable
-              style={[
-                styles.typeButton,
-                { 
-                  backgroundColor: currentColors.card,
-                  borderColor: currentColors.border,
-                },
-                giftType === "money" && {
-                  backgroundColor: currentColors.secondary,
-                  borderColor: currentColors.secondary,
-                },
-              ]}
-              onPress={() => {
-                if (Platform.OS !== "web") {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                setGiftType("money");
-              }}
-            >
-              <IconSymbol
-                name="dollarsign.circle.fill"
-                size={24}
-                color={
-                  giftType === "money" ? currentColors.background : currentColors.text
-                }
-              />
-              <Text
-                style={[
-                  styles.typeButtonText,
-                  { color: currentColors.text },
-                  giftType === "money" && { color: currentColors.background },
-                ]}
-              >
-                Money Gift Card
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.typeButton,
-                { 
-                  backgroundColor: currentColors.card,
-                  borderColor: currentColors.border,
-                },
-                giftType === "points" && {
-                  backgroundColor: currentColors.secondary,
-                  borderColor: currentColors.secondary,
-                },
-              ]}
-              onPress={() => {
-                if (Platform.OS !== "web") {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                setGiftType("points");
-              }}
-            >
-              <IconSymbol
-                name="star.fill"
-                size={24}
-                color={
-                  giftType === "points"
-                    ? currentColors.background
-                    : currentColors.text
-                }
-              />
-              <Text
-                style={[
-                  styles.typeButtonText,
-                  { color: currentColors.text },
-                  giftType === "points" && { color: currentColors.background },
-                ]}
-              >
-                Points Gift Card
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* Amount/Points Selection */}
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: currentColors.text }]}>
-              {giftType === "money" ? "Select Amount" : "Select Points"}
+            <Text style={[styles.headerTitle, { color: currentColors.text }]}>
+              Gift Cards
             </Text>
-            <View style={styles.amountGrid}>
-              {(giftType === "money" ? giftCardAmounts : pointsAmounts).map(
-                (value) => (
-                  <Pressable
-                    key={value}
-                    style={[
-                      styles.amountButton,
-                      { 
-                        backgroundColor: currentColors.card,
-                        borderColor: currentColors.border,
-                      },
-                      (giftType === "money"
-                        ? selectedAmount === value
-                        : selectedPoints === value) && {
-                        backgroundColor: currentColors.secondary,
-                        borderColor: currentColors.secondary,
-                      },
-                    ]}
-                    onPress={() =>
-                      giftType === "money"
-                        ? handleAmountSelect(value)
-                        : handlePointsSelect(value)
+            <View style={styles.headerRight}>
+              <IconSymbol
+                name="gift.fill"
+                size={28}
+                color={currentColors.primary}
+              />
+              <LinearGradient
+                colors={[currentColors.secondary, currentColors.highlight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.pointsBadge}
+              >
+                <IconSymbol
+                  name="star.fill"
+                  size={14}
+                  color={currentColors.background}
+                />
+                <Text style={[styles.pointsText, { color: currentColors.background }]}>
+                  {userPoints}
+                </Text>
+              </LinearGradient>
+            </View>
+          </LinearGradient>
+
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: currentColors.textSecondary },
+              ]}
+            >
+              Share the love of authentic Nigerian cuisine
+            </Text>
+
+            {/* Gift Type Selection */}
+            <View style={styles.typeSelector}>
+              <LinearGradient
+                colors={giftType === "money" ? [currentColors.secondary, currentColors.highlight] : [currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[
+                  styles.typeButton,
+                  { borderColor: currentColors.border },
+                ]}
+              >
+                <Pressable
+                  style={styles.typeButtonInner}
+                  onPress={() => {
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }
+                    setGiftType("money");
+                  }}
+                >
+                  <IconSymbol
+                    name="dollarsign.circle.fill"
+                    size={24}
+                    color={
+                      giftType === "money" ? currentColors.background : currentColors.text
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.typeButtonText,
+                      { color: giftType === "money" ? currentColors.background : currentColors.text },
+                    ]}
                   >
-                    <Text
+                    Money Gift Card
+                  </Text>
+                </Pressable>
+              </LinearGradient>
+              <LinearGradient
+                colors={giftType === "points" ? [currentColors.secondary, currentColors.highlight] : [currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[
+                  styles.typeButton,
+                  { borderColor: currentColors.border },
+                ]}
+              >
+                <Pressable
+                  style={styles.typeButtonInner}
+                  onPress={() => {
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                    setGiftType("points");
+                  }}
+                >
+                  <IconSymbol
+                    name="star.fill"
+                    size={24}
+                    color={
+                      giftType === "points"
+                        ? currentColors.background
+                        : currentColors.text
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.typeButtonText,
+                      { color: giftType === "points" ? currentColors.background : currentColors.text },
+                    ]}
+                  >
+                    Points Gift Card
+                  </Text>
+                </Pressable>
+              </LinearGradient>
+            </View>
+
+            {/* Amount/Points Selection */}
+            <View style={styles.section}>
+              <Text style={[styles.label, { color: currentColors.text }]}>
+                {giftType === "money" ? "Select Amount" : "Select Points"}
+              </Text>
+              <View style={styles.amountGrid}>
+                {(giftType === "money" ? giftCardAmounts : pointsAmounts).map(
+                  (value) => (
+                    <LinearGradient
+                      key={value}
+                      colors={(giftType === "money"
+                        ? selectedAmount === value
+                        : selectedPoints === value) ? [currentColors.secondary, currentColors.highlight] : [currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
                       style={[
-                        styles.amountText,
-                        { color: currentColors.text },
-                        (giftType === "money"
-                          ? selectedAmount === value
-                          : selectedPoints === value) && {
-                          color: currentColors.background,
-                        },
+                        styles.amountButton,
+                        { borderColor: currentColors.border },
                       ]}
                     >
-                      {giftType === "money" ? `$${value}` : `${value} pts`}
-                    </Text>
-                  </Pressable>
-                )
-              )}
+                      <Pressable
+                        style={styles.amountButtonInner}
+                        onPress={() =>
+                          giftType === "money"
+                            ? handleAmountSelect(value)
+                            : handlePointsSelect(value)
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.amountText,
+                            { color: (giftType === "money"
+                              ? selectedAmount === value
+                              : selectedPoints === value) ? currentColors.background : currentColors.text },
+                          ]}
+                        >
+                          {giftType === "money" ? `$${value}` : `${value} pts`}
+                        </Text>
+                      </Pressable>
+                    </LinearGradient>
+                  )
+                )}
+              </View>
             </View>
-          </View>
 
-          {/* Recipient Information */}
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: currentColors.text }]}>
-              Recipient Name *
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: currentColors.card,
-                  color: currentColors.text,
-                  borderColor: currentColors.border,
-                },
-              ]}
-              placeholder="Enter recipient's name"
-              placeholderTextColor={currentColors.textSecondary}
-              value={recipientName}
-              onChangeText={setRecipientName}
-            />
-          </View>
-
-          {giftType === "money" ? (
+            {/* Recipient Information */}
             <View style={styles.section}>
               <Text style={[styles.label, { color: currentColors.text }]}>
-                Recipient Email *
+                Recipient Name *
               </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: currentColors.card,
-                    color: currentColors.text,
-                    borderColor: currentColors.border,
-                  },
-                ]}
-                placeholder="Enter recipient's email"
-                placeholderTextColor={currentColors.textSecondary}
-                value={recipientEmail}
-                onChangeText={setRecipientEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-          ) : (
-            <View style={styles.section}>
-              <Text style={[styles.label, { color: currentColors.text }]}>
-                Recipient User ID *
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: currentColors.card,
-                    color: currentColors.text,
-                    borderColor: currentColors.border,
-                  },
-                ]}
-                placeholder="Enter recipient's user ID"
-                placeholderTextColor={currentColors.textSecondary}
-                value={recipientId}
-                onChangeText={setRecipientId}
-              />
-              <Text
-                style={[
-                  styles.helperText,
-                  { color: currentColors.textSecondary },
-                ]}
+              <LinearGradient
+                colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.inputWrapper, { borderColor: currentColors.border }]}
               >
-                The recipient must be a registered user to receive points
-              </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      color: currentColors.text,
+                    },
+                  ]}
+                  placeholder="Enter recipient's name"
+                  placeholderTextColor={currentColors.textSecondary}
+                  value={recipientName}
+                  onChangeText={setRecipientName}
+                />
+              </LinearGradient>
             </View>
-          )}
 
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: currentColors.text }]}>
-              Personal Message (Optional)
-            </Text>
-            <TextInput
-              style={[
-                styles.textArea,
-                {
-                  backgroundColor: currentColors.card,
-                  color: currentColors.text,
-                  borderColor: currentColors.border,
-                },
-              ]}
-              placeholder="Add a personal message..."
-              placeholderTextColor={currentColors.textSecondary}
-              value={message}
-              onChangeText={setMessage}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Summary */}
-          <View
-            style={[
-              styles.summary, 
-              { 
-                backgroundColor: currentColors.card,
-                borderColor: currentColors.border,
-              }
-            ]}
-          >
             {giftType === "money" ? (
-              <>
-                <View style={styles.summaryRow}>
-                  <Text
+              <View style={styles.section}>
+                <Text style={[styles.label, { color: currentColors.text }]}>
+                  Recipient Email *
+                </Text>
+                <LinearGradient
+                  colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.inputWrapper, { borderColor: currentColors.border }]}
+                >
+                  <TextInput
                     style={[
-                      styles.summaryLabel,
-                      { color: currentColors.textSecondary },
+                      styles.input,
+                      {
+                        color: currentColors.text,
+                      },
                     ]}
-                  >
-                    Gift Card Amount
-                  </Text>
-                  <Text
-                    style={[styles.summaryValue, { color: currentColors.text }]}
-                  >
-                    ${selectedAmount.toFixed(2)}
-                  </Text>
-                </View>
-                <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: currentColors.border }]}>
-                  <Text
-                    style={[styles.totalLabel, { color: currentColors.text }]}
-                  >
-                    Total
-                  </Text>
-                  <Text
-                    style={[
-                      styles.totalValue,
-                      { color: currentColors.secondary },
-                    ]}
-                  >
-                    ${selectedAmount.toFixed(2)}
-                  </Text>
-                </View>
-              </>
+                    placeholder="Enter recipient's email"
+                    placeholderTextColor={currentColors.textSecondary}
+                    value={recipientEmail}
+                    onChangeText={setRecipientEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </LinearGradient>
+              </View>
             ) : (
-              <>
-                <View style={styles.summaryRow}>
-                  <Text
+              <View style={styles.section}>
+                <Text style={[styles.label, { color: currentColors.text }]}>
+                  Recipient User ID *
+                </Text>
+                <LinearGradient
+                  colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.inputWrapper, { borderColor: currentColors.border }]}
+                >
+                  <TextInput
                     style={[
-                      styles.summaryLabel,
-                      { color: currentColors.textSecondary },
+                      styles.input,
+                      {
+                        color: currentColors.text,
+                      },
                     ]}
-                  >
-                    Your Points
-                  </Text>
-                  <Text
-                    style={[styles.summaryValue, { color: currentColors.text }]}
-                  >
-                    {userPoints} pts
-                  </Text>
-                </View>
-                <View style={styles.summaryRow}>
-                  <Text
-                    style={[
-                      styles.summaryLabel,
-                      { color: currentColors.textSecondary },
-                    ]}
-                  >
-                    Points to Send
-                  </Text>
-                  <Text
-                    style={[
-                      styles.summaryValue,
-                      { color: currentColors.secondary },
-                    ]}
-                  >
-                    {selectedPoints} pts
-                  </Text>
-                </View>
-                <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: currentColors.border }]}>
-                  <Text
-                    style={[styles.totalLabel, { color: currentColors.text }]}
-                  >
-                    Remaining Points
-                  </Text>
-                  <Text
-                    style={[
-                      styles.totalValue,
-                      { color: currentColors.secondary },
-                    ]}
-                  >
-                    {userPoints - selectedPoints} pts
-                  </Text>
-                </View>
-              </>
+                    placeholder="Enter recipient's user ID"
+                    placeholderTextColor={currentColors.textSecondary}
+                    value={recipientId}
+                    onChangeText={setRecipientId}
+                  />
+                </LinearGradient>
+                <Text
+                  style={[
+                    styles.helperText,
+                    { color: currentColors.textSecondary },
+                  ]}
+                >
+                  The recipient must be a registered user to receive points
+                </Text>
+              </View>
             )}
-          </View>
 
-          <Pressable
-            style={[
-              styles.purchaseButton,
-              { backgroundColor: currentColors.secondary },
-            ]}
-            onPress={handlePurchase}
-          >
-            <IconSymbol
-              name={giftType === "money" ? "gift.fill" : "star.fill"}
-              size={20}
-              color={currentColors.background}
-            />
-            <Text
-              style={[styles.purchaseButtonText, { color: currentColors.background }]}
+            <View style={styles.section}>
+              <Text style={[styles.label, { color: currentColors.text }]}>
+                Personal Message (Optional)
+              </Text>
+              <LinearGradient
+                colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.textAreaWrapper, { borderColor: currentColors.border }]}
+              >
+                <TextInput
+                  style={[
+                    styles.textArea,
+                    {
+                      color: currentColors.text,
+                    },
+                  ]}
+                  placeholder="Add a personal message..."
+                  placeholderTextColor={currentColors.textSecondary}
+                  value={message}
+                  onChangeText={setMessage}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </LinearGradient>
+            </View>
+
+            {/* Summary */}
+            <LinearGradient
+              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[
+                styles.summary, 
+                { borderColor: currentColors.border }
+              ]}
             >
-              {giftType === "money"
-                ? "Purchase Gift Card"
-                : "Send Points Gift Card"}
-            </Text>
-          </Pressable>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+              {giftType === "money" ? (
+                <>
+                  <View style={styles.summaryRow}>
+                    <Text
+                      style={[
+                        styles.summaryLabel,
+                        { color: currentColors.textSecondary },
+                      ]}
+                    >
+                      Gift Card Amount
+                    </Text>
+                    <Text
+                      style={[styles.summaryValue, { color: currentColors.text }]}
+                    >
+                      ${selectedAmount.toFixed(2)}
+                    </Text>
+                  </View>
+                  <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: currentColors.border }]}>
+                    <Text
+                      style={[styles.totalLabel, { color: currentColors.text }]}
+                    >
+                      Total
+                    </Text>
+                    <Text
+                      style={[
+                        styles.totalValue,
+                        { color: currentColors.secondary },
+                      ]}
+                    >
+                      ${selectedAmount.toFixed(2)}
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <View style={styles.summaryRow}>
+                    <Text
+                      style={[
+                        styles.summaryLabel,
+                        { color: currentColors.textSecondary },
+                      ]}
+                    >
+                      Your Points
+                    </Text>
+                    <Text
+                      style={[styles.summaryValue, { color: currentColors.text }]}
+                    >
+                      {userPoints} pts
+                    </Text>
+                  </View>
+                  <View style={styles.summaryRow}>
+                    <Text
+                      style={[
+                        styles.summaryLabel,
+                        { color: currentColors.textSecondary },
+                      ]}
+                    >
+                      Points to Send
+                    </Text>
+                    <Text
+                      style={[
+                        styles.summaryValue,
+                        { color: currentColors.secondary },
+                      ]}
+                    >
+                      {selectedPoints} pts
+                    </Text>
+                  </View>
+                  <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: currentColors.border }]}>
+                    <Text
+                      style={[styles.totalLabel, { color: currentColors.text }]}
+                    >
+                      Remaining Points
+                    </Text>
+                    <Text
+                      style={[
+                        styles.totalValue,
+                        { color: currentColors.secondary },
+                      ]}
+                    >
+                      {userPoints - selectedPoints} pts
+                    </Text>
+                  </View>
+                </>
+              )}
+            </LinearGradient>
+
+            <LinearGradient
+              colors={[currentColors.secondary, currentColors.highlight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.purchaseButton}
+            >
+              <Pressable
+                style={styles.purchaseButtonInner}
+                onPress={handlePurchase}
+              >
+                <IconSymbol
+                  name={giftType === "money" ? "gift.fill" : "star.fill"}
+                  size={20}
+                  color={currentColors.background}
+                />
+                <Text
+                  style={[styles.purchaseButtonText, { color: currentColors.background }]}
+                >
+                  {giftType === "money"
+                    ? "Purchase Gift Card"
+                    : "Send Points Gift Card"}
+                </Text>
+              </Pressable>
+            </LinearGradient>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
   },
@@ -521,11 +556,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderBottomWidth: 2,
+    boxShadow: '0px 6px 20px rgba(74, 215, 194, 0.3)',
+    elevation: 8,
   },
   headerTitle: {
     fontSize: 32,
     fontFamily: 'PlayfairDisplay_700Bold',
     letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   headerRight: {
     flexDirection: "row",
@@ -539,6 +579,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 0,
     gap: 4,
+    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.4)',
+    elevation: 6,
   },
   pointsText: {
     fontSize: 12,
@@ -564,15 +606,17 @@ const styles = StyleSheet.create({
   },
   typeButton: {
     flex: 1,
+    borderRadius: 0,
+    boxShadow: "0px 6px 20px rgba(212, 175, 55, 0.3)",
+    elevation: 6,
+    borderWidth: 2,
+  },
+  typeButtonInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
     paddingVertical: 16,
-    borderRadius: 0,
-    boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.15)",
-    elevation: 3,
-    borderWidth: 2,
   },
   typeButtonText: {
     fontSize: 14,
@@ -593,26 +637,30 @@ const styles = StyleSheet.create({
   },
   amountButton: {
     width: "30%",
-    paddingVertical: 16,
     borderRadius: 0,
-    alignItems: "center",
-    boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.15)",
-    elevation: 3,
+    boxShadow: "0px 6px 20px rgba(212, 175, 55, 0.3)",
+    elevation: 6,
     borderWidth: 2,
+  },
+  amountButtonInner: {
+    paddingVertical: 16,
+    alignItems: "center",
   },
   amountText: {
     fontSize: 16,
     fontFamily: 'Inter_700Bold',
   },
+  inputWrapper: {
+    borderRadius: 0,
+    boxShadow: "0px 6px 20px rgba(212, 175, 55, 0.25)",
+    elevation: 6,
+    borderWidth: 2,
+  },
   input: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 0,
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
-    boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.15)",
-    elevation: 3,
-    borderWidth: 2,
   },
   helperText: {
     fontSize: 12,
@@ -620,24 +668,26 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontStyle: "italic",
   },
+  textAreaWrapper: {
+    borderRadius: 0,
+    boxShadow: "0px 6px 20px rgba(212, 175, 55, 0.25)",
+    elevation: 6,
+    borderWidth: 2,
+  },
   textArea: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 0,
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
     minHeight: 100,
-    boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.15)",
-    elevation: 3,
-    borderWidth: 2,
   },
   summary: {
     padding: 16,
     borderRadius: 0,
     marginTop: 8,
     marginBottom: 20,
-    boxShadow: "0px 4px 16px rgba(212, 175, 55, 0.15)",
-    elevation: 4,
+    boxShadow: "0px 8px 24px rgba(212, 175, 55, 0.3)",
+    elevation: 8,
     borderWidth: 2,
   },
   summaryRow: {
@@ -667,14 +717,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
   },
   purchaseButton: {
+    borderRadius: 0,
+    boxShadow: "0px 8px 24px rgba(212, 175, 55, 0.5)",
+    elevation: 10,
+  },
+  purchaseButtonInner: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 16,
-    borderRadius: 0,
     gap: 8,
-    boxShadow: "0px 4px 16px rgba(212, 175, 55, 0.3)",
-    elevation: 5,
   },
   purchaseButtonText: {
     fontSize: 16,

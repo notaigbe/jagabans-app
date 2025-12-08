@@ -21,6 +21,7 @@ import * as Haptics from "expo-haptics";
 import Toast from "@/components/Toast";
 import { ActivityIndicator } from "react-native";
 import { supabase } from "@/app/integrations/supabase/client";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -162,235 +163,550 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView
-        style={[styles.safeArea, { backgroundColor: currentColors.background }]}
-        edges={["top"]}
+      <LinearGradient
+        colors={[currentColors.gradientStart || currentColors.background, currentColors.gradientMid || currentColors.background, currentColors.gradientEnd || currentColors.background]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.gradientContainer}
       >
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoidingView}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        <SafeAreaView
+          style={styles.safeArea}
+          edges={["top"]}
         >
-          <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.authContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+          <KeyboardAvoidingView
+            style={styles.keyboardAvoidingView}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
           >
-            <View style={styles.authHeader}>
-              <IconSymbol
-                name="person.circle.fill"
-                size={80}
-                color={currentColors.primary}
-              />
-              <Text style={[styles.authTitle, { color: currentColors.text }]}>
-                {isSignUp ? "Create Account" : "Welcome Back"}
-              </Text>
-              <Text
-                style={[
-                  styles.authSubtitle,
-                  { color: currentColors.textSecondary },
-                ]}
-              >
-                {isSignUp
-                  ? "Sign up to start earning points"
-                  : "Sign in to your account"}
-              </Text>
-            </View>
-
-            <View style={styles.authForm}>
-              {isSignUp && (
-                <View
-                  style={[
-                    styles.inputContainer,
-                    {
-                      backgroundColor: currentColors.card,
-                      borderColor: currentColors.border,
-                    },
-                  ]}
-                >
-                  <IconSymbol
-                    name="person"
-                    size={20}
-                    color={currentColors.textSecondary}
-                  />
-                  <TextInput
-                    style={[styles.input, { color: currentColors.text }]}
-                    placeholder="Full Name"
-                    placeholderTextColor={currentColors.textSecondary}
-                    value={name}
-                    onChangeText={setName}
-                    autoCapitalize="words"
-                  />
-                </View>
-              )}
-
-              <View
-                style={[
-                  styles.inputContainer,
-                  {
-                    backgroundColor: currentColors.card,
-                    borderColor: currentColors.border,
-                  },
-                ]}
-              >
+            <ScrollView
+              style={styles.container}
+              contentContainerStyle={styles.authContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.authHeader}>
                 <IconSymbol
-                  name="envelope"
-                  size={20}
-                  color={currentColors.textSecondary}
+                  name="person.circle.fill"
+                  size={80}
+                  color={currentColors.primary}
                 />
-                <TextInput
-                  style={[styles.input, { color: currentColors.text }]}
-                  placeholder="Email"
-                  placeholderTextColor={currentColors.textSecondary}
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-              </View>
-
-              <View
-                style={[
-                  styles.inputContainer,
-                  {
-                    backgroundColor: currentColors.card,
-                    borderColor: currentColors.border,
-                  },
-                ]}
-              >
-                <IconSymbol
-                  name="lock"
-                  size={20}
-                  color={currentColors.textSecondary}
-                />
-                <TextInput
-                  style={[styles.input, { color: currentColors.text }]}
-                  placeholder="Password"
-                  placeholderTextColor={currentColors.textSecondary}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-                <Pressable
-                  onPress={() => {
-                    setShowPassword(!showPassword);
-                    if (Platform.OS !== "web") {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <IconSymbol
-                    name={showPassword ? "eye.slash.fill" : "eye.fill"}
-                    size={20}
-                    color={currentColors.textSecondary}
-                  />
-                </Pressable>
-              </View>
-
-              {isSignUp && (
-                <View
-                  style={[
-                    styles.inputContainer,
-                    {
-                      backgroundColor: currentColors.card,
-                      borderColor: currentColors.border,
-                    },
-                  ]}
-                >
-                  <IconSymbol
-                    name="phone"
-                    size={20}
-                    color={currentColors.textSecondary}
-                  />
-                  <TextInput
-                    style={[styles.input, { color: currentColors.text }]}
-                    placeholder="Phone (optional)"
-                    placeholderTextColor={currentColors.textSecondary}
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                  />
-                </View>
-              )}
-
-              <Pressable
-                style={[
-                  styles.authButton,
-                  {
-                    backgroundColor: currentColors.primary,
-                    opacity: loading ? 0.6 : 1,
-                  },
-                ]}
-                onPress={handleAuth}
-                disabled={loading}
-              >
-                <Text
-                  style={[styles.authButtonText, { color: currentColors.card }]}
-                >
-                  {loading ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
+                <Text style={[styles.authTitle, { color: currentColors.text }]}>
+                  {isSignUp ? "Create Account" : "Welcome Back"}
                 </Text>
-              </Pressable>
-
-              <Pressable
-                style={styles.switchButton}
-                onPress={() => {
-                  setIsSignUp(!isSignUp);
-                  // Clear form when switching
-                  setEmail("");
-                  setPassword("");
-                  setName("");
-                  setPhone("");
-                  setShowPassword(false);
-                }}
-                disabled={loading}
-              >
                 <Text
                   style={[
-                    styles.switchButtonText,
+                    styles.authSubtitle,
                     { color: currentColors.textSecondary },
                   ]}
                 >
                   {isSignUp
-                    ? "Already have an account? "
-                    : "Don't have an account? "}
-                  <Text
-                    style={{ color: currentColors.primary, fontWeight: "600" }}
-                  >
-                    {isSignUp ? "Sign In" : "Sign Up"}
-                  </Text>
+                    ? "Sign up to start earning points"
+                    : "Sign in to your account"}
                 </Text>
-              </Pressable>
-              {/* Admin Access Link */}
-              <Pressable
-                style={styles.adminButton}
-                onPress={() => {
-                  if (Platform.OS !== "web") {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
-                  handleMenuPress("/admin");
-                }}
-                disabled={loading}
-              >
-                <IconSymbol
-                  name="admin-panel-settings"
-                  size={16}
-                  color={currentColors.textSecondary}
+              </View>
+
+              <View style={styles.authForm}>
+                {isSignUp && (
+                  <LinearGradient
+                    colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[
+                      styles.inputContainer,
+                      { borderColor: currentColors.border },
+                    ]}
+                  >
+                    <IconSymbol
+                      name="person"
+                      size={20}
+                      color={currentColors.textSecondary}
+                    />
+                    <TextInput
+                      style={[styles.input, { color: currentColors.text }]}
+                      placeholder="Full Name"
+                      placeholderTextColor={currentColors.textSecondary}
+                      value={name}
+                      onChangeText={setName}
+                      autoCapitalize="words"
+                    />
+                  </LinearGradient>
+                )}
+
+                <LinearGradient
+                  colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[
+                    styles.inputContainer,
+                    { borderColor: currentColors.border },
+                  ]}
+                >
+                  <IconSymbol
+                    name="envelope"
+                    size={20}
+                    color={currentColors.textSecondary}
+                  />
+                  <TextInput
+                    style={[styles.input, { color: currentColors.text }]}
+                    placeholder="Email"
+                    placeholderTextColor={currentColors.textSecondary}
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                </LinearGradient>
+
+                <LinearGradient
+                  colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[
+                    styles.inputContainer,
+                    { borderColor: currentColors.border },
+                  ]}
+                >
+                  <IconSymbol
+                    name="lock"
+                    size={20}
+                    color={currentColors.textSecondary}
+                  />
+                  <TextInput
+                    style={[styles.input, { color: currentColors.text }]}
+                    placeholder="Password"
+                    placeholderTextColor={currentColors.textSecondary}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                  />
+                  <Pressable
+                    onPress={() => {
+                      setShowPassword(!showPassword);
+                      if (Platform.OS !== "web") {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }
+                    }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <IconSymbol
+                      name={showPassword ? "eye.slash.fill" : "eye.fill"}
+                      size={20}
+                      color={currentColors.textSecondary}
+                    />
+                  </Pressable>
+                </LinearGradient>
+
+                {isSignUp && (
+                  <LinearGradient
+                    colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[
+                      styles.inputContainer,
+                      { borderColor: currentColors.border },
+                    ]}
+                  >
+                    <IconSymbol
+                      name="phone"
+                      size={20}
+                      color={currentColors.textSecondary}
+                    />
+                    <TextInput
+                      style={[styles.input, { color: currentColors.text }]}
+                      placeholder="Phone (optional)"
+                      placeholderTextColor={currentColors.textSecondary}
+                      value={phone}
+                      onChangeText={setPhone}
+                      keyboardType="phone-pad"
+                    />
+                  </LinearGradient>
+                )}
+
+                <LinearGradient
+                  colors={[currentColors.primary, currentColors.secondary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[
+                    styles.authButton,
+                    { opacity: loading ? 0.6 : 1 },
+                  ]}
+                >
+                  <Pressable
+                    style={styles.authButtonInner}
+                    onPress={handleAuth}
+                    disabled={loading}
+                  >
+                    <Text
+                      style={[styles.authButtonText, { color: currentColors.card }]}
+                    >
+                      {loading ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
+                    </Text>
+                  </Pressable>
+                </LinearGradient>
+
+                <Pressable
+                  style={styles.switchButton}
+                  onPress={() => {
+                    setIsSignUp(!isSignUp);
+                    // Clear form when switching
+                    setEmail("");
+                    setPassword("");
+                    setName("");
+                    setPhone("");
+                    setShowPassword(false);
+                  }}
+                  disabled={loading}
+                >
+                  <Text
+                    style={[
+                      styles.switchButtonText,
+                      { color: currentColors.textSecondary },
+                    ]}
+                  >
+                    {isSignUp
+                      ? "Already have an account? "
+                      : "Don't have an account? "}
+                    <Text
+                      style={{ color: currentColors.primary, fontWeight: "600" }}
+                    >
+                      {isSignUp ? "Sign In" : "Sign Up"}
+                    </Text>
+                  </Text>
+                </Pressable>
+                {/* Admin Access Link */}
+                <Pressable
+                  style={styles.adminButton}
+                  onPress={() => {
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                    handleMenuPress("/admin");
+                  }}
+                  disabled={loading}
+                >
+                  <IconSymbol
+                    name="admin-panel-settings"
+                    size={16}
+                    color={currentColors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.adminButtonText,
+                      { color: currentColors.textSecondary },
+                    ]}
+                  >
+                    Admin Dashboard
+                  </Text>
+                </Pressable>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+          <Toast
+            visible={toastVisible}
+            message={toastMessage}
+            type={toastType}
+            onHide={() => setToastVisible(false)}
+            currentColors={currentColors}
+          />
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
+
+  return (
+    <LinearGradient
+      colors={[currentColors.gradientStart || currentColors.background, currentColors.gradientMid || currentColors.background, currentColors.gradientEnd || currentColors.background]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.gradientContainer}
+    >
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={["top"]}
+      >
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+        >
+          {/* Profile Header with Gradient */}
+          <LinearGradient
+            colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.profileHeader}
+          >
+            <View style={styles.profileImageContainer}>
+              {imageLoading ? (
+                <View
+                  style={[
+                    styles.profileImagePlaceholder,
+                    { backgroundColor: currentColors.primary + "20" },
+                  ]}
+                >
+                  <ActivityIndicator size="large" color={currentColors.primary} />
+                </View>
+              ) : profileImageUrl ? (
+                <Image
+                  source={{ uri: profileImageUrl }}
+                  style={styles.profileImage}
+                  onError={(error) => {
+                    console.error("Image load error:", error);
+                    setProfileImageUrl(null);
+                  }}
                 />
+              ) : (
+                <LinearGradient
+                  colors={[currentColors.primary, currentColors.secondary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.profileImagePlaceholder}
+                >
+                  <IconSymbol
+                    name="person"
+                    size={48}
+                    color={currentColors.card}
+                  />
+                </LinearGradient>
+              )}
+              <LinearGradient
+                colors={[currentColors.primary, currentColors.secondary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.editImageButton}
+              >
+                <Pressable
+                  style={styles.editImageButtonInner}
+                  onPress={() => handleMenuPress("/edit-profile")}
+                >
+                  <IconSymbol name="camera" size={16} color={currentColors.card} />
+                </Pressable>
+              </LinearGradient>
+            </View>
+            <Text style={[styles.profileName, { color: currentColors.text }]}>
+              {userProfile?.name}
+            </Text>
+            <Text
+              style={[
+                styles.profileEmail,
+                { color: currentColors.textSecondary },
+              ]}
+            >
+              {userProfile?.email}
+            </Text>
+
+            <View style={styles.pointsCard}>
+              <IconSymbol
+                name="star.fill"
+                size={32}
+                color={currentColors.primary}
+              />
+              <View style={styles.pointsInfo}>
+                <Text style={[styles.pointsValue, { color: currentColors.text }]}>
+                  {userProfile?.points || 0}
+                </Text>
                 <Text
                   style={[
-                    styles.adminButtonText,
+                    styles.pointsLabel,
                     { color: currentColors.textSecondary },
                   ]}
                 >
-                  Admin Dashboard
+                  Points Available
                 </Text>
-              </Pressable>
+              </View>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          </LinearGradient>
+
+          {/* Menu Options */}
+          <View style={styles.menuSection}>
+            <LinearGradient
+              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.menuItem}
+            >
+              <Pressable
+                style={styles.menuItemInner}
+                onPress={() => handleMenuPress("/order-history")}
+              >
+                <View
+                  style={[
+                    styles.menuIcon,
+                    { backgroundColor: currentColors.primary + "20" },
+                  ]}
+                >
+                  <IconSymbol
+                    name="receipt-long"
+                    size={24}
+                    color={currentColors.primary}
+                  />
+                </View>
+                <View style={styles.menuContent}>
+                  <Text style={[styles.menuTitle, { color: currentColors.text }]}>
+                    Order History
+                  </Text>
+                  <Text
+                    style={[
+                      styles.menuSubtitle,
+                      { color: currentColors.textSecondary },
+                    ]}
+                  >
+                    {userProfile?.orders?.length || 0} orders
+                  </Text>
+                </View>
+                <IconSymbol
+                  name="chevron-right"
+                  size={24}
+                  color={currentColors.textSecondary}
+                />
+              </Pressable>
+            </LinearGradient>
+
+            <LinearGradient
+              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.menuItem}
+            >
+              <Pressable
+                style={styles.menuItemInner}
+                onPress={() => handleMenuPress("/payment-methods")}
+              >
+                <View
+                  style={[styles.menuIcon, { backgroundColor: "#4ECDC4" + "20" }]}
+                >
+                  <IconSymbol name="credit-card" size={24} color="#4ECDC4" />
+                </View>
+                <View style={styles.menuContent}>
+                  <Text style={[styles.menuTitle, { color: currentColors.text }]}>
+                    Payment Methods
+                  </Text>
+                  <Text
+                    style={[
+                      styles.menuSubtitle,
+                      { color: currentColors.textSecondary },
+                    ]}
+                  >
+                    {userProfile?.paymentMethods?.length || 0} cards
+                  </Text>
+                </View>
+                <IconSymbol
+                  name="chevron-right"
+                  size={24}
+                  color={currentColors.textSecondary}
+                />
+              </Pressable>
+            </LinearGradient>
+
+            <LinearGradient
+              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.menuItem}
+            >
+              <Pressable
+                style={styles.menuItemInner}
+                onPress={() => handleMenuPress("/events")}
+              >
+                <View
+                  style={[styles.menuIcon, { backgroundColor: "#95E1D3" + "20" }]}
+                >
+                  <IconSymbol name="event" size={24} color="#95E1D3" />
+                </View>
+                <View style={styles.menuContent}>
+                  <Text style={[styles.menuTitle, { color: currentColors.text }]}>
+                    Events
+                  </Text>
+                  <Text
+                    style={[
+                      styles.menuSubtitle,
+                      { color: currentColors.textSecondary },
+                    ]}
+                  >
+                    View upcoming events
+                  </Text>
+                </View>
+                <IconSymbol
+                  name="chevron-right"
+                  size={24}
+                  color={currentColors.textSecondary}
+                />
+              </Pressable>
+            </LinearGradient>
+
+            <LinearGradient
+              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.menuItem}
+            >
+              <Pressable
+                style={styles.menuItemInner}
+                onPress={() => handleMenuPress("/theme-settings")}
+              >
+                <View
+                  style={[styles.menuIcon, { backgroundColor: "#F38181" + "20" }]}
+                >
+                  <IconSymbol name="palette" size={24} color="#F38181" />
+                </View>
+                <View style={styles.menuContent}>
+                  <Text style={[styles.menuTitle, { color: currentColors.text }]}>
+                    Theme Settings
+                  </Text>
+                  <Text
+                    style={[
+                      styles.menuSubtitle,
+                      { color: currentColors.textSecondary },
+                    ]}
+                  >
+                    Customize appearance
+                  </Text>
+                </View>
+                <IconSymbol
+                  name="chevron-right"
+                  size={24}
+                  color={currentColors.textSecondary}
+                />
+              </Pressable>
+            </LinearGradient>
+
+            <LinearGradient
+              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.menuItem}
+            >
+              <Pressable
+                style={styles.menuItemInner}
+                onPress={handleSignOut}
+              >
+                <View
+                  style={[styles.menuIcon, { backgroundColor: "#FF6B6B" + "20" }]}
+                >
+                  <IconSymbol name="logout" size={24} color="#FF6B6B" />
+                </View>
+                <View style={styles.menuContent}>
+                  <Text style={[styles.menuTitle, { color: "#FF6B6B" }]}>
+                    Sign Out
+                  </Text>
+                  <Text
+                    style={[
+                      styles.menuSubtitle,
+                      { color: currentColors.textSecondary },
+                    ]}
+                  >
+                    Sign out of your account
+                  </Text>
+                </View>
+                <IconSymbol
+                  name="chevron-right"
+                  size={24}
+                  color={currentColors.textSecondary}
+                />
+              </Pressable>
+            </LinearGradient>
+          </View>
+        </ScrollView>
         <Toast
           visible={toastVisible}
           message={toastMessage}
@@ -399,269 +715,14 @@ export default function ProfileScreen() {
           currentColors={currentColors}
         />
       </SafeAreaView>
-    );
-  }
-
-  return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: currentColors.background }]}
-      edges={["top"]}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-      >
-        {/* Profile Header */}
-        <View
-          style={[
-            styles.profileHeader,
-            { backgroundColor: currentColors.card },
-          ]}
-        >
-          <View style={styles.profileImageContainer}>
-            {imageLoading ? (
-              <View
-                style={[
-                  styles.profileImagePlaceholder,
-                  { backgroundColor: currentColors.primary + "20" },
-                ]}
-              >
-                <ActivityIndicator size="large" color={currentColors.primary} />
-              </View>
-            ) : profileImageUrl ? (
-              <Image
-                source={{ uri: profileImageUrl }}
-                style={styles.profileImage}
-                onError={(error) => {
-                  console.error("Image load error:", error);
-                  setProfileImageUrl(null);
-                }}
-              />
-            ) : (
-              <View
-                style={[
-                  styles.profileImagePlaceholder,
-                  { backgroundColor: currentColors.primary },
-                ]}
-              >
-                <IconSymbol
-                  name="person"
-                  size={48}
-                  color={currentColors.card}
-                />
-              </View>
-            )}
-            <Pressable
-              style={[
-                styles.editImageButton,
-                { backgroundColor: currentColors.primary },
-              ]}
-              onPress={() => handleMenuPress("/edit-profile")}
-            >
-              <IconSymbol name="camera" size={16} color={currentColors.card} />
-            </Pressable>
-          </View>
-          <Text style={[styles.profileName, { color: currentColors.text }]}>
-            {userProfile?.name}
-          </Text>
-          <Text
-            style={[
-              styles.profileEmail,
-              { color: currentColors.textSecondary },
-            ]}
-          >
-            {userProfile?.email}
-          </Text>
-
-          <View style={styles.pointsCard}>
-            <IconSymbol
-              name="star.fill"
-              size={32}
-              color={currentColors.primary}
-            />
-            <View style={styles.pointsInfo}>
-              <Text style={[styles.pointsValue, { color: currentColors.text }]}>
-                {userProfile?.points || 0}
-              </Text>
-              <Text
-                style={[
-                  styles.pointsLabel,
-                  { color: currentColors.textSecondary },
-                ]}
-              >
-                Points Available
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Menu Options */}
-        <View style={styles.menuSection}>
-          <Pressable
-            style={[styles.menuItem, { backgroundColor: currentColors.card }]}
-            onPress={() => handleMenuPress("/order-history")}
-          >
-            <View
-              style={[
-                styles.menuIcon,
-                { backgroundColor: currentColors.primary + "20" },
-              ]}
-            >
-              <IconSymbol
-                name="receipt-long"
-                size={24}
-                color={currentColors.primary}
-              />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, { color: currentColors.text }]}>
-                Order History
-              </Text>
-              <Text
-                style={[
-                  styles.menuSubtitle,
-                  { color: currentColors.textSecondary },
-                ]}
-              >
-                {userProfile?.orders?.length || 0} orders
-              </Text>
-            </View>
-            <IconSymbol
-              name="chevron-right"
-              size={24}
-              color={currentColors.textSecondary}
-            />
-          </Pressable>
-
-          <Pressable
-            style={[styles.menuItem, { backgroundColor: currentColors.card }]}
-            onPress={() => handleMenuPress("/payment-methods")}
-          >
-            <View
-              style={[styles.menuIcon, { backgroundColor: "#4ECDC4" + "20" }]}
-            >
-              <IconSymbol name="credit-card" size={24} color="#4ECDC4" />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, { color: currentColors.text }]}>
-                Payment Methods
-              </Text>
-              <Text
-                style={[
-                  styles.menuSubtitle,
-                  { color: currentColors.textSecondary },
-                ]}
-              >
-                {userProfile?.paymentMethods?.length || 0} cards
-              </Text>
-            </View>
-            <IconSymbol
-              name="chevron-right"
-              size={24}
-              color={currentColors.textSecondary}
-            />
-          </Pressable>
-
-          <Pressable
-            style={[styles.menuItem, { backgroundColor: currentColors.card }]}
-            onPress={() => handleMenuPress("/events")}
-          >
-            <View
-              style={[styles.menuIcon, { backgroundColor: "#95E1D3" + "20" }]}
-            >
-              <IconSymbol name="event" size={24} color="#95E1D3" />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, { color: currentColors.text }]}>
-                Events
-              </Text>
-              <Text
-                style={[
-                  styles.menuSubtitle,
-                  { color: currentColors.textSecondary },
-                ]}
-              >
-                View upcoming events
-              </Text>
-            </View>
-            <IconSymbol
-              name="chevron-right"
-              size={24}
-              color={currentColors.textSecondary}
-            />
-          </Pressable>
-
-          <Pressable
-            style={[styles.menuItem, { backgroundColor: currentColors.card }]}
-            onPress={() => handleMenuPress("/theme-settings")}
-          >
-            <View
-              style={[styles.menuIcon, { backgroundColor: "#F38181" + "20" }]}
-            >
-              <IconSymbol name="palette" size={24} color="#F38181" />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, { color: currentColors.text }]}>
-                Theme Settings
-              </Text>
-              <Text
-                style={[
-                  styles.menuSubtitle,
-                  { color: currentColors.textSecondary },
-                ]}
-              >
-                Customize appearance
-              </Text>
-            </View>
-            <IconSymbol
-              name="chevron-right"
-              size={24}
-              color={currentColors.textSecondary}
-            />
-          </Pressable>
-
-          <Pressable
-            style={[styles.menuItem, { backgroundColor: currentColors.card }]}
-            onPress={handleSignOut}
-          >
-            <View
-              style={[styles.menuIcon, { backgroundColor: "#FF6B6B" + "20" }]}
-            >
-              <IconSymbol name="logout" size={24} color="#FF6B6B" />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, { color: "#FF6B6B" }]}>
-                Sign Out
-              </Text>
-              <Text
-                style={[
-                  styles.menuSubtitle,
-                  { color: currentColors.textSecondary },
-                ]}
-              >
-                Sign out of your account
-              </Text>
-            </View>
-            <IconSymbol
-              name="chevron-right"
-              size={24}
-              color={currentColors.textSecondary}
-            />
-          </Pressable>
-        </View>
-      </ScrollView>
-      <Toast
-        visible={toastVisible}
-        message={toastMessage}
-        type={toastType}
-        onHide={() => setToastVisible(false)}
-        currentColors={currentColors}
-      />
-    </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
   },
@@ -687,6 +748,9 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     marginTop: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   authSubtitle: {
     fontSize: 16,
@@ -704,6 +768,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 16,
     borderWidth: 1,
+    boxShadow: '0px 6px 20px rgba(212, 175, 55, 0.25)',
+    elevation: 6,
   },
   input: {
     flex: 1,
@@ -712,9 +778,13 @@ const styles = StyleSheet.create({
   },
   authButton: {
     borderRadius: 12,
+    marginTop: 8,
+    boxShadow: '0px 8px 24px rgba(74, 215, 194, 0.4)',
+    elevation: 8,
+  },
+  authButtonInner: {
     paddingVertical: 16,
     alignItems: "center",
-    marginTop: 8,
   },
   authButtonText: {
     fontSize: 18,
@@ -754,6 +824,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 24,
     marginBottom: 16,
+    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.3)',
+    elevation: 8,
   },
   profileImageContainer: {
     position: "relative",
@@ -763,6 +835,8 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
+    boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.3)',
+    elevation: 6,
   },
   profileImagePlaceholder: {
     width: 100,
@@ -770,6 +844,8 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
+    boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.3)',
+    elevation: 6,
   },
   editImageButton: {
     position: "absolute",
@@ -778,6 +854,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
+    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.4)',
+    elevation: 6,
+  },
+  editImageButtonInner: {
+    width: 32,
+    height: 32,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -810,12 +892,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   menuItem: {
+    borderRadius: 16,
+    boxShadow: "0px 6px 20px rgba(212, 175, 55, 0.25)",
+    elevation: 6,
+  },
+  menuItemInner: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    borderRadius: 16,
-    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.05)",
-    elevation: 2,
   },
   menuIcon: {
     width: 48,
@@ -824,6 +908,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+    elevation: 4,
   },
   menuContent: {
     flex: 1,

@@ -12,6 +12,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/contexts/AppContext';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export interface TabBarItem {
   name: string;
@@ -65,13 +66,15 @@ export default function FloatingTabBar({
           }
         ]}
       >
-        <View
+        <LinearGradient
+          colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={[
             styles.tabBar,
             {
               maxWidth: containerWidth,
               borderRadius,
-              backgroundColor: currentColors.card,
               borderColor: currentColors.border,
             },
           ]}
@@ -94,11 +97,16 @@ export default function FloatingTabBar({
                     color={active ? currentColors.secondary : currentColors.textSecondary}
                   />
                   {isCartTab && cartItemCount > 0 && (
-                    <View style={[styles.badge, { backgroundColor: currentColors.secondary }]}>
+                    <LinearGradient
+                      colors={[currentColors.secondary, currentColors.highlight]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.badge}
+                    >
                       <Text style={[styles.badgeText, { color: currentColors.background }]}>
                         {cartItemCount > 99 ? '99+' : cartItemCount}
                       </Text>
-                    </View>
+                    </LinearGradient>
                   )}
                 </View>
                 <Text
@@ -112,7 +120,7 @@ export default function FloatingTabBar({
               </TouchableOpacity>
             );
           })}
-        </View>
+        </LinearGradient>
       </View>
     </SafeAreaView>
   );
@@ -139,8 +147,8 @@ const styles = StyleSheet.create({
     width: '90%',
     justifyContent: 'space-around',
     alignItems: 'center',
-    boxShadow: '0px 6px 20px rgba(212, 175, 55, 0.25)',
-    elevation: 10,
+    boxShadow: '0px 10px 30px rgba(212, 175, 55, 0.4)',
+    elevation: 12,
     borderWidth: 2,
   },
   tab: {
@@ -166,6 +174,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.5)',
+    elevation: 6,
   },
   badgeText: {
     fontSize: 10,

@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { IconSymbol } from '@/components/IconSymbol';
 import Dialog from '@/components/Dialog';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function CartScreen() {
   const { cart, updateCartQuantity, removeFromCart, currentColors } = useApp();
@@ -64,145 +65,185 @@ export default function CartScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentColors.background }]} edges={['top']}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: currentColors.border }]}>
-          <Text style={[styles.headerTitle, { color: currentColors.text }]}>Shopping Cart</Text>
-          <Text style={[styles.itemCount, { color: currentColors.textSecondary }]}>
-            {cart.length} {cart.length === 1 ? 'item' : 'items'}
-          </Text>
-        </View>
+    <LinearGradient
+      colors={[currentColors.gradientStart || currentColors.background, currentColors.gradientMid || currentColors.background, currentColors.gradientEnd || currentColors.background]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.gradientContainer}
+    >
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.container}>
+          {/* Header with Gradient */}
+          <LinearGradient
+            colors={[currentColors.headerGradientStart || currentColors.card, currentColors.headerGradientEnd || currentColors.card]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.header, { borderBottomColor: currentColors.border }]}
+          >
+            <Text style={[styles.headerTitle, { color: currentColors.text }]}>Shopping Cart</Text>
+            <Text style={[styles.itemCount, { color: currentColors.textSecondary }]}>
+              {cart.length} {cart.length === 1 ? 'item' : 'items'}
+            </Text>
+          </LinearGradient>
 
-        {cart.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <IconSymbol name="cart.fill" size={80} color={currentColors.textSecondary} />
-            <Text style={[styles.emptyText, { color: currentColors.text }]}>
-              Your cart is empty
-            </Text>
-            <Text style={[styles.emptySubtext, { color: currentColors.textSecondary }]}>
-              Add some delicious items to get started!
-            </Text>
-            <Pressable
-              style={[styles.browseButton, { backgroundColor: currentColors.secondary }]}
-              onPress={() => router.push('/')}
-            >
-              <Text style={[styles.browseButtonText, { color: currentColors.background }]}>
-                Browse Menu
+          {cart.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <IconSymbol name="cart.fill" size={80} color={currentColors.textSecondary} />
+              <Text style={[styles.emptyText, { color: currentColors.text }]}>
+                Your cart is empty
               </Text>
-            </Pressable>
-          </View>
-        ) : (
-          <>
-            <ScrollView
-              style={styles.cartList}
-              contentContainerStyle={styles.cartListContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {cart.map((item) => (
-                <View key={item.id} style={[styles.cartItem, { backgroundColor: currentColors.card, borderColor: currentColors.border }]}>
-                  <View style={[styles.imageContainer, { borderColor: currentColors.border }]}>
-                    <Image source={{ uri: item.image }} style={styles.itemImage} />
-                  </View>
-                  <View style={styles.itemDetails}>
-                    <Text style={[styles.itemName, { color: currentColors.text }]}>{item.name}</Text>
-                    <Text style={[styles.itemPrice, { color: currentColors.text }]}>
-                      ${item.price.toFixed(2)}
-                    </Text>
-                    <View style={styles.quantityContainer}>
-                      <Pressable
-                        style={[styles.quantityButton, { backgroundColor: currentColors.background, borderColor: currentColors.border }]}
-                        onPress={() => handleQuantityChange(item.id, -1)}
-                      >
-                        <IconSymbol name="minus" size={16} color={currentColors.secondary} />
-                      </Pressable>
-                      <Text style={[styles.quantity, { color: currentColors.text }]}>{item.quantity}</Text>
-                      <Pressable
-                        style={[styles.quantityButton, { backgroundColor: currentColors.background, borderColor: currentColors.border }]}
-                        onPress={() => handleQuantityChange(item.id, 1)}
-                      >
-                        <IconSymbol name="plus" size={16} color={currentColors.secondary} />
-                      </Pressable>
-                    </View>
-                  </View>
-                  <Pressable
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveItem(item.id)}
-                  >
-                    <IconSymbol name="trash" size={20} color={currentColors.textSecondary} />
-                  </Pressable>
-                </View>
-              ))}
-            </ScrollView>
-
-            {/* Summary */}
-            <View style={[styles.summary, { backgroundColor: currentColors.card, borderTopColor: currentColors.border }]}>
-              <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Subtotal</Text>
-                <Text style={[styles.summaryValue, { color: currentColors.text }]}>${subtotal.toFixed(2)}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Tax (8%)</Text>
-                <Text style={[styles.summaryValue, { color: currentColors.text }]}>${tax.toFixed(2)}</Text>
-              </View>
-              <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: currentColors.border }]}>
-                <Text style={[styles.totalLabel, { color: currentColors.text }]}>Total</Text>
-                <Text style={[styles.totalValue, { color: currentColors.secondary }]}>${total.toFixed(2)}</Text>
-              </View>
-              <Pressable
-                style={[styles.checkoutButton, { backgroundColor: currentColors.secondary }]}
-                onPress={handleCheckout}
+              <Text style={[styles.emptySubtext, { color: currentColors.textSecondary }]}>
+                Add some delicious items to get started!
+              </Text>
+              <LinearGradient
+                colors={[currentColors.secondary, currentColors.highlight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.browseButton}
               >
-                <Text style={[styles.checkoutButtonText, { color: currentColors.background }]}>
-                  Proceed to Checkout
-                </Text>
-                <IconSymbol name="arrow.right" size={20} color={currentColors.background} />
-              </Pressable>
+                <Pressable
+                  style={styles.browseButtonInner}
+                  onPress={() => router.push('/')}
+                >
+                  <Text style={[styles.browseButtonText, { color: currentColors.background }]}>
+                    Browse Menu
+                  </Text>
+                </Pressable>
+              </LinearGradient>
             </View>
-          </>
-        )}
-      </View>
-      <Dialog
-        visible={dialogVisible}
-        title={dialogType === 'remove' ? 'Remove Item' : 'Empty Cart'}
-        message={
-          dialogType === 'remove'
-            ? 'Are you sure you want to remove this item from your cart?'
-            : 'Please add items to your cart before checking out.'
-        }
-        buttons={
-          dialogType === 'remove'
-            ? [
-                {
-                  text: 'Cancel',
-                  onPress: () => setItemToRemove(null),
-                  style: 'cancel',
-                },
-                {
-                  text: 'Remove',
-                  onPress: handleConfirmRemove,
-                  style: 'destructive',
-                },
-              ]
-            : [
-                {
-                  text: 'OK',
-                  onPress: () => {},
-                  style: 'default',
-                },
-              ]
-        }
-        onHide={() => {
-          setDialogVisible(false);
-          setItemToRemove(null);
-        }}
-        currentColors={currentColors}
-      />
-    </SafeAreaView>
+          ) : (
+            <>
+              <ScrollView
+                style={styles.cartList}
+                contentContainerStyle={styles.cartListContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {cart.map((item) => (
+                  <LinearGradient
+                    key={item.id}
+                    colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.cartItem, { borderColor: currentColors.border }]}
+                  >
+                    <View style={[styles.imageContainer, { borderColor: currentColors.border }]}>
+                      <Image source={{ uri: item.image }} style={styles.itemImage} />
+                    </View>
+                    <View style={styles.itemDetails}>
+                      <Text style={[styles.itemName, { color: currentColors.text }]}>{item.name}</Text>
+                      <Text style={[styles.itemPrice, { color: currentColors.secondary }]}>
+                        ${item.price.toFixed(2)}
+                      </Text>
+                      <View style={styles.quantityContainer}>
+                        <Pressable
+                          style={[styles.quantityButton, { backgroundColor: currentColors.background, borderColor: currentColors.border }]}
+                          onPress={() => handleQuantityChange(item.id, -1)}
+                        >
+                          <IconSymbol name="minus" size={16} color={currentColors.secondary} />
+                        </Pressable>
+                        <Text style={[styles.quantity, { color: currentColors.text }]}>{item.quantity}</Text>
+                        <Pressable
+                          style={[styles.quantityButton, { backgroundColor: currentColors.background, borderColor: currentColors.border }]}
+                          onPress={() => handleQuantityChange(item.id, 1)}
+                        >
+                          <IconSymbol name="plus" size={16} color={currentColors.secondary} />
+                        </Pressable>
+                      </View>
+                    </View>
+                    <Pressable
+                      style={styles.removeButton}
+                      onPress={() => handleRemoveItem(item.id)}
+                    >
+                      <IconSymbol name="trash" size={20} color={currentColors.textSecondary} />
+                    </Pressable>
+                  </LinearGradient>
+                ))}
+              </ScrollView>
+
+              {/* Summary with Gradient */}
+              <LinearGradient
+                colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.summary, { borderTopColor: currentColors.border }]}
+              >
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Subtotal</Text>
+                  <Text style={[styles.summaryValue, { color: currentColors.text }]}>${subtotal.toFixed(2)}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Tax (8%)</Text>
+                  <Text style={[styles.summaryValue, { color: currentColors.text }]}>${tax.toFixed(2)}</Text>
+                </View>
+                <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: currentColors.border }]}>
+                  <Text style={[styles.totalLabel, { color: currentColors.text }]}>Total</Text>
+                  <Text style={[styles.totalValue, { color: currentColors.secondary }]}>${total.toFixed(2)}</Text>
+                </View>
+                <LinearGradient
+                  colors={[currentColors.secondary, currentColors.highlight]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.checkoutButton}
+                >
+                  <Pressable
+                    style={styles.checkoutButtonInner}
+                    onPress={handleCheckout}
+                  >
+                    <Text style={[styles.checkoutButtonText, { color: currentColors.background }]}>
+                      Proceed to Checkout
+                    </Text>
+                    <IconSymbol name="arrow.right" size={20} color={currentColors.background} />
+                  </Pressable>
+                </LinearGradient>
+              </LinearGradient>
+            </>
+          )}
+        </View>
+        <Dialog
+          visible={dialogVisible}
+          title={dialogType === 'remove' ? 'Remove Item' : 'Empty Cart'}
+          message={
+            dialogType === 'remove'
+              ? 'Are you sure you want to remove this item from your cart?'
+              : 'Please add items to your cart before checking out.'
+          }
+          buttons={
+            dialogType === 'remove'
+              ? [
+                  {
+                    text: 'Cancel',
+                    onPress: () => setItemToRemove(null),
+                    style: 'cancel',
+                  },
+                  {
+                    text: 'Remove',
+                    onPress: handleConfirmRemove,
+                    style: 'destructive',
+                  },
+                ]
+              : [
+                  {
+                    text: 'OK',
+                    onPress: () => {},
+                    style: 'default',
+                  },
+                ]
+          }
+          onHide={() => {
+            setDialogVisible(false);
+            setItemToRemove(null);
+          }}
+          currentColors={currentColors}
+        />
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
   },
@@ -213,12 +254,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 24,
     borderBottomWidth: 2,
+    boxShadow: '0px 6px 20px rgba(74, 215, 194, 0.3)',
+    elevation: 8,
   },
   headerTitle: {
     fontSize: 32,
     fontFamily: 'PlayfairDisplay_700Bold',
     marginBottom: 4,
     letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   itemCount: {
     fontSize: 14,
@@ -243,9 +289,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   browseButton: {
+    borderRadius: 0,
+    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.4)',
+    elevation: 8,
+  },
+  browseButtonInner: {
     paddingHorizontal: 32,
     paddingVertical: 14,
-    borderRadius: 0,
   },
   browseButtonText: {
     fontSize: 16,
@@ -265,13 +315,15 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     borderWidth: 2,
-    boxShadow: '0px 4px 16px rgba(212, 175, 55, 0.15)',
-    elevation: 4,
+    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.3)',
+    elevation: 8,
   },
   imageContainer: {
     borderRadius: 0,
     overflow: 'hidden',
     borderWidth: 2,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
+    elevation: 4,
   },
   itemImage: {
     width: 80,
@@ -305,6 +357,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
+    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.25)',
+    elevation: 4,
   },
   quantity: {
     fontSize: 16,
@@ -320,6 +374,8 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 120,
     borderTopWidth: 2,
+    boxShadow: '0px -6px 20px rgba(74, 215, 194, 0.3)',
+    elevation: 10,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -348,15 +404,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
   },
   checkoutButton: {
+    borderRadius: 0,
+    marginTop: 20,
+    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.5)',
+    elevation: 10,
+  },
+  checkoutButtonInner: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 16,
-    borderRadius: 0,
-    marginTop: 20,
     gap: 8,
-    boxShadow: '0px 4px 16px rgba(212, 175, 55, 0.3)',
-    elevation: 5,
   },
   checkoutButtonText: {
     fontSize: 16,

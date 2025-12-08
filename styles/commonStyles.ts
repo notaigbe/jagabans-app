@@ -15,6 +15,14 @@ const colorSchemes = {
       card: '#1A2838', // Dark navy card
       highlight: '#E5C158', // Lighter gold
       border: '#D4AF37', // Gold border
+      // Gradient colors
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
     dark: {
       background: '#0D1A2B', // Deep navy (almost black-blue)
@@ -26,6 +34,14 @@ const colorSchemes = {
       card: '#1A2838', // Dark navy card
       highlight: '#E5C158', // Lighter gold
       border: '#D4AF37', // Gold border
+      // Gradient colors
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
   },
   warm: {
@@ -39,6 +55,13 @@ const colorSchemes = {
       card: '#1A2838',
       highlight: '#E5C158',
       border: '#D4AF37',
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
     dark: {
       background: '#0D1A2B',
@@ -50,6 +73,13 @@ const colorSchemes = {
       card: '#1A2838',
       highlight: '#E5C158',
       border: '#D4AF37',
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
   },
   cool: {
@@ -63,6 +93,13 @@ const colorSchemes = {
       card: '#1A2838',
       highlight: '#E5C158',
       border: '#D4AF37',
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
     dark: {
       background: '#0D1A2B',
@@ -74,6 +111,13 @@ const colorSchemes = {
       card: '#1A2838',
       highlight: '#E5C158',
       border: '#D4AF37',
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
   },
   vibrant: {
@@ -87,6 +131,13 @@ const colorSchemes = {
       card: '#1A2838',
       highlight: '#E5C158',
       border: '#D4AF37',
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
     dark: {
       background: '#0D1A2B',
@@ -98,6 +149,13 @@ const colorSchemes = {
       card: '#1A2838',
       highlight: '#E5C158',
       border: '#D4AF37',
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
   },
   minimal: {
@@ -111,6 +169,13 @@ const colorSchemes = {
       card: '#1A2838',
       highlight: '#E5C158',
       border: '#D4AF37',
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
     dark: {
       background: '#0D1A2B',
@@ -122,6 +187,13 @@ const colorSchemes = {
       card: '#1A2838',
       highlight: '#E5C158',
       border: '#D4AF37',
+      gradientStart: '#0D1A2B',
+      gradientMid: '#1A3A2E',
+      gradientEnd: '#2A4A3E',
+      headerGradientStart: '#0D1A2B',
+      headerGradientEnd: '#1A3A2E',
+      cardGradientStart: '#1A2838',
+      cardGradientEnd: '#243848',
     },
   },
 };
@@ -139,11 +211,15 @@ export const buttonStyles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignSelf: 'center',
     width: '100%',
+    boxShadow: '0px 8px 24px rgba(74, 215, 194, 0.35)',
+    elevation: 8,
   },
   secondaryButton: {
     backgroundColor: colors.secondary,
     alignSelf: 'center',
     width: '100%',
+    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.35)',
+    elevation: 8,
   },
 });
 
@@ -171,7 +247,10 @@ export const commonStyles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     color: colors.text,
-    marginBottom: 10
+    marginBottom: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   text: {
     fontSize: 16,
@@ -197,8 +276,8 @@ export const commonStyles = StyleSheet.create({
     padding: 16,
     marginVertical: 8,
     width: '100%',
-    boxShadow: '0px 4px 16px rgba(212, 175, 55, 0.15)',
-    elevation: 5,
+    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.25)',
+    elevation: 8,
   },
   icon: {
     width: 60,
