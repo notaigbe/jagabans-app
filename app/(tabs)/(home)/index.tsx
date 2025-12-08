@@ -258,40 +258,44 @@ export default function HomeScreen() {
                       style={styles.menuItemImage}
                     />
                   </View>
-                  <LinearGradient
-                    colors={['#1A3A2E', '#1A3A2EE6', '#1A3A2ECC']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 1 }}
-                    style={styles.menuItemInfo}
-                  >
-                    <Text style={styles.menuItemName}>
-                      {item.name}
-                    </Text>
-                    <Text
-                      style={styles.menuItemDescription}
-                      numberOfLines={2}
+                  <View style={styles.menuItemInfoWrapper}>
+                    {/* Texture overlay */}
+                    <View style={styles.textureOverlay} />
+                    <LinearGradient
+                      colors={['rgba(26, 58, 46, 0.85)', 'rgba(26, 58, 46, 0.85)', 'rgba(26, 58, 46, 0.85)']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0, y: 1 }}
+                      style={styles.menuItemInfo}
                     >
-                      {item.description}
-                    </Text>
-                    <View style={styles.menuItemFooter}>
-                      <Text style={styles.menuItemPrice}>
-                        ${item.price.toFixed(2)}
+                      <Text style={styles.menuItemName}>
+                        {item.name}
                       </Text>
-                      <Pressable
-                        style={styles.addButton}
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          handleAddToCart(item);
-                        }}
+                      <Text
+                        style={styles.menuItemDescription}
+                        numberOfLines={2}
                       >
-                        <IconSymbol
-                          name="plus"
-                          size={20}
-                          color="#5FE8D0"
-                        />
-                      </Pressable>
-                    </View>
-                  </LinearGradient>
+                        {item.description}
+                      </Text>
+                      <View style={styles.menuItemFooter}>
+                        <Text style={styles.menuItemPrice}>
+                          ${item.price.toFixed(2)}
+                        </Text>
+                        <Pressable
+                          style={styles.addButton}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(item);
+                          }}
+                        >
+                          <IconSymbol
+                            name="plus"
+                            size={20}
+                            color="#5FE8D0"
+                          />
+                        </Pressable>
+                      </View>
+                    </LinearGradient>
+                  </View>
                 </Pressable>
               ))
             )}
@@ -457,8 +461,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 28,
     overflow: "hidden",
-    boxShadow: "0px 6px 20px rgba(95, 232, 208, 0.2)",
-    elevation: 6,
+    boxShadow: "0px 8px 24px rgba(212, 175, 55, 0.5)",
+    elevation: 8,
     backgroundColor: '#1A3A2E',
   },
   imageContainer: {
@@ -473,6 +477,22 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     resizeMode: 'cover',
+  },
+  menuItemInfoWrapper: {
+    position: 'relative',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    overflow: 'hidden',
+  },
+  textureOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    opacity: 0.15,
+    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,.05) 2px, rgba(255,255,255,.05) 4px)',
   },
   menuItemInfo: {
     padding: 24,
@@ -509,8 +529,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    boxShadow: "0px 3px 10px rgba(95, 232, 208, 0.4)",
-    elevation: 4,
+    boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.6)",
+    elevation: 6,
     backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: '#5FE8D0',

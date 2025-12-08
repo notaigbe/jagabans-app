@@ -58,59 +58,63 @@ export default function FloatingTabBar({
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <LinearGradient
-        colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[
-          styles.tabBar,
-          {
-            borderTopColor: currentColors.border,
-          },
-        ]}
-      >
-        {tabs.map((tab) => {
-          const active = isActive(tab.route);
-          const isCartTab = tab.name === 'cart';
-          
-          return (
-            <TouchableOpacity
-              key={tab.name}
-              style={styles.tab}
-              onPress={() => handleTabPress(tab.route)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.iconContainer}>
-                <IconSymbol
-                  name={tab.icon as any}
-                  size={24}
-                  color={active ? currentColors.secondary : currentColors.textSecondary}
-                />
-                {isCartTab && cartItemCount > 0 && (
-                  <LinearGradient
-                    colors={[currentColors.secondary, currentColors.highlight]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.badge}
-                  >
-                    <Text style={[styles.badgeText, { color: currentColors.background }]}>
-                      {cartItemCount > 99 ? '99+' : cartItemCount}
-                    </Text>
-                  </LinearGradient>
-                )}
-              </View>
-              <Text
-                style={[
-                  styles.label,
-                  { color: active ? currentColors.secondary : currentColors.textSecondary },
-                ]}
+      <View style={styles.tabBarWrapper}>
+        {/* Texture overlay */}
+        <View style={styles.textureOverlay} />
+        <LinearGradient
+          colors={['rgba(26, 40, 56, 0.95)', 'rgba(26, 40, 56, 0.95)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[
+            styles.tabBar,
+            {
+              borderTopColor: currentColors.border,
+            },
+          ]}
+        >
+          {tabs.map((tab) => {
+            const active = isActive(tab.route);
+            const isCartTab = tab.name === 'cart';
+            
+            return (
+              <TouchableOpacity
+                key={tab.name}
+                style={styles.tab}
+                onPress={() => handleTabPress(tab.route)}
+                activeOpacity={0.7}
               >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </LinearGradient>
+                <View style={styles.iconContainer}>
+                  <IconSymbol
+                    name={tab.icon as any}
+                    size={24}
+                    color={active ? currentColors.secondary : currentColors.textSecondary}
+                  />
+                  {isCartTab && cartItemCount > 0 && (
+                    <LinearGradient
+                      colors={[currentColors.secondary, currentColors.highlight]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.badge}
+                    >
+                      <Text style={[styles.badgeText, { color: currentColors.background }]}>
+                        {cartItemCount > 99 ? '99+' : cartItemCount}
+                      </Text>
+                    </LinearGradient>
+                  )}
+                </View>
+                <Text
+                  style={[
+                    styles.label,
+                    { color: active ? currentColors.secondary : currentColors.textSecondary },
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 }
@@ -123,6 +127,23 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: 'transparent',
   },
+  tabBarWrapper: {
+    position: 'relative',
+    width: '100%',
+    overflow: 'hidden',
+  },
+  textureOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    opacity: 0.05,
+    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,.1) 2px, rgba(255,255,255,.1) 4px)',
+    zIndex: 1,
+    pointerEvents: 'none',
+  },
   tabBar: {
     flexDirection: 'row',
     paddingVertical: 12,
@@ -131,7 +152,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     borderTopWidth: 2,
-    boxShadow: '0px -4px 20px rgba(212, 175, 55, 0.3)',
+    boxShadow: '0px -6px 24px rgba(212, 175, 55, 0.4)',
     elevation: 12,
   },
   tab: {
@@ -157,7 +178,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
-    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.5)',
+    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.6)',
     elevation: 6,
   },
   badgeText: {
