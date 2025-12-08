@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Pressable,
   Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,11 +20,13 @@ export default function CheckoutScreen() {
   useEffect(() => {
     setTabBarVisible(false);
     
-    Alert.alert(
-      'Platform Not Supported',
-      'Checkout is only available on iOS and Android mobile devices. Please use the mobile app to complete your purchase.',
-      [{ text: 'Go Back', onPress: () => router.back() }]
-    );
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Platform Not Supported',
+        'Checkout is only available on iOS and Android mobile devices. Please use the mobile app to complete your purchase.',
+        [{ text: 'Go Back', onPress: () => router.back() }]
+      );
+    }
 
     return () => setTabBarVisible(true);
   }, [router, setTabBarVisible]);
@@ -70,6 +73,12 @@ export default function CheckoutScreen() {
       fontWeight: 'bold',
     },
   });
+
+  if (Platform.OS !== 'web') {
+    // This should never render on native platforms
+    // because checkout.native.tsx will be used instead
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
