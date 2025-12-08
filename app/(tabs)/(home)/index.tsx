@@ -27,12 +27,14 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const menuCategories = [
   "All",
-  "Online Special",
   "Online Appetizers",
-  "Online Jollof Combos",
   "Online Beverages",
-  "Online Sides",
+  "Online Desserts",
+  "Online Jollof Combos",
+  "Online White Rice Combos",
   "Online Soups x Dips",
+  "Online Special",
+  "Online Sides",
 ];
 
 // Responsive font size calculation
@@ -52,7 +54,7 @@ const getResponsivePadding = (basePadding: number) => {
 export default function HomeScreen() {
   const router = useRouter();
   const { currentColors, menuItems, loadMenuItems, addToCart, getUnreadNotificationCount } = useApp();
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("Online Special");
   const [loading, setLoading] = useState(false);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -206,17 +208,13 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <View style={styles.headerContent}>
               {headerImage ? (
-                <Image 
-                  source={{ uri: headerImage }} 
-                  style={styles.logo}
-                  tintColor="#5FE8D0"
-                />
+                <Image source={{ uri: headerImage }} style={styles.logo} />
               ) : (
                 <View style={styles.logoPlaceholder}>
-                  <Text style={styles.logoText}>
-                    Jagabans
+                  <Text style={[styles.logoText, { color: currentColors.primary }]}>
+                    JAGABANS
                   </Text>
-                  <Text style={styles.logoSubtext}>
+                  <Text style={[styles.logoSubtext, { color: currentColors.secondary }]}>
                     LOS ANGELES
                   </Text>
                 </View>
@@ -224,17 +222,14 @@ export default function HomeScreen() {
             </View>
             <Pressable 
               onPress={() => router.push("/notifications")}
-              style={styles.notificationButton}
+              style={styles.menuButton}
             >
-              <IconSymbol
-                ios_icon_name="bell.fill"
-                android_material_icon_name="notifications"
-                size={28}
-                color="#FFFFFF"
-              />
+              <View style={styles.hamburgerLine} />
+              <View style={styles.hamburgerLine} />
+              <View style={styles.hamburgerLine} />
               {unreadCount > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>
+                <View style={[styles.notificationBadge, { backgroundColor: currentColors.primary }]}>
+                  <Text style={[styles.notificationBadgeText, { color: currentColors.background }]}>
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Text>
                 </View>
@@ -411,6 +406,9 @@ export default function HomeScreen() {
                     paddingHorizontal: getResponsivePadding(16),
                     paddingVertical: getResponsivePadding(10),
                   },
+                  selectedCategory === category && {
+                    color: currentColors.background,
+                  },
                 ]}
                 onPress={() => handleCategoryPress(category)}
               >
@@ -436,8 +434,13 @@ export default function HomeScreen() {
         {/* Menu Items */}
         {loading || menuItems.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#5FE8D0" />
-            <Text style={styles.loadingText}>
+            <ActivityIndicator size="large" color={currentColors.primary} />
+            <Text
+              style={[
+                styles.loadingText,
+                { color: currentColors.textSecondary },
+              ]}
+            >
               Loading menu...
             </Text>
           </View>
@@ -459,32 +462,45 @@ export default function HomeScreen() {
               filteredItems.map((item) => (
                 <Pressable
                   key={item.id}
-                  style={styles.menuItem}
+                  style={[
+                    styles.menuItem,
+                    { backgroundColor: currentColors.card },
+                  ]}
                   onPress={() => handleItemPress(item.id)}
                 >
-                  <View style={styles.imageContainer}>
+                  <View style={[styles.imageContainer, { borderColor: currentColors.border }]}>
                     <Image
                       source={{ uri: item.image }}
                       style={styles.menuItemImage}
                     />
+                    <View style={styles.imageOverlay} />
                   </View>
-                  <View style={styles.menuItemInfoWrapper}>
-                    {/* Texture overlay */}
-                    <View style={styles.textureOverlay} />
-                    <LinearGradient
-                      colors={['rgba(26, 58, 46, 0.85)', 'rgba(26, 58, 46, 0.85)', 'rgba(26, 58, 46, 0.85)']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={styles.menuItemInfo}
+                  <View style={styles.menuItemInfo}>
+                    <Text
+                      style={[
+                        styles.menuItemName,
+                        { color: currentColors.text },
+                      ]}
                     >
-                      <Text style={styles.menuItemName}>
-                        {item.name}
-                      </Text>
+                      {item.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.menuItemDescription,
+                        { color: currentColors.textSecondary },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {item.description}
+                    </Text>
+                    <View style={styles.menuItemFooter}>
                       <Text
-                        style={styles.menuItemDescription}
-                        numberOfLines={2}
+                        style={[
+                          styles.menuItemPrice,
+                          { color: currentColors.primary },
+                        ]}
                       >
-                        {item.description}
+                        ${item.price.toFixed(2)}
                       </Text>
                       <View style={styles.menuItemFooter}>
                         <Text style={styles.menuItemPrice}>
@@ -520,7 +536,7 @@ export default function HomeScreen() {
         onHide={() => setToastVisible(false)}
         currentColors={currentColors}
       />
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -528,9 +544,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerBackground: {
-    backgroundColor: '#0D1A2B',
-    paddingBottom: 20,
+  headerGradient: {
+    paddingBottom: 16,
   },
   headerSafeArea: {
     width: '100%',
@@ -540,41 +555,46 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   headerContent: {
     flex: 1,
     alignItems: "center",
   },
   logo: {
-    width: 200,
-    height: 70,
+    width: 180,
+    height: 60,
     resizeMode: "contain",
   },
   logoPlaceholder: {
     alignItems: 'center',
   },
   logoText: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'PlayfairDisplay_900Black',
-    letterSpacing: 3,
-    fontStyle: 'italic',
-    color: '#5FE8D0',
+    letterSpacing: 2,
   },
   logoSubtext: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    letterSpacing: 5,
-    marginTop: -2,
-    color: '#5FE8D0',
+    letterSpacing: 4,
+    marginTop: -4,
   },
-  notificationButton: {
+  menuButton: {
     position: 'relative',
     width: 40,
     height: 40,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 4,
+  },
+  hamburgerLine: {
+    width: 24,
+    height: 2,
+    backgroundColor: '#D4AF37',
+    marginVertical: 3,
+    borderRadius: 1,
   },
   notificationBadge: {
     position: 'absolute',
@@ -586,13 +606,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
-    backgroundColor: '#D4AF37',
   },
   notificationBadgeText: {
     fontSize: 10,
     fontWeight: 'bold',
     fontFamily: 'Inter_700Bold',
-    color: '#0D1A2B',
   },
   stickySearchContainer: {
     position: 'absolute',
@@ -705,6 +723,22 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
     paddingTop: 20,
   },
+  sectionHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 16,
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    fontSize: 28,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  divider: {
+    width: 80,
+    height: 1,
+  },
   categoriesContainer: {
     maxHeight: 60,
     marginBottom: 20,
@@ -712,15 +746,16 @@ const styles = StyleSheet.create({
   categoriesContent: {
     paddingHorizontal: 20,
     paddingVertical: 8,
-    gap: 6,
+    gap: 8,
   },
   categoryButton: {
-    borderRadius: 12,
-    marginRight: 6,
+    borderRadius: 20,
+    borderColor: '#ccccccff',
+    marginRight: 8,
     minWidth: 80,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
+    borderWidth: 1,
   },
   categoryText: {
     fontWeight: "600",
@@ -737,7 +772,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
-    color: '#B0B8C1',
   },
   emptyContainer: {
     flex: 1,
@@ -757,18 +791,17 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     borderRadius: 16,
-    marginBottom: 28,
+    marginBottom: 24,
     overflow: "hidden",
-    boxShadow: "0px 8px 24px rgba(212, 175, 55, 0.5)",
-    elevation: 8,
-    backgroundColor: '#1A3A2E',
+    boxShadow: "0px 4px 16px rgba(74, 215, 194, 0.15)",
+    elevation: 5,
   },
   imageContainer: {
     width: "100%",
-    height: 260,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    height: 240,
+    borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 2,
     position: 'relative',
   },
   menuItemImage: {
@@ -776,40 +809,28 @@ const styles = StyleSheet.create({
     height: "100%",
     resizeMode: 'cover',
   },
-  menuItemInfoWrapper: {
-    position: 'relative',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    overflow: 'hidden',
-  },
-  textureOverlay: {
+  imageOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'transparent',
-    opacity: 0.15,
-    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,.05) 2px, rgba(255,255,255,.05) 4px)',
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
   },
   menuItemInfo: {
-    padding: 24,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+    padding: 10,
   },
   menuItemName: {
-    fontSize: 26,
+    fontSize: 24,
     fontFamily: 'PlayfairDisplay_700Bold',
-    marginBottom: 10,
+    marginBottom: 8,
     letterSpacing: 0.5,
-    color: '#FFFFFF',
   },
   menuItemDescription: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    marginBottom: 18,
-    lineHeight: 24,
-    color: '#FFFFFF',
+    marginBottom: 16,
+    lineHeight: 22,
   },
   menuItemFooter: {
     flexDirection: "row",
@@ -817,20 +838,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   menuItemPrice: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: 'Inter_700Bold',
-    color: '#5FE8D0',
   },
   addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.6)",
-    elevation: 6,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#5FE8D0',
+    boxShadow: "0px 2px 8px rgba(215, 194, 74, 0.3)",
+    elevation: 3,
   },
 });
