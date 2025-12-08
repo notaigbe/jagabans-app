@@ -17,10 +17,10 @@ import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 import Toast from '@/components/Toast';
 import { supabase } from '@/app/integrations/supabase/client';
-import {
-  SQIPCardEntry,
-  SQIPCore,
-} from 'react-native-square-in-app-payments';
+// import {
+//   SQIPCardEntry,
+//   SQIPCore,
+// } from 'react-native-square-in-app-payments';
 
 interface StoredCard {
   id: string;
@@ -30,8 +30,8 @@ interface StoredCard {
   expYear: number;
   cardholderName?: string;
   isDefault: boolean;
-  squareCardId: string;
-  squareCustomerId: string;
+  // squareCardId: string;
+  // squareCustomerId: string;
 }
 
 export default function PaymentMethodsScreen() {
@@ -51,15 +51,15 @@ export default function PaymentMethodsScreen() {
     setToastVisible(true);
   };
 
-  const initializeSquare = async () => {
-    try {
-      const applicationId = 'sandbox-sq0idb-YOUR_APP_ID'; // Replace with actual app ID
-      await SQIPCore.setSquareApplicationId(applicationId);
-      console.log('Square SDK initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize Square SDK:', error);
-    }
-  };
+  // const initializeSquare = async () => {
+  //   try {
+  //     const applicationId = 'sandbox-sq0idb-YOUR_APP_ID'; // Replace with actual app ID
+  //     await SQIPCore.setSquareApplicationId(applicationId);
+  //     console.log('Square SDK initialized successfully');
+  //   } catch (error) {
+  //     console.error('Failed to initialize Square SDK:', error);
+  //   }
+  // };
 
   const loadStoredCards = useCallback(async () => {
     if (!userProfile) return;
@@ -67,7 +67,7 @@ export default function PaymentMethodsScreen() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('square_cards')
+        .from('payment_methods')
         .select('*')
         .eq('user_id', userProfile.id)
         .order('is_default', { ascending: false })
@@ -78,14 +78,14 @@ export default function PaymentMethodsScreen() {
       if (data && data.length > 0) {
         const cards: StoredCard[] = data.map((card: any) => ({
           id: card.id,
-          cardBrand: card.card_brand,
-          last4: card.last_4,
-          expMonth: card.exp_month,
-          expYear: card.exp_year,
+          cardBrand: card.type,
+          last4: card.card_number.slice(-4),
+          expMonth: card.expiry_date.slice(0, 2),
+          expYear: card.expiry_date.slice(2, 4),
           cardholderName: card.cardholder_name,
           isDefault: card.is_default,
-          squareCardId: card.square_card_id,
-          squareCustomerId: card.square_customer_id,
+          // squareCardId: card.square_card_id,
+          // squareCustomerId: card.square_customer_id,
         }));
         
         setStoredCards(cards);
@@ -103,113 +103,113 @@ export default function PaymentMethodsScreen() {
   useEffect(() => {
     if (userProfile) {
       loadStoredCards();
-      initializeSquare();
+      // initializeSquare();
     }
   }, [userProfile, loadStoredCards]);
 
-  const handleAddCard = async () => {
-    try {
-      setProcessing(true);
+  // const handleAddCard = async () => {
+  //   try {
+  //     setProcessing(true);
       
-      await SQIPCardEntry.startCardEntryFlow(
-        {
-          collectPostalCode: true,
-          skipCardHolderName: false,
-        },
-        async (cardDetails) => {
-          console.log('Card nonce received:', cardDetails.nonce);
+  //     await SQIPCardEntry.startCardEntryFlow(
+  //       {
+  //         collectPostalCode: true,
+  //         skipCardHolderName: false,
+  //       },
+  //       async (cardDetails) => {
+  //         console.log('Card nonce received:', cardDetails.nonce);
           
-          // Here you would typically make a small charge or create a customer
-          // For now, we'll show a message that the card needs to be added during checkout
-          showToast('info', 'Please add your card during checkout to save it for future use.');
-          setProcessing(false);
-        },
-        (error) => {
-          console.error('Card entry error:', error);
-          showToast('error', error.message || 'Failed to capture card information');
-          setProcessing(false);
-        },
-        () => {
-          console.log('Card entry cancelled');
-          setProcessing(false);
-        }
-      );
-    } catch (error) {
-      console.error('Failed to start card entry:', error);
-      showToast('error', 'Failed to open card entry form');
-      setProcessing(false);
-    }
-  };
+  //         // Here you would typically make a small charge or create a customer
+  //         // For now, we'll show a message that the card needs to be added during checkout
+  //         showToast('info', 'Please add your card during checkout to save it for future use.');
+  //         setProcessing(false);
+  //       },
+  //       (error) => {
+  //         console.error('Card entry error:', error);
+  //         showToast('error', error.message || 'Failed to capture card information');
+  //         setProcessing(false);
+  //       },
+  //       () => {
+  //         console.log('Card entry cancelled');
+  //         setProcessing(false);
+  //       }
+  //     );
+  //   } catch (error) {
+  //     console.error('Failed to start card entry:', error);
+  //     showToast('error', 'Failed to open card entry form');
+  //     setProcessing(false);
+  //   }
+  // };
 
-  const handleSetDefault = async (cardId: string) => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+  // const handleSetDefault = async (cardId: string) => {
+  //   if (Platform.OS !== 'web') {
+  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  //   }
 
-    try {
-      setProcessing(true);
+  //   try {
+  //     setProcessing(true);
 
-      // Update all cards to not be default
-      await supabase
-        .from('square_cards')
-        .update({ is_default: false })
-        .eq('user_id', userProfile!.id);
+  //     // Update all cards to not be default
+  //     await supabase
+  //       .from('square_cards')
+  //       .update({ is_default: false })
+  //       .eq('user_id', userProfile!.id);
 
-      // Set the selected card as default
-      const { error } = await supabase
-        .from('square_cards')
-        .update({ is_default: true })
-        .eq('id', cardId);
+  //     // Set the selected card as default
+  //     const { error } = await supabase
+  //       .from('square_cards')
+  //       .update({ is_default: true })
+  //       .eq('id', cardId);
 
-      if (error) throw error;
+  //     if (error) throw error;
 
-      showToast('success', 'Default card updated successfully');
-      await loadStoredCards();
-    } catch (error) {
-      console.error('Error setting default card:', error);
-      showToast('error', 'Failed to update default card');
-    } finally {
-      setProcessing(false);
-    }
-  };
+  //     showToast('success', 'Default card updated successfully');
+  //     await loadStoredCards();
+  //   } catch (error) {
+  //     console.error('Error setting default card:', error);
+  //     showToast('error', 'Failed to update default card');
+  //   } finally {
+  //     setProcessing(false);
+  //   }
+  // };
 
-  const handleRemoveCard = (cardId: string) => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+  // const handleRemoveCard = (cardId: string) => {
+  //   if (Platform.OS !== 'web') {
+  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  //   }
 
-    Alert.alert(
-      'Remove Payment Method',
-      'Are you sure you want to remove this payment method?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setProcessing(true);
+  //   Alert.alert(
+  //     'Remove Payment Method',
+  //     'Are you sure you want to remove this payment method?',
+  //     [
+  //       { text: 'Cancel', style: 'cancel' },
+  //       {
+  //         text: 'Remove',
+  //         style: 'destructive',
+  //         onPress: async () => {
+  //           try {
+  //             setProcessing(true);
 
-              const { error } = await supabase
-                .from('square_cards')
-                .delete()
-                .eq('id', cardId);
+  //             const { error } = await supabase
+  //               .from('square_cards')
+  //               .delete()
+  //               .eq('id', cardId);
 
-              if (error) throw error;
+  //             if (error) throw error;
 
-              showToast('success', 'Payment method removed successfully');
-              await loadStoredCards();
-            } catch (error) {
-              console.error('Error removing card:', error);
-              showToast('error', 'Failed to remove payment method');
-            } finally {
-              setProcessing(false);
-            }
-          },
-        },
-      ]
-    );
-  };
+  //             showToast('success', 'Payment method removed successfully');
+  //             await loadStoredCards();
+  //           } catch (error) {
+  //             console.error('Error removing card:', error);
+  //             showToast('error', 'Failed to remove payment method');
+  //           } finally {
+  //             setProcessing(false);
+  //           }
+  //         },
+  //       },
+  //     ]
+  //   );
+  // };
 
   const getCardBrandIcon = (brand: string) => {
     const brandLower = brand.toLowerCase();

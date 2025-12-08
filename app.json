@@ -1,34 +1,34 @@
 {
   "expo": {
     "name": "Ooosum Foods LLC",
-    "slug": "Ooosum Foods LLC",
+    "slug": "ooosum-foods-llc",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/9fd556bb-ad33-4d32-a5ad-b20988c68b2a.jpeg",
+    "icon": "./assets/images/jagabans-circle.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/9fd556bb-ad33-4d32-a5ad-b20988c68b2a.jpeg",
+      "image": "./assets/images/jagabans-circle.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Natively",
+      "bundleIdentifier": "com.ooosumfoods.jagabansla",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/9fd556bb-ad33-4d32-a5ad-b20988c68b2a.jpeg",
+        "foregroundImage": "./assets/images/jagabans-circle.png",
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Natively"
+      "package": "com.ooosumfoods.jagabansla"
     },
     "web": {
-      "favicon": "./assets/images/9fd556bb-ad33-4d32-a5ad-b20988c68b2a.jpeg",
+      "favicon": "./assets/images/jagabans-circle.png",
       "bundler": "metro"
     },
     "plugins": [
@@ -41,7 +41,10 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "94e71267-25cb-411f-88e6-37bafccde801"
+      }
     }
   },
   "scheme": "Ooosum Foods LLC"
