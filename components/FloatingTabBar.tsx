@@ -32,7 +32,7 @@ export default function FloatingTabBar({
   tabs,
   containerWidth = 350,
   borderRadius = 0,
-  bottomMargin = 20,
+  bottomMargin = 0,
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -58,70 +58,59 @@ export default function FloatingTabBar({
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <View 
+      <LinearGradient
+        colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={[
-          styles.container, 
-          { 
-            marginBottom: bottomMargin,
-          }
+          styles.tabBar,
+          {
+            borderTopColor: currentColors.border,
+          },
         ]}
       >
-        <LinearGradient
-          colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.tabBar,
-            {
-              maxWidth: containerWidth,
-              borderRadius,
-              borderColor: currentColors.border,
-            },
-          ]}
-        >
-          {tabs.map((tab) => {
-            const active = isActive(tab.route);
-            const isCartTab = tab.name === 'cart';
-            
-            return (
-              <TouchableOpacity
-                key={tab.name}
-                style={styles.tab}
-                onPress={() => handleTabPress(tab.route)}
-                activeOpacity={0.7}
+        {tabs.map((tab) => {
+          const active = isActive(tab.route);
+          const isCartTab = tab.name === 'cart';
+          
+          return (
+            <TouchableOpacity
+              key={tab.name}
+              style={styles.tab}
+              onPress={() => handleTabPress(tab.route)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconContainer}>
+                <IconSymbol
+                  name={tab.icon as any}
+                  size={24}
+                  color={active ? currentColors.secondary : currentColors.textSecondary}
+                />
+                {isCartTab && cartItemCount > 0 && (
+                  <LinearGradient
+                    colors={[currentColors.secondary, currentColors.highlight]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.badge}
+                  >
+                    <Text style={[styles.badgeText, { color: currentColors.background }]}>
+                      {cartItemCount > 99 ? '99+' : cartItemCount}
+                    </Text>
+                  </LinearGradient>
+                )}
+              </View>
+              <Text
+                style={[
+                  styles.label,
+                  { color: active ? currentColors.secondary : currentColors.textSecondary },
+                ]}
               >
-                <View style={styles.iconContainer}>
-                  <IconSymbol
-                    name={tab.icon as any}
-                    size={24}
-                    color={active ? currentColors.secondary : currentColors.textSecondary}
-                  />
-                  {isCartTab && cartItemCount > 0 && (
-                    <LinearGradient
-                      colors={[currentColors.secondary, currentColors.highlight]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.badge}
-                    >
-                      <Text style={[styles.badgeText, { color: currentColors.background }]}>
-                        {cartItemCount > 99 ? '99+' : cartItemCount}
-                      </Text>
-                    </LinearGradient>
-                  )}
-                </View>
-                <Text
-                  style={[
-                    styles.label,
-                    { color: active ? currentColors.secondary : currentColors.textSecondary },
-                  ]}
-                >
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </LinearGradient>
-      </View>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -133,23 +122,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: 'transparent',
-    pointerEvents: 'box-none',
-  },
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    pointerEvents: 'box-none',
   },
   tabBar: {
     flexDirection: 'row',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    width: '90%',
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+    width: '100%',
     justifyContent: 'space-around',
     alignItems: 'center',
-    boxShadow: '0px 10px 30px rgba(212, 175, 55, 0.4)',
+    borderTopWidth: 2,
+    boxShadow: '0px -4px 20px rgba(212, 175, 55, 0.3)',
     elevation: 12,
-    borderWidth: 2,
   },
   tab: {
     flex: 1,
