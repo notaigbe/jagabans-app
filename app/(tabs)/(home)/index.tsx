@@ -61,8 +61,7 @@ export default function HomeScreen() {
   
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
-  const headerHeight = useRef(new Animated.Value(1)).current;
-  const searchBarTop = useRef(new Animated.Value(0)).current;
+  const searchBarSticky = useRef(new Animated.Value(0)).current;
   
   // Toast state
   const [toastVisible, setToastVisible] = useState(false);
@@ -106,40 +105,26 @@ export default function HomeScreen() {
   // Handle scroll animations
   useEffect(() => {
     const listener = scrollY.addListener(({ value }) => {
-      // Hide header when scrolling down past 50px
+      // Make search bar sticky when scrolling down past 50px
       if (value > 50) {
-        Animated.parallel([
-          Animated.timing(headerHeight, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-          Animated.timing(searchBarTop, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-        ]).start();
+        Animated.timing(searchBarSticky, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: false,
+        }).start();
       } else {
-        Animated.parallel([
-          Animated.timing(headerHeight, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-          Animated.timing(searchBarTop, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-        ]).start();
+        Animated.timing(searchBarSticky, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: false,
+        }).start();
       }
     });
 
     return () => {
       scrollY.removeListener(listener);
     };
-  }, [scrollY, headerHeight, searchBarTop]);
+  }, [scrollY, searchBarSticky]);
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
@@ -170,21 +155,6 @@ export default function HomeScreen() {
     showToast("success", `1 ${item.name} Added to cart`);
   };
 
-  const animatedHeaderHeight = headerHeight.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 120],
-  });
-
-  const animatedHeaderOpacity = headerHeight.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-
-  const isSearchBarSticky = searchBarTop.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-
   return (
     <LinearGradient
       colors={['#0D1A2B', '#1A2838', '#2A3848', '#3A4858', '#4A5868', '#5A6878', '#D4AF37']}
@@ -192,17 +162,8 @@ export default function HomeScreen() {
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >
-      {/* Animated Header */}
-      <Animated.View 
-        style={[
-          styles.headerBackground,
-          {
-            height: animatedHeaderHeight,
-            opacity: animatedHeaderOpacity,
-            overflow: 'hidden',
-          }
-        ]}
-      >
+      {/* Fixed Header */}
+      <View style={styles.headerBackground}>
         <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
           <View style={styles.header}>
             <View style={styles.headerContent}>
@@ -236,23 +197,24 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         </SafeAreaView>
-      </Animated.View>
+      </View>
 
-      {/* Sticky Search Bar */}
+      {/* Sticky Search Bar - positioned below header */}
       <Animated.View 
         style={[
           styles.stickySearchContainer,
           {
-            transform: [{
-              translateY: searchBarTop.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 0],
-              })
-            }]
+            top: searchBarSticky.interpolate({
+              inputRange: [0, 1],
+              outputRange: [120, 0],
+            }),
           }
         ]}
       >
-        <SafeAreaView edges={['top']} style={styles.searchSafeArea}>
+        <SafeAreaView edges={searchBarSticky.interpolate({
+          inputRange: [0, 1],
+          outputRange: [[], ['top']],
+        }) as any} style={styles.searchSafeArea}>
           <View style={styles.searchBarWrapper}>
             <View style={styles.searchBarContainer}>
               <IconSymbol
@@ -284,8 +246,8 @@ export default function HomeScreen() {
             {/* Category Dropdown Button (visible when sticky) */}
             <Animated.View
               style={{
-                opacity: searchBarTop,
-                width: searchBarTop.interpolate({
+                opacity: searchBarSticky,
+                width: searchBarSticky.interpolate({
                   inputRange: [0, 1],
                   outputRange: [0, 50],
                 }),
@@ -377,13 +339,16 @@ export default function HomeScreen() {
         )}
         scrollEventThrottle={16}
       >
-        {/* Categories - Hidden when sticky */}
+        {/* Categories - Below search bar when at top, hidden when sticky */}
         <Animated.View
           style={{
-            opacity: headerHeight,
-            height: headerHeight.interpolate({
+            opacity: searchBarSticky.interpolate({
               inputRange: [0, 1],
-              outputRange: [0, 80],
+              outputRange: [1, 0],
+            }),
+            height: searchBarSticky.interpolate({
+              inputRange: [0, 1],
+              outputRange: [80, 0],
             }),
             overflow: 'hidden',
           }}
@@ -548,11 +513,9 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 999,
+    zIndex: 1000,
     backgroundColor: '#0D1A2B',
-  },
-  headerGradient: {
-    paddingBottom: 16,
+    height: 120,
   },
   headerSafeArea: {
     width: '100%',
@@ -621,10 +584,9 @@ const styles = StyleSheet.create({
   },
   stickySearchContainer: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
-    zIndex: 1000,
+    zIndex: 999,
     backgroundColor: '#0D1A2B',
     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.3)',
     elevation: 8,
@@ -724,30 +686,14 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginTop: 70,
+    marginTop: 190,
   },
   scrollContent: {
     paddingBottom: 120,
-    paddingTop: 20,
-  },
-  sectionHeader: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 16,
-    alignItems: 'center',
-  },
-  sectionTitle: {
-    fontSize: 28,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  divider: {
-    width: 80,
-    height: 1,
+    paddingTop: 0,
   },
   categoriesContainer: {
-    maxHeight: 60,
+    maxHeight: 80,
     marginBottom: 20,
   },
   categoriesContent: {
