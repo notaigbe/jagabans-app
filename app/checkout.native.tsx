@@ -117,7 +117,7 @@ function CheckoutContent() {
   //Dialog state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogType, setDialogType] = useState<'remove' | 'empty'>('remove');
-  
+
   // Order state for realtime updates
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
@@ -241,7 +241,6 @@ function CheckoutContent() {
       payment_status: 'pending',
       delivery_address: orderType === 'delivery' ? (validatedAddress || deliveryAddress) : null,
       pickup_notes: orderType === 'pickup' ? pickupNotes : null,
-      payment_gateway: 'square',
     })
     .select()
     .single();
