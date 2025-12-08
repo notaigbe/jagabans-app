@@ -182,8 +182,8 @@ export default function HomeScreen() {
               style={[
                 styles.categoryButton,
                 {
-                  backgroundColor: selectedCategory === category ? '#E5A84A' : '#1A3A2E',
-                  borderColor: selectedCategory === category ? '#E5A84A' : '#4AD7C2',
+                  backgroundColor: selectedCategory === category ? '#F5A623' : '#1A3A2E',
+                  borderColor: selectedCategory === category ? '#F5A623' : '#4AD7C2',
                   paddingHorizontal: getResponsivePadding(16),
                   paddingVertical: getResponsivePadding(10),
                 },
