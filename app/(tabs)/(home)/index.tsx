@@ -24,14 +24,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const menuCategories = [
   "All",
-  "Online Appetizers",
-  "Online Beverages",
-  "Online Desserts",
-  "Online Jollof Combos",
-  "Online White Rice Combos",
-  "Online Soups x Dips",
   "Online Special",
+  "Online Appetizers",
+  "Online Jollof Combos",
+  "Online Beverages",
   "Online Sides",
+  "Online Soups x Dips",
 ];
 
 // Responsive font size calculation
@@ -51,7 +49,7 @@ const getResponsivePadding = (basePadding: number) => {
 export default function HomeScreen() {
   const router = useRouter();
   const { currentColors, menuItems, loadMenuItems, addToCart, getUnreadNotificationCount } = useApp();
-  const [selectedCategory, setSelectedCategory] = useState("Online Special");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(false);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
   // Toast state
@@ -119,7 +117,12 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: currentColors.background }]}>
+    <LinearGradient
+      colors={['#0D1A2B', '#1A2838', '#2A3848', '#3A4858', '#4A5868', '#5A6878', '#D4AF37']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.container}
+    >
       {/* Header with Gradient */}
       <LinearGradient
         colors={['#0D1A2B', '#1A2838', '#2A3848', '#3A4858', '#D4AF37']}
@@ -167,14 +170,6 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Online Special Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: currentColors.primary }]}>
-            Online Special
-          </Text>
-          <View style={[styles.divider, { backgroundColor: currentColors.primary }]} />
-        </View>
-
         {/* Categories */}
         <ScrollView
           horizontal
@@ -188,14 +183,10 @@ export default function HomeScreen() {
               style={[
                 styles.categoryButton,
                 {
-                  backgroundColor: currentColors.card,
-                  borderColor: currentColors.border,
+                  backgroundColor: selectedCategory === category ? '#E5A84A' : '#1A3A2E',
+                  borderColor: selectedCategory === category ? '#E5A84A' : '#4AD7C2',
                   paddingHorizontal: getResponsivePadding(16),
                   paddingVertical: getResponsivePadding(10),
-                },
-                selectedCategory === category && {
-                  backgroundColor: currentColors.secondary,
-                  borderColor: currentColors.secondary,
                 },
               ]}
               onPress={() => handleCategoryPress(category)}
@@ -204,11 +195,8 @@ export default function HomeScreen() {
                 style={[
                   styles.categoryText,
                   {
-                    color: currentColors.text,
+                    color: selectedCategory === category ? '#1A5A3E' : '#FFFFFF',
                     fontSize: getResponsiveFontSize(13),
-                  },
-                  selectedCategory === category && {
-                    color: currentColors.background,
                   },
                 ]}
                 numberOfLines={1}
@@ -220,6 +208,14 @@ export default function HomeScreen() {
             </Pressable>
           ))}
         </ScrollView>
+
+        {/* Online Special Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: currentColors.primary }]}>
+            Online Special
+          </Text>
+          <View style={[styles.divider, { backgroundColor: currentColors.primary }]} />
+        </View>
 
         {/* Menu Items */}
         {loading || menuItems.length === 0 ? (
@@ -329,7 +325,7 @@ export default function HomeScreen() {
         onHide={() => setToastVisible(false)}
         currentColors={currentColors}
       />
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -411,9 +407,32 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 120,
   },
+  categoriesContainer: {
+    maxHeight: 60,
+    marginBottom: 20,
+    marginTop: 20,
+  },
+  categoriesContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  categoryButton: {
+    borderRadius: 0,
+    marginRight: 6,
+    minWidth: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+  },
+  categoryText: {
+    fontWeight: "600",
+    textAlign: "center",
+    fontFamily: 'Inter_600SemiBold',
+  },
   sectionHeader: {
     paddingHorizontal: 20,
-    paddingTop: 32,
+    paddingTop: 12,
     paddingBottom: 20,
     alignItems: 'flex-start',
   },
@@ -426,28 +445,6 @@ const styles = StyleSheet.create({
   divider: {
     width: 100,
     height: 2,
-  },
-  categoriesContainer: {
-    maxHeight: 60,
-    marginBottom: 20,
-  },
-  categoriesContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  categoryButton: {
-    borderRadius: 0,
-    marginRight: 8,
-    minWidth: 80,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-  },
-  categoryText: {
-    fontWeight: "600",
-    textAlign: "center",
-    fontFamily: 'Inter_600SemiBold',
   },
   loadingContainer: {
     flex: 1,
