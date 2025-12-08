@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,9 @@ import {
   Platform,
   Dimensions,
   ActivityIndicator,
+  TextInput,
+  Animated,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -52,6 +55,14 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(false);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  
+  // Animation values
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const headerHeight = useRef(new Animated.Value(1)).current;
+  const searchBarTop = useRef(new Animated.Value(0)).current;
+  
   // Toast state
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -91,15 +102,57 @@ export default function HomeScreen() {
     }
   }, [menuItems.length, loadMenuItems]);
 
-  const filteredItems =
-    selectedCategory === "All"
-      ? menuItems
-      : menuItems.filter((item) => item.category === selectedCategory);
+  // Handle scroll animations
+  useEffect(() => {
+    const listener = scrollY.addListener(({ value }) => {
+      // Hide header when scrolling down past 50px
+      if (value > 50) {
+        Animated.parallel([
+          Animated.timing(headerHeight, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+          Animated.timing(searchBarTop, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+        ]).start();
+      } else {
+        Animated.parallel([
+          Animated.timing(headerHeight, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+          Animated.timing(searchBarTop, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+        ]).start();
+      }
+    });
+
+    return () => {
+      scrollY.removeListener(listener);
+    };
+  }, [scrollY, headerHeight, searchBarTop]);
+
+  const filteredItems = menuItems.filter((item) => {
+    const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
+    const matchesSearch = searchQuery === "" || 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const handleCategoryPress = (category: string) => {
     console.log("Category selected:", category);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedCategory(category);
+    setShowCategoryDropdown(false);
   };
 
   const handleItemPress = (itemId: string) => {
@@ -116,6 +169,21 @@ export default function HomeScreen() {
     showToast("success", `1 ${item.name} Added to cart`);
   };
 
+  const animatedHeaderHeight = headerHeight.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 120],
+  });
+
+  const animatedHeaderOpacity = headerHeight.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  const isSearchBarSticky = searchBarTop.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
   return (
     <LinearGradient
       colors={['#0D1A2B', '#1A2838', '#2A3848', '#3A4858', '#4A5868', '#5A6878', '#D4AF37']}
@@ -123,8 +191,17 @@ export default function HomeScreen() {
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >
-      {/* Header with Dark Green Background */}
-      <View style={styles.headerBackground}>
+      {/* Animated Header */}
+      <Animated.View 
+        style={[
+          styles.headerBackground,
+          {
+            height: animatedHeaderHeight,
+            opacity: animatedHeaderOpacity,
+            overflow: 'hidden',
+          }
+        ]}
+      >
         <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
           <View style={styles.header}>
             <View style={styles.headerContent}>
@@ -165,59 +242,196 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         </SafeAreaView>
-      </View>
+      </Animated.View>
 
-      <ScrollView
+      {/* Sticky Search Bar */}
+      <Animated.View 
+        style={[
+          styles.stickySearchContainer,
+          {
+            transform: [{
+              translateY: searchBarTop.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 0],
+              })
+            }]
+          }
+        ]}
+      >
+        <SafeAreaView edges={['top']} style={styles.searchSafeArea}>
+          <View style={styles.searchBarWrapper}>
+            <View style={styles.searchBarContainer}>
+              <IconSymbol
+                ios_icon_name="magnifyingglass"
+                android_material_icon_name="search"
+                size={20}
+                color="#B0B8C1"
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search menu items..."
+                placeholderTextColor="#B0B8C1"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <Pressable onPress={() => setSearchQuery("")}>
+                  <IconSymbol
+                    ios_icon_name="xmark.circle.fill"
+                    android_material_icon_name="cancel"
+                    size={20}
+                    color="#B0B8C1"
+                  />
+                </Pressable>
+              )}
+            </View>
+            
+            {/* Category Dropdown Button (visible when sticky) */}
+            <Animated.View
+              style={{
+                opacity: searchBarTop,
+                width: searchBarTop.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 50],
+                }),
+                overflow: 'hidden',
+              }}
+            >
+              <Pressable
+                style={styles.categoryDropdownButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowCategoryDropdown(!showCategoryDropdown);
+                }}
+              >
+                <IconSymbol
+                  ios_icon_name="line.3.horizontal.decrease.circle"
+                  android_material_icon_name="filter_list"
+                  size={24}
+                  color="#5FE8D0"
+                />
+              </Pressable>
+            </Animated.View>
+          </View>
+        </SafeAreaView>
+      </Animated.View>
+
+      {/* Category Dropdown Modal */}
+      <Modal
+        visible={showCategoryDropdown}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCategoryDropdown(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setShowCategoryDropdown(false)}
+        >
+          <View style={styles.dropdownContainer}>
+            <View style={styles.dropdownHeader}>
+              <Text style={styles.dropdownTitle}>Categories</Text>
+              <Pressable onPress={() => setShowCategoryDropdown(false)}>
+                <IconSymbol
+                  ios_icon_name="xmark.circle.fill"
+                  android_material_icon_name="cancel"
+                  size={24}
+                  color="#5FE8D0"
+                />
+              </Pressable>
+            </View>
+            <ScrollView style={styles.dropdownScroll}>
+              {menuCategories.map((category) => (
+                <Pressable
+                  key={category}
+                  style={[
+                    styles.dropdownItem,
+                    selectedCategory === category && styles.dropdownItemSelected,
+                  ]}
+                  onPress={() => handleCategoryPress(category)}
+                >
+                  <Text
+                    style={[
+                      styles.dropdownItemText,
+                      selectedCategory === category && styles.dropdownItemTextSelected,
+                    ]}
+                  >
+                    {category}
+                  </Text>
+                  {selectedCategory === category && (
+                    <IconSymbol
+                      ios_icon_name="checkmark.circle.fill"
+                      android_material_icon_name="check_circle"
+                      size={20}
+                      color="#F5A623"
+                    />
+                  )}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Animated.ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
       >
-        {/* Categories */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
-          contentContainerStyle={styles.categoriesContent}
+        {/* Categories - Hidden when sticky */}
+        <Animated.View
+          style={{
+            opacity: headerHeight,
+            height: headerHeight.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 80],
+            }),
+            overflow: 'hidden',
+          }}
         >
-          {menuCategories.map((category) => (
-            <Pressable
-              key={category}
-              style={[
-                styles.categoryButton,
-                {
-                  backgroundColor: selectedCategory === category ? '#F5A623' : '#1A3A2E',
-                  borderColor: selectedCategory === category ? '#F5A623' : '#4AD7C2',
-                  paddingHorizontal: getResponsivePadding(16),
-                  paddingVertical: getResponsivePadding(10),
-                },
-              ]}
-              onPress={() => handleCategoryPress(category)}
-            >
-              <Text
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.categoriesContainer}
+            contentContainerStyle={styles.categoriesContent}
+          >
+            {menuCategories.map((category) => (
+              <Pressable
+                key={category}
                 style={[
-                  styles.categoryText,
+                  styles.categoryButton,
                   {
-                    color: selectedCategory === category ? '#1A5A3E' : '#FFFFFF',
-                    fontSize: getResponsiveFontSize(13),
+                    backgroundColor: selectedCategory === category ? '#F5A623' : '#1A3A2E',
+                    borderColor: selectedCategory === category ? '#F5A623' : '#4AD7C2',
+                    paddingHorizontal: getResponsivePadding(16),
+                    paddingVertical: getResponsivePadding(10),
                   },
                 ]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
+                onPress={() => handleCategoryPress(category)}
               >
-                {category}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        {/* Online Special Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
-            Online Special
-          </Text>
-          <View style={styles.divider} />
-        </View>
+                <Text
+                  style={[
+                    styles.categoryText,
+                    {
+                      color: selectedCategory === category ? '#1A5A3E' : '#FFFFFF',
+                      fontSize: getResponsiveFontSize(13),
+                    },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                >
+                  {category}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </Animated.View>
 
         {/* Menu Items */}
         {loading || menuItems.length === 0 ? (
@@ -232,17 +446,13 @@ export default function HomeScreen() {
             {filteredItems.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <IconSymbol
-                  name="restaurant"
+                  ios_icon_name="magnifyingglass"
+                  android_material_icon_name="search_off"
                   size={64}
-                  color={currentColors.textSecondary}
+                  color="#B0B8C1"
                 />
-                <Text
-                  style={[
-                    styles.emptyText,
-                    { color: currentColors.textSecondary },
-                  ]}
-                >
-                  No items in this category
+                <Text style={styles.emptyText}>
+                  {searchQuery ? "No items match your search" : "No items in this category"}
                 </Text>
               </View>
             ) : (
@@ -288,7 +498,8 @@ export default function HomeScreen() {
                           }}
                         >
                           <IconSymbol
-                            name="plus"
+                            ios_icon_name="plus"
+                            android_material_icon_name="add"
                             size={20}
                             color="#5FE8D0"
                           />
@@ -301,7 +512,7 @@ export default function HomeScreen() {
             )}
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
       <Toast
         visible={toastVisible}
         message={toastMessage}
@@ -383,16 +594,120 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     color: '#0D1A2B',
   },
+  stickySearchContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: '#0D1A2B',
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.3)',
+    elevation: 8,
+  },
+  searchSafeArea: {
+    width: '100%',
+  },
+  searchBarWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  searchBarContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A2838',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 2,
+    borderColor: '#4AD7C2',
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+  },
+  categoryDropdownButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#1A2838',
+    borderWidth: 2,
+    borderColor: '#4AD7C2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'flex-start',
+    paddingTop: Platform.OS === 'ios' ? 100 : 80,
+  },
+  dropdownContainer: {
+    backgroundColor: '#1A2838',
+    marginHorizontal: 20,
+    borderRadius: 16,
+    maxHeight: 400,
+    borderWidth: 2,
+    borderColor: '#4AD7C2',
+    boxShadow: '0px 8px 24px rgba(74, 215, 194, 0.3)',
+    elevation: 8,
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#4AD7C2',
+  },
+  dropdownTitle: {
+    fontSize: 20,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: '#5FE8D0',
+  },
+  dropdownScroll: {
+    maxHeight: 320,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(74, 215, 194, 0.2)',
+  },
+  dropdownItemSelected: {
+    backgroundColor: 'rgba(245, 166, 35, 0.15)',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+  },
+  dropdownItemTextSelected: {
+    fontFamily: 'Inter_600SemiBold',
+    color: '#F5A623',
+  },
   scrollView: {
     flex: 1,
+    marginTop: 70,
   },
   scrollContent: {
     paddingBottom: 120,
+    paddingTop: 20,
   },
   categoriesContainer: {
     maxHeight: 60,
     marginBottom: 20,
-    marginTop: 20,
   },
   categoriesContent: {
     paddingHorizontal: 20,
@@ -411,24 +726,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
     fontFamily: 'Inter_600SemiBold',
-  },
-  sectionHeader: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
-    alignItems: 'flex-start',
-  },
-  sectionTitle: {
-    fontSize: 36,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    letterSpacing: 1,
-    marginBottom: 16,
-    color: '#5FE8D0',
-  },
-  divider: {
-    width: 100,
-    height: 2,
-    backgroundColor: '#5FE8D0',
   },
   loadingContainer: {
     flex: 1,
@@ -452,6 +749,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
+    color: '#B0B8C1',
   },
   menuContainer: {
     paddingHorizontal: 20,
