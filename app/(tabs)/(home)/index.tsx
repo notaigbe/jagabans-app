@@ -122,7 +122,7 @@ export default function HomeScreen() {
     <View style={[styles.container, { backgroundColor: currentColors.background }]}>
       {/* Header with Gradient */}
       <LinearGradient
-        colors={['#0D1A2B', '#1A2838', '#2A3848', '#D4AF37']}
+        colors={['#69d3b009', '#1b444980', '#2a4f5375', '#d4af3705']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.headerGradient}
@@ -169,9 +169,9 @@ export default function HomeScreen() {
       >
         {/* Online Special Section */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: currentColors.primary }]}>
+          {/* <Text style={[styles.sectionTitle, { color: currentColors.primary }]}>
             Online Special
-          </Text>
+          </Text> */}
           <View style={[styles.divider, { backgroundColor: currentColors.primary }]} />
         </View>
 
@@ -416,10 +416,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'PlayfairDisplay_700Bold',
     letterSpacing: 1,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   divider: {
     width: 80,
@@ -428,6 +428,8 @@ const styles = StyleSheet.create({
   categoriesContainer: {
     maxHeight: 60,
     marginBottom: 16,
+    borderColor: '#ccc',
+    borderWidth: 1,
   },
   categoriesContent: {
     paddingHorizontal: 20,
@@ -436,6 +438,7 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     borderRadius: 20,
+    borderColor: '#ccccccff',
     marginRight: 8,
     minWidth: 80,
     alignItems: "center",
@@ -502,7 +505,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.15)',
   },
   menuItemInfo: {
-    padding: 20,
+    padding: 10,
   },
   menuItemName: {
     fontSize: 24,
@@ -531,7 +534,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    boxShadow: "0px 2px 8px rgba(74, 215, 194, 0.3)",
+    boxShadow: "0px 2px 8px rgba(215, 194, 74, 0.3)",
     elevation: 3,
   },
 });
