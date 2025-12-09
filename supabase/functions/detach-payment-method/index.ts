@@ -48,7 +48,7 @@ serve(async (req) => {
 
     // Verify payment method belongs to user
     const { data: paymentMethodRecord } = await supabase
-      .from('stripe_payment_methods')
+      .from('payment_methods')
       .select('*')
       .eq('stripe_payment_method_id', paymentMethodId)
       .eq('user_id', user.id)
@@ -65,7 +65,7 @@ serve(async (req) => {
 
     // Delete from database
     const { error: deleteError } = await supabase
-      .from('stripe_payment_methods')
+      .from('payment_methods')
       .delete()
       .eq('stripe_payment_method_id', paymentMethodId)
       .eq('user_id', user.id);

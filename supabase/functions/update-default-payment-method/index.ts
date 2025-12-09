@@ -48,7 +48,7 @@ serve(async (req) => {
 
     // Verify payment method belongs to user
     const { data: paymentMethodRecord } = await supabase
-      .from('stripe_payment_methods')
+      .from('payment_methods')
       .select('stripe_customer_id')
       .eq('stripe_payment_method_id', paymentMethodId)
       .eq('user_id', user.id)
@@ -69,13 +69,13 @@ serve(async (req) => {
 
     // Update database - set all to non-default first
     await supabase
-      .from('stripe_payment_methods')
+      .from('payment_methods')
       .update({ is_default: false })
       .eq('user_id', user.id);
 
     // Set the selected one as default
     const { error: updateError } = await supabase
-      .from('stripe_payment_methods')
+      .from('payment_methods')
       .update({ is_default: true })
       .eq('stripe_payment_method_id', paymentMethodId)
       .eq('user_id', user.id);

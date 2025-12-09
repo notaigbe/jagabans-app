@@ -77,23 +77,25 @@ serve(async (req) => {
 
       // Set all existing payment methods to non-default
       await supabase
-        .from('stripe_payment_methods')
+        .from('payment_methods')
         .update({ is_default: false })
         .eq('user_id', user.id);
     }
 
     // Save payment method to database
     const { error: insertError } = await supabase
-      .from('stripe_payment_methods')
+      .from('payment_methods')
       .insert({
         user_id: user.id,
         stripe_customer_id: profile.stripe_customer_id,
         stripe_payment_method_id: paymentMethodId,
-        type: paymentMethod.type,
-        card_brand: paymentMethod.card?.brand || '',
-        card_last4: paymentMethod.card?.last4 || '',
-        card_exp_month: paymentMethod.card?.exp_month || 0,
-        card_exp_year: paymentMethod.card?.exp_year || 0,
+        type: paymentMethod.type === 'card' ? 'credit' : 'debit',
+        cardholder_name: paymentMethod.billing_details?.name || 'Card Holder',
+        expiry_date: `${paymentMethod.card?.exp_month}/${paymentMethod.card?.exp_year}`,
+        brand: paymentMethod.card?.brand || '',
+        last4: paymentMethod.card?.last4 || '',
+        exp_month: paymentMethod.card?.exp_month || 0,
+        exp_year: paymentMethod.card?.exp_year || 0,
         is_default: setAsDefault || false,
       });
 

@@ -55,7 +55,7 @@ export default function PaymentMethodsScreen() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('stripe_payment_methods')
+        .from('payment_methods')
         .select('*')
         .eq('user_id', userProfile.id)
         .order('is_default', { ascending: false })
@@ -66,11 +66,11 @@ export default function PaymentMethodsScreen() {
       if (data && data.length > 0) {
         const cards: StoredCard[] = data.map((card: any) => ({
           id: card.id,
-          stripePaymentMethodId: card.stripe_payment_method_id,
-          cardBrand: card.card_brand || 'card',
-          last4: card.card_last4 || '****',
-          expMonth: card.card_exp_month || 0,
-          expYear: card.card_exp_year || 0,
+          stripePaymentMethodId: card.stripe_payment_method_id || '',
+          cardBrand: card.brand || 'card',
+          last4: card.last4 || '****',
+          expMonth: card.exp_month || 0,
+          expYear: card.exp_year || 0,
           isDefault: card.is_default || false,
         }));
         

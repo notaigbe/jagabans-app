@@ -527,34 +527,52 @@ export interface Database {
           id: string
           user_id: string
           type: 'credit' | 'debit'
-          card_number: string
+          card_number: string | null
           cardholder_name: string
           expiry_date: string
           is_default: boolean
           created_at: string
           updated_at: string
+          stripe_payment_method_id: string | null
+          stripe_customer_id: string | null
+          last4: string | null
+          brand: string | null
+          exp_month: number | null
+          exp_year: number | null
         }
         Insert: {
           id?: string
           user_id: string
           type: 'credit' | 'debit'
-          card_number: string
+          card_number?: string | null
           cardholder_name: string
           expiry_date: string
           is_default?: boolean
           created_at?: string
           updated_at?: string
+          stripe_payment_method_id?: string | null
+          stripe_customer_id?: string | null
+          last4?: string | null
+          brand?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
         }
         Update: {
           id?: string
           user_id?: string
           type?: 'credit' | 'debit'
-          card_number?: string
+          card_number?: string | null
           cardholder_name?: string
           expiry_date?: string
           is_default?: boolean
           created_at?: string
           updated_at?: string
+          stripe_payment_method_id?: string | null
+          stripe_customer_id?: string | null
+          last4?: string | null
+          brand?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
         }
       }
       notifications: {
