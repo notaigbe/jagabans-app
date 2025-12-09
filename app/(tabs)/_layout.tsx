@@ -25,12 +25,12 @@ export default function TabLayout() {
       icon: 'bag.fill',
       label: 'Merch',
     },
-    {
-      name: 'giftcards',
-      route: '/(tabs)/giftcards',
-      icon: 'gift.fill',
-      label: 'Gift Cards',
-    },
+    // {
+    //   name: 'giftcards',
+    //   route: '/(tabs)/giftcards',
+    //   icon: 'gift.fill',
+    //   label: 'Gift Cards',
+    // },
     {
       name: 'profile',
       route: '/(tabs)/profile',
@@ -51,7 +51,7 @@ export default function TabLayout() {
         <Stack.Screen name="(home)" />
         <Stack.Screen name="cart" />
         <Stack.Screen name="merch" />
-        <Stack.Screen name="giftcards" />
+        {/* <Stack.Screen name="giftcards" /> */}
         <Stack.Screen name="profile" />
       </Stack>
       <FloatingTabBar tabs={tabs} />

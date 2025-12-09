@@ -85,7 +85,7 @@ export default function OrderHistoryScreen() {
     paddingHorizontal: 40,
   },
   statsCard: {
-    borderRadius: 16,
+    borderRadius: 0,
     padding: 20,
     flexDirection: 'row',
     marginBottom: 24,
@@ -115,7 +115,7 @@ export default function OrderHistoryScreen() {
     marginBottom: 16,
   },
   orderCard: {
-    borderRadius: 16,
+    borderRadius: 0,
     padding: 20,
     marginBottom: 16,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',

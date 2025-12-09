@@ -334,12 +334,13 @@ export default function HomeScreen() {
       >
         {/* Categories - Hidden when collapsed */}
         {!categoriesCollapsed && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoriesContainer}
-            contentContainerStyle={styles.categoriesContent}
-          >
+          <View style={styles.categoriesWrapper}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoriesContainer}
+              contentContainerStyle={styles.categoriesContent}
+            >
             {menuCategories.map((category) => (
               <Pressable
                 key={category}
@@ -371,7 +372,26 @@ export default function HomeScreen() {
               </Pressable>
             ))}
           </ScrollView>
-        )}
+    
+    {/* Left fade overlay */}
+    <LinearGradient
+      colors={['rgba(13, 26, 43, 0.9)', 'transparent']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.categoryFadeLeft}
+      pointerEvents="none"
+    />
+    
+    {/* Right fade overlay */}
+    <LinearGradient
+      colors={['transparent', 'rgba(13, 26, 43, 0.9)']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.categoryFadeRight}
+      pointerEvents="none"
+    />
+  </View>
+)}
 
         {/* Menu Items */}
         {loading || menuItems.length === 0 ? (
@@ -550,8 +570,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1A3A2E',
-    borderRadius: 12,
-    borderWidth: 2,
+    borderRadius: 0,
+    borderWidth: 1,
     borderColor: '#4AD7C2',
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -585,7 +605,7 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     backgroundColor: '#1A3A2E',
-    borderRadius: 16,
+    borderRadius: 0,
     borderWidth: 2,
     borderColor: '#4AD7C2',
     maxHeight: 400,
@@ -637,8 +657,8 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     maxHeight: 60,
-    marginBottom: 12,
-    marginTop: 12,
+    // marginBottom: 12,
+    // marginTop: 12,
   },
   categoriesContent: {
     paddingHorizontal: 20,
@@ -646,12 +666,17 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   categoryButton: {
-    borderRadius: 12,
+    borderRadius: 0,
     marginRight: 6,
     minWidth: 80,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
+    borderWidth: 1,
+  },
+  categoryGradient: {
+    borderRadius: 0,
+    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.4)',
+    elevation: 8,
   },
   categoryText: {
     fontWeight: "600",
@@ -686,7 +711,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   menuItem: {
-    borderRadius: 16,
+    borderRadius: 0,
     marginBottom: 28,
     overflow: "hidden",
     boxShadow: "0px 8px 24px rgba(212, 175, 55, 0.5)",
@@ -696,8 +721,8 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: "100%",
     height: 260,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    // borderTopLeftRadius: 16,
+    // borderTopRightRadius: 16,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -754,13 +779,34 @@ const styles = StyleSheet.create({
   addButton: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 0,
     justifyContent: "center",
     alignItems: "center",
     boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.6)",
     elevation: 6,
     backgroundColor: 'transparent',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#5FE8D0',
   },
+  categoriesWrapper: {
+  position: 'relative',
+  marginBottom: 12,
+  marginTop: 12,
+},
+categoryFadeLeft: {
+  position: 'absolute',
+  left: 0,
+  top: 0,
+  bottom: 0,
+  width: 40,
+  zIndex: 10,
+},
+categoryFadeRight: {
+  position: 'absolute',
+  right: 0,
+  top: 0,
+  bottom: 0,
+  width: 40,
+  zIndex: 10,
+},
 });

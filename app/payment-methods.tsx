@@ -286,7 +286,7 @@ export default function PaymentMethodsScreen() {
       marginBottom: 20,
     },
     cardItem: {
-      borderRadius: 16,
+      borderRadius: 0,
       padding: 20,
       marginBottom: 16,
       boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
