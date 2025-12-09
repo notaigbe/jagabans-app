@@ -22,6 +22,7 @@ import * as Haptics from "expo-haptics";
 import { imageService } from "@/services/supabaseService";
 import Toast from "@/components/Toast";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -162,8 +163,23 @@ export default function HomeScreen() {
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >
-      {/* Header with Dark Green Background */}
-      <View style={styles.headerBackground}>
+      {/* Header with Gradient and Translucency matching the image */}
+      <LinearGradient
+        colors={[
+          'rgba(13, 26, 43, 0.95)',
+          'rgba(20, 35, 50, 0.92)',
+          'rgba(30, 50, 65, 0.88)',
+          'rgba(45, 70, 85, 0.85)',
+          'rgba(70, 90, 100, 0.82)',
+          'rgba(100, 120, 110, 0.78)',
+          'rgba(150, 140, 90, 0.75)',
+          'rgba(180, 160, 80, 0.72)',
+          'rgba(200, 180, 70, 0.70)',
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.headerBackground}
+      >
         <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
           <View style={styles.header}>
             <View style={styles.headerContent}>
@@ -190,9 +206,9 @@ export default function HomeScreen() {
             >
               <IconSymbol
                 ios_icon_name="bell.fill"
-                android_material_icon_name="notifications"
+                name="notifications"
                 size={28}
-                color="#FFFFFF"
+                color="#D4AF37"
               />
               {unreadCount > 0 && (
                 <View style={styles.notificationBadge}>
@@ -204,14 +220,14 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         </SafeAreaView>
-      </View>
+      </LinearGradient>
 
       {/* Search Bar with Category Dropdown */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBarWrapper}>
           <IconSymbol
             ios_icon_name="magnifyingglass"
-            android_material_icon_name="search"
+            name="search"
             size={20}
             color="#B0B8C1"
             style={styles.searchIcon}
@@ -228,7 +244,7 @@ export default function HomeScreen() {
             <Pressable onPress={handleClearSearch} style={styles.clearButton}>
               <IconSymbol
                 ios_icon_name="xmark.circle.fill"
-                android_material_icon_name="cancel"
+                name="cancel"
                 size={20}
                 color="#B0B8C1"
               />
@@ -243,7 +259,7 @@ export default function HomeScreen() {
             >
               <IconSymbol
                 ios_icon_name="line.3.horizontal.decrease.circle.fill"
-                android_material_icon_name="filter_list"
+                name="filter-list"
                 size={28}
                 color="#F5A623"
               />
@@ -269,7 +285,7 @@ export default function HomeScreen() {
               <Pressable onPress={() => setShowCategoryDropdown(false)}>
                 <IconSymbol
                   ios_icon_name="xmark.circle.fill"
-                  android_material_icon_name="cancel"
+                  name="cancel"
                   size={24}
                   color="#B0B8C1"
                 />
@@ -296,7 +312,7 @@ export default function HomeScreen() {
                   {selectedCategory === category && (
                     <IconSymbol
                       ios_icon_name="checkmark.circle.fill"
-                      android_material_icon_name="check_circle"
+                      name="check-circle"
                       size={20}
                       color="#5FE8D0"
                     />
@@ -371,7 +387,7 @@ export default function HomeScreen() {
               <View style={styles.emptyContainer}>
                 <IconSymbol
                   ios_icon_name="magnifyingglass"
-                  android_material_icon_name="search"
+                  name="search"
                   size={64}
                   color={currentColors.textSecondary}
                 />
@@ -428,7 +444,7 @@ export default function HomeScreen() {
                         >
                           <IconSymbol
                             ios_icon_name="plus"
-                            android_material_icon_name="add"
+                            name="add"
                             size={20}
                             color="#5FE8D0"
                           />
@@ -458,8 +474,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerBackground: {
-    backgroundColor: '#0D1A2B',
-    paddingBottom: 20,
+    paddingBottom: 10,
+    boxShadow: '0px 4px 20px rgba(212, 175, 55, 0.4)',
+    elevation: 8,
   },
   headerSafeArea: {
     width: '100%',
@@ -470,7 +487,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 4,
   },
   headerContent: {
     flex: 1,

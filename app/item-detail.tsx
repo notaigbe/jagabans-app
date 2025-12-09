@@ -307,7 +307,7 @@ export default function ItemDetailScreen() {
 
           <View style={styles.categoryContainer}>
             <IconSymbol
-              name="tag.fill"
+              name="label"
               size={16}
               color={currentColors.textSecondary}
             />
@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 16,
-    borderRadius: 25,
+    borderRadius: 0,
     gap: 8,
     boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.3)",
     elevation: 4,
