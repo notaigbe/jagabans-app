@@ -190,9 +190,9 @@ export default function HomeScreen() {
             >
               <IconSymbol
                 ios_icon_name="bell.fill"
-                android_material_icon_name="notifications"
+                name="notifications"
                 size={28}
-                color="#FFFFFF"
+                color="#5FE8D0"
               />
               {unreadCount > 0 && (
                 <View style={styles.notificationBadge}>
@@ -211,7 +211,7 @@ export default function HomeScreen() {
         <View style={styles.searchBarWrapper}>
           <IconSymbol
             ios_icon_name="magnifyingglass"
-            android_material_icon_name="search"
+            name="search"
             size={20}
             color="#B0B8C1"
             style={styles.searchIcon}
@@ -228,7 +228,7 @@ export default function HomeScreen() {
             <Pressable onPress={handleClearSearch} style={styles.clearButton}>
               <IconSymbol
                 ios_icon_name="xmark.circle.fill"
-                android_material_icon_name="cancel"
+                name="cancel"
                 size={20}
                 color="#B0B8C1"
               />
@@ -242,8 +242,8 @@ export default function HomeScreen() {
               style={styles.categoryDropdownButton}
             >
               <IconSymbol
-                ios_icon_name="line.3.horizontal.decrease.circle.fill"
-                android_material_icon_name="filter_list"
+                ios_icon_name="line.horizontal.3.decrease.circle.fill"
+                name="filter-list"
                 size={28}
                 color="#F5A623"
               />
@@ -269,7 +269,7 @@ export default function HomeScreen() {
               <Pressable onPress={() => setShowCategoryDropdown(false)}>
                 <IconSymbol
                   ios_icon_name="xmark.circle.fill"
-                  android_material_icon_name="cancel"
+                  name="cancel"
                   size={24}
                   color="#B0B8C1"
                 />
@@ -296,7 +296,7 @@ export default function HomeScreen() {
                   {selectedCategory === category && (
                     <IconSymbol
                       ios_icon_name="checkmark.circle.fill"
-                      android_material_icon_name="check_circle"
+                      name="check-circle"
                       size={20}
                       color="#5FE8D0"
                     />
@@ -371,7 +371,7 @@ export default function HomeScreen() {
               <View style={styles.emptyContainer}>
                 <IconSymbol
                   ios_icon_name="magnifyingglass"
-                  android_material_icon_name="search"
+                  name="search"
                   size={64}
                   color={currentColors.textSecondary}
                 />
@@ -428,7 +428,7 @@ export default function HomeScreen() {
                         >
                           <IconSymbol
                             ios_icon_name="plus"
-                            android_material_icon_name="add"
+                            name="add"
                             size={20}
                             color="#5FE8D0"
                           />
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
   headerBackground: {
     backgroundColor: '#0D1A2B',
-    paddingBottom: 20,
+    paddingBottom: 10,
   },
   headerSafeArea: {
     width: '100%',
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 4,
   },
   headerContent: {
     flex: 1,
@@ -533,8 +533,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1A3A2E',
-    borderRadius: 12,
-    borderWidth: 2,
+    borderRadius: 0,
+    borderWidth: 1,
     borderColor: '#4AD7C2',
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     backgroundColor: '#1A3A2E',
-    borderRadius: 16,
+    borderRadius: 0,
     borderWidth: 2,
     borderColor: '#4AD7C2',
     maxHeight: 400,
@@ -629,12 +629,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   categoryButton: {
-    borderRadius: 12,
+    borderRadius: 0,
     marginRight: 6,
     minWidth: 80,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
+    borderWidth: 1,
   },
   categoryText: {
     fontWeight: "600",
@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   menuItem: {
-    borderRadius: 16,
+    borderRadius: 0,
     marginBottom: 28,
     overflow: "hidden",
     boxShadow: "0px 8px 24px rgba(212, 175, 55, 0.5)",
@@ -679,8 +679,8 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: "100%",
     height: 260,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    // borderTopLeftRadius: 16,
+    // borderTopRightRadius: 16,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -737,13 +737,13 @@ const styles = StyleSheet.create({
   addButton: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 0,
     justifyContent: "center",
     alignItems: "center",
     boxShadow: "0px 4px 12px rgba(212, 175, 55, 0.6)",
     elevation: 6,
     backgroundColor: 'transparent',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#5FE8D0',
   },
 });

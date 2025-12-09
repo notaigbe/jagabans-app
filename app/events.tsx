@@ -288,7 +288,7 @@ export default function EventsScreen() {
   },
   emptyState: {
     padding: 40,
-    borderRadius: 16,
+    borderRadius: 0,
     alignItems: 'center',
     gap: 12,
   },
@@ -302,7 +302,7 @@ export default function EventsScreen() {
     textAlign: 'center',
   },
   eventCard: {
-    borderRadius: 16,
+    borderRadius: 0,
     marginBottom: 20,
     overflow: 'hidden',
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',

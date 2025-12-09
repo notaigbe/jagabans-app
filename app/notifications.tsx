@@ -106,7 +106,7 @@ export default function NotificationsScreen() {
     paddingHorizontal: 40,
   },
   notificationCard: {
-    borderRadius: 16,
+    borderRadius: 0,
     padding: 16,
     marginBottom: 12,
     flexDirection: 'row',

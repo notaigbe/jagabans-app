@@ -142,7 +142,7 @@ export default function ThemeSettingsScreen() {
     },
     optionCard: {
       backgroundColor: currentColors.card,
-      borderRadius: 12,
+      borderRadius: 0,
       padding: 16,
       marginBottom: 12,
       flexDirection: 'row',
@@ -187,7 +187,7 @@ export default function ThemeSettingsScreen() {
     },
     colorSchemeCard: {
       backgroundColor: currentColors.card,
-      borderRadius: 12,
+      borderRadius: 0,
       padding: 16,
       marginBottom: 12,
       boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',

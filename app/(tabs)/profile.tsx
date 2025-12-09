@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 0,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 16,
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   authButton: {
-    borderRadius: 12,
+    borderRadius: 0,
     marginTop: 8,
     boxShadow: '0px 8px 24px rgba(74, 215, 194, 0.4)',
     elevation: 8,
@@ -892,7 +892,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   menuItem: {
-    borderRadius: 16,
+    borderRadius: 0,
     boxShadow: "0px 6px 20px rgba(212, 175, 55, 0.25)",
     elevation: 6,
   },
@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+    boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.15)',
     elevation: 4,
   },
   menuContent: {
