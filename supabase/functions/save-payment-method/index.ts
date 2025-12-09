@@ -46,30 +46,18 @@ serve(async (req) => {
       throw new Error('Payment method ID is required');
     }
 
-    // Get user profile with Stripe customer ID
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('stripe_customer_id')
-      .eq('user_id', user.id)
-      .single();
+    // Get payment method details from Stripe
+    const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
 
-    if (!profile || !profile.stripe_customer_id) {
-      throw new Error('Stripe customer not found');
+    if (!paymentMethod.customer) {
+      throw new Error('Payment method must be attached to a customer');
     }
 
-    // Attach payment method to customer
-    await stripe.paymentMethods.attach(paymentMethodId, {
-      customer: profile.stripe_customer_id,
-    });
-
-    console.log('Payment method attached:', paymentMethodId);
-
-    // Get payment method details
-    const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+    const customerId = paymentMethod.customer as string;
 
     // If setAsDefault, update customer's default payment method
     if (setAsDefault) {
-      await stripe.customers.update(profile.stripe_customer_id, {
+      await stripe.customers.update(customerId, {
         invoice_settings: {
           default_payment_method: paymentMethodId,
         },
@@ -87,7 +75,7 @@ serve(async (req) => {
       .from('payment_methods')
       .insert({
         user_id: user.id,
-        stripe_customer_id: profile.stripe_customer_id,
+        stripe_customer_id: customerId,
         stripe_payment_method_id: paymentMethodId,
         type: paymentMethod.type === 'card' ? 'credit' : 'debit',
         cardholder_name: paymentMethod.billing_details?.name || 'Card Holder',
@@ -103,6 +91,8 @@ serve(async (req) => {
       console.error('Error saving payment method:', insertError);
       throw new Error('Failed to save payment method');
     }
+
+    console.log('Payment method saved successfully:', paymentMethodId);
 
     return new Response(
       JSON.stringify({

@@ -40,10 +40,10 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Get user profile
+    // Get user profile for name and email
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('name, email, stripe_customer_id')
+      .select('name, email')
       .eq('user_id', user.id)
       .single();
 
@@ -51,7 +51,16 @@ serve(async (req) => {
       throw new Error('User profile not found');
     }
 
-    let customerId = profile.stripe_customer_id;
+    // Check if user has any existing payment methods with stripe_customer_id
+    const { data: existingPaymentMethods } = await supabase
+      .from('payment_methods')
+      .select('stripe_customer_id')
+      .eq('user_id', user.id)
+      .not('stripe_customer_id', 'is', null)
+      .limit(1)
+      .single();
+
+    let customerId = existingPaymentMethods?.stripe_customer_id;
 
     // If customer doesn't exist, create one
     if (!customerId) {
@@ -67,17 +76,6 @@ serve(async (req) => {
 
       customerId = customer.id;
       console.log('Stripe customer created:', customerId);
-
-      // Update user profile with Stripe customer ID
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ stripe_customer_id: customerId })
-        .eq('user_id', user.id);
-
-      if (updateError) {
-        console.error('Error updating user profile with customer ID:', updateError);
-        // Continue anyway - we have the customer ID
-      }
     } else {
       console.log('Using existing Stripe customer:', customerId);
     }
