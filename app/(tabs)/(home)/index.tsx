@@ -244,8 +244,8 @@ export default function HomeScreen() {
               <IconSymbol
                 ios_icon_name="line.3.horizontal.decrease.circle.fill"
                 android_material_icon_name="filter_list"
-                size={24}
-                color="#5FE8D0"
+                size={28}
+                color="#F5A623"
               />
             </Pressable>
           )}
