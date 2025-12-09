@@ -163,18 +163,18 @@ export default function HomeScreen() {
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >
-      {/* Header with Gradient and Translucency matching the image */}
+      {/* Header with Gradient and 3% Translucency */}
       <LinearGradient
         colors={[
-          'rgba(13, 26, 43, 0.95)',
-          'rgba(20, 35, 50, 0.92)',
-          'rgba(30, 50, 65, 0.88)',
-          'rgba(45, 70, 85, 0.85)',
-          'rgba(70, 90, 100, 0.82)',
-          'rgba(100, 120, 110, 0.78)',
-          'rgba(150, 140, 90, 0.75)',
-          'rgba(180, 160, 80, 0.72)',
-          'rgba(200, 180, 70, 0.70)',
+          'rgba(13, 26, 43, 0.97)',
+          'rgba(20, 35, 50, 0.97)',
+          'rgba(30, 50, 65, 0.97)',
+          'rgba(45, 70, 85, 0.97)',
+          'rgba(70, 90, 100, 0.97)',
+          'rgba(100, 120, 110, 0.97)',
+          'rgba(150, 140, 90, 0.97)',
+          'rgba(180, 160, 80, 0.97)',
+          'rgba(200, 180, 70, 0.97)',
         ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
