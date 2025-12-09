@@ -10,6 +10,7 @@ import {
   Platform,
   Dimensions,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -52,6 +53,7 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(false);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   // Toast state
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -91,10 +93,17 @@ export default function HomeScreen() {
     }
   }, [menuItems.length, loadMenuItems]);
 
-  const filteredItems =
-    selectedCategory === "All"
-      ? menuItems
-      : menuItems.filter((item) => item.category === selectedCategory);
+  const filteredItems = menuItems.filter((item) => {
+    // Filter by search query
+    const matchesSearch = searchQuery.trim() === "" || 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Filter by category
+    const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   const handleCategoryPress = (category: string) => {
     console.log("Category selected:", category);
@@ -114,6 +123,12 @@ export default function HomeScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addToCart({ ...item, quantity: 1 });
     showToast("success", `1 ${item.name} Added to cart`);
+  };
+
+  const handleClearSearch = () => {
+    console.log("Clearing search");
+    setSearchQuery("");
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   return (
@@ -167,6 +182,37 @@ export default function HomeScreen() {
         </SafeAreaView>
       </View>
 
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBarWrapper}>
+          <IconSymbol
+            ios_icon_name="magnifyingglass"
+            android_material_icon_name="search"
+            size={20}
+            color="#B0B8C1"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search menu..."
+            placeholderTextColor="#B0B8C1"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={handleClearSearch} style={styles.clearButton}>
+              <IconSymbol
+                ios_icon_name="xmark.circle.fill"
+                android_material_icon_name="cancel"
+                size={20}
+                color="#B0B8C1"
+              />
+            </Pressable>
+          )}
+        </View>
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -214,7 +260,7 @@ export default function HomeScreen() {
         {/* Online Special Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>
-            Online Special
+            {searchQuery ? 'Search Results' : 'Online Special'}
           </Text>
           <View style={styles.divider} />
         </View>
@@ -232,7 +278,8 @@ export default function HomeScreen() {
             {filteredItems.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <IconSymbol
-                  name="restaurant"
+                  ios_icon_name="magnifyingglass"
+                  android_material_icon_name="search"
                   size={64}
                   color={currentColors.textSecondary}
                 />
@@ -242,7 +289,7 @@ export default function HomeScreen() {
                     { color: currentColors.textSecondary },
                   ]}
                 >
-                  No items in this category
+                  {searchQuery ? 'No items match your search' : 'No items in this category'}
                 </Text>
               </View>
             ) : (
@@ -288,7 +335,8 @@ export default function HomeScreen() {
                           }}
                         >
                           <IconSymbol
-                            name="plus"
+                            ios_icon_name="plus"
+                            android_material_icon_name="add"
                             size={20}
                             color="#5FE8D0"
                           />
@@ -383,6 +431,38 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     color: '#0D1A2B',
   },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: 'transparent',
+  },
+  searchBarWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A3A2E',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#4AD7C2',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.3)',
+    elevation: 4,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    padding: 0,
+  },
+  clearButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
   scrollView: {
     flex: 1,
   },
@@ -392,7 +472,7 @@ const styles = StyleSheet.create({
   categoriesContainer: {
     maxHeight: 60,
     marginBottom: 20,
-    marginTop: 20,
+    marginTop: 12,
   },
   categoriesContent: {
     paddingHorizontal: 20,
