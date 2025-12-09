@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -19,6 +20,7 @@ import { colors } from "@/styles/commonStyles";
 import { Event } from "@/types";
 import { eventService } from "@/services/supabaseService";
 import * as Haptics from "expo-haptics";
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function AdminEventManagement() {
   const router = useRouter();
@@ -30,13 +32,16 @@ export default function AdminEventManagement() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    date: "",
+    date: new Date(),
     location: "",
     capacity: "",
     image: "",
     isPrivate: true,
     isInviteOnly: false,
   });
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
     loadEvents();
@@ -45,7 +50,6 @@ export default function AdminEventManagement() {
   const loadEvents = async () => {
     try {
       setLoading(true);
-      // Load both private and invite-only events for admin
       const privateRes = await eventService.getPrivateEvents();
       const publicRes = await eventService.getPublicEvents();
 
@@ -63,7 +67,7 @@ export default function AdminEventManagement() {
         date: event.date,
         location: event.location,
         capacity: event.capacity,
-        attendees: [], // Will be populated from event_rsvps if needed
+        attendees: [],
         image: event.image,
         isPrivate: event.is_private,
         isInviteOnly: event.is_invite_only,
@@ -79,33 +83,34 @@ export default function AdminEventManagement() {
     }
   };
 
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setFormData({ ...formData, date: selectedDate });
+    }
+  };
+
+  const handleTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      const newDate = new Date(formData.date);
+      newDate.setHours(selectedTime.getHours());
+      newDate.setMinutes(selectedTime.getMinutes());
+      setFormData({ ...formData, date: newDate });
+    }
+  };
+
   const handleAddEvent = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    // Validation
     if (!formData.title.trim()) {
       Alert.alert("Error", "Event title is required");
       return;
     }
-    if (!formData.date.trim()) {
-      Alert.alert("Error", "Event date is required");
-      return;
-    }
     if (!formData.location.trim()) {
       Alert.alert("Error", "Event location is required");
-      return;
-    }
-
-    // Validate date format
-    const dateRegex = /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$/;
-    if (!dateRegex.test(formData.date)) {
-      Alert.alert(
-        "Error",
-        "Please use the format: YYYY-MM-DDTHH:MM:SS\
-Example: 2025-12-25T18:00:00"
-      );
       return;
     }
 
@@ -115,7 +120,7 @@ Example: 2025-12-25T18:00:00"
       const newEventData: Omit<Event, "id" | "attendees"> = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        date: formData.date,
+        date: formData.date.toISOString(),
         location: formData.location.trim(),
         capacity: parseInt(formData.capacity) || 50,
         image:
@@ -128,7 +133,6 @@ Example: 2025-12-25T18:00:00"
       const res = await eventService.createEvent(newEventData);
       if (res.error) throw res.error;
 
-      // Reload events from backend
       await loadEvents();
       setIsAddingEvent(false);
       resetForm();
@@ -168,7 +172,6 @@ Example: 2025-12-25T18:00:00"
               const res = await eventService.deleteEvent(eventId);
               if (res.error) throw res.error;
 
-              // Reload events from backend
               await loadEvents();
               Alert.alert("Deleted", "Event deleted successfully");
             } catch (err) {
@@ -191,15 +194,15 @@ Example: 2025-12-25T18:00:00"
       return;
     }
 
-    const message = `You're invited to ${event.title} at Jagabans LA!\
-\
-${event.description}\
-\
+    const message = `You're invited to ${event.title} at Jagabans LA!
+
+${event.description}
+
 Date: ${new Date(event.date).toLocaleDateString()} at ${new Date(
       event.date
-    ).toLocaleTimeString()}\
-Location: ${event.location}\
-\
+    ).toLocaleTimeString()}
+Location: ${event.location}
+
 Access the event: ${event.shareableLink}`;
 
     try {
@@ -221,7 +224,7 @@ Access the event: ${event.shareableLink}`;
     setFormData({
       title: "",
       description: "",
-      date: "",
+      date: new Date(),
       location: "",
       capacity: "",
       image: "",
@@ -310,15 +313,48 @@ Access the event: ${event.shareableLink}`;
               editable={!saving}
             />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Date & Time (YYYY-MM-DDTHH:MM:SS) *"
-              placeholderTextColor={colors.textSecondary}
-              value={formData.date}
-              onChangeText={(text) => setFormData({ ...formData, date: text })}
-              editable={!saving}
-            />
-            <Text style={styles.helperText}>Example: 2025-12-25T18:00:00</Text>
+            <View style={styles.dateTimeContainer}>
+              <Pressable
+                style={styles.dateTimeButton}
+                onPress={() => setShowDatePicker(true)}
+                disabled={saving}
+              >
+                <IconSymbol name="calendar-today" size={20} color={colors.primary} />
+                <Text style={styles.dateTimeButtonText}>
+                  {formData.date.toLocaleDateString()}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.dateTimeButton}
+                onPress={() => setShowTimePicker(true)}
+                disabled={saving}
+              >
+                <IconSymbol name="schedule" size={20} color={colors.primary} />
+                <Text style={styles.dateTimeButtonText}>
+                  {formData.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </Pressable>
+            </View>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={formData.date}
+                mode="date"
+                display="default"
+                onChange={handleDateChange}
+                minimumDate={new Date()}
+              />
+            )}
+
+            {showTimePicker && (
+              <DateTimePicker
+                value={formData.date}
+                mode="time"
+                display="default"
+                onChange={handleTimeChange}
+              />
+            )}
 
             <TextInput
               style={styles.input}
@@ -630,7 +666,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -638,11 +674,26 @@ const styles = StyleSheet.create({
     height: 80,
     textAlignVertical: "top",
   },
-  helperText: {
-    fontSize: 12,
-    color: colors.textSecondary,
+  dateTimeContainer: {
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 12,
-    marginLeft: 4,
+  },
+  dateTimeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dateTimeButtonText: {
+    fontSize: 16,
+    color: colors.text,
+    flex: 1,
   },
   eventTypeSection: {
     marginTop: 4,

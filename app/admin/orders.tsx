@@ -15,11 +15,13 @@ import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import { Order, CartItem } from '@/types';
-import { orderService } from '@/services/supabaseService';
+import { orderService, notificationService } from '@/services/supabaseService';
 import * as Haptics from 'expo-haptics';
+import { supabase } from '@/app/integrations/supabase/client';
 
 interface OrderWithItems extends Order {
   items: CartItem[];
+  userId?: string;
 }
 
 export default function AdminOrderManagement() {
@@ -43,6 +45,7 @@ export default function AdminOrderManagement() {
       const transformedOrders = (res.data || []).map((order: any) => ({
         id: order.id,
         orderNumber: order.order_number || 0,
+        userId: order.user_id,
         items: (order.order_items || []).map((item: any) => ({
           id: item.id || item.item_id || '',
           name: item.item_name || item.name || '',
@@ -77,7 +80,22 @@ export default function AdminOrderManagement() {
     { value: 'completed', label: 'Completed', color: '#4CAF50' },
   ];
 
-  const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
+  const getStatusMessage = (status: Order['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'Your order has been received and is pending confirmation.';
+      case 'preparing':
+        return 'Your order is being prepared by our kitchen staff.';
+      case 'ready':
+        return 'Your order is ready for pickup or delivery!';
+      case 'completed':
+        return 'Your order has been completed. Thank you for your order!';
+      default:
+        return 'Your order status has been updated.';
+    }
+  };
+
+  const handleStatusChange = (orderId: string, newStatus: Order['status'], userId?: string) => {
     console.log('Changing order status:', orderId, newStatus);
     (async () => {
       try {
@@ -89,6 +107,7 @@ export default function AdminOrderManagement() {
         const transformedOrder: OrderWithItems = {
           id: updatedOrder.id,
           orderNumber: updatedOrder.order_number || 0,
+          userId: updatedOrder.user_id,
           items: (updatedOrder.order_items || []).map((item: any) => ({
             id: item.id || item.item_id || '',
             name: item.item_name || item.name || '',
@@ -107,6 +126,21 @@ export default function AdminOrderManagement() {
         };
 
         setOrders((prev) => prev.map((o) => (o.id === orderId ? transformedOrder : o)));
+
+        // Send notification to user
+        if (userId) {
+          const statusMessage = getStatusMessage(newStatus);
+          await notificationService.createNotification({
+            userId,
+            title: `Order #${transformedOrder.orderNumber} ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+            message: statusMessage,
+            type: 'order',
+            actionUrl: '/order-history',
+          });
+          console.log('Notification sent to user:', userId);
+        }
+
+        Alert.alert('Success', 'Order status updated and notification sent to customer');
       } catch (err) {
         console.error('Update order status failed', err);
         Alert.alert('Error', 'Unable to update order status');
@@ -247,7 +281,7 @@ export default function AdminOrderManagement() {
                               order.status === status && styles.actionButtonActive,
                               { borderColor: getStatusColor(status) },
                             ]}
-                            onPress={() => handleStatusChange(order.id, status)}
+                            onPress={() => handleStatusChange(order.id, status, order.userId)}
                           >
                             <Text
                               style={[

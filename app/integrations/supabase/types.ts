@@ -22,6 +22,7 @@ export interface Database {
           updated_at: string
           user_id: string | null
           user_role: 'user' | 'admin' | 'super_admin'
+          stripe_customer_id: string | null
         }
         Insert: {
           id: string
@@ -34,6 +35,7 @@ export interface Database {
           updated_at?: string
           user_id?: string | null
           user_role?: 'user' | 'admin' | 'super_admin'
+          stripe_customer_id?: string | null
         }
         Update: {
           id?: string
@@ -46,6 +48,7 @@ export interface Database {
           updated_at?: string
           user_id?: string | null
           user_role?: 'user' | 'admin' | 'super_admin'
+          stripe_customer_id?: string | null
         }
       }
       menu_items: {
@@ -199,6 +202,50 @@ export interface Database {
           receipt_url?: string | null
           error_message?: string | null
           metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      stripe_payment_methods: {
+        Row: {
+          id: string
+          user_id: string
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          type: string
+          card_brand: string | null
+          card_last4: string | null
+          card_exp_month: number | null
+          card_exp_year: number | null
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          type: string
+          card_brand?: string | null
+          card_last4?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          stripe_customer_id?: string
+          stripe_payment_method_id?: string
+          type?: string
+          card_brand?: string | null
+          card_last4?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          is_default?: boolean
           created_at?: string
           updated_at?: string
         }
