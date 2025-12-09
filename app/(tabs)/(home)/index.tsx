@@ -318,12 +318,13 @@ export default function HomeScreen() {
       >
         {/* Categories - Hidden when collapsed */}
         {!categoriesCollapsed && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoriesContainer}
-            contentContainerStyle={styles.categoriesContent}
-          >
+          <View style={styles.categoriesWrapper}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoriesContainer}
+              contentContainerStyle={styles.categoriesContent}
+            >
             {menuCategories.map((category) => (
               <Pressable
                 key={category}
@@ -355,7 +356,26 @@ export default function HomeScreen() {
               </Pressable>
             ))}
           </ScrollView>
-        )}
+    
+    {/* Left fade overlay */}
+    <LinearGradient
+      colors={['rgba(13, 26, 43, 0.9)', 'transparent']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.categoryFadeLeft}
+      pointerEvents="none"
+    />
+    
+    {/* Right fade overlay */}
+    <LinearGradient
+      colors={['transparent', 'rgba(13, 26, 43, 0.9)']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.categoryFadeRight}
+      pointerEvents="none"
+    />
+  </View>
+)}
 
         {/* Menu Items */}
         {loading || menuItems.length === 0 ? (
@@ -620,8 +640,8 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     maxHeight: 60,
-    marginBottom: 12,
-    marginTop: 12,
+    // marginBottom: 12,
+    // marginTop: 12,
   },
   categoriesContent: {
     paddingHorizontal: 20,
@@ -635,6 +655,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
+  },
+  categoryGradient: {
+    borderRadius: 0,
+    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.4)',
+    elevation: 8,
   },
   categoryText: {
     fontWeight: "600",
@@ -746,4 +771,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#5FE8D0',
   },
+  categoriesWrapper: {
+  position: 'relative',
+  marginBottom: 12,
+  marginTop: 12,
+},
+categoryFadeLeft: {
+  position: 'absolute',
+  left: 0,
+  top: 0,
+  bottom: 0,
+  width: 40,
+  zIndex: 10,
+},
+categoryFadeRight: {
+  position: 'absolute',
+  right: 0,
+  top: 0,
+  bottom: 0,
+  width: 40,
+  zIndex: 10,
+},
 });
