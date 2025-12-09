@@ -144,11 +144,18 @@ export default function ProfileScreen() {
     }
 
     showDialog("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", onPress: () => {}, style: "cancel" },
+      { 
+        text: "Cancel", 
+        onPress: () => {
+          console.log("Sign out cancelled");
+        }, 
+        style: "cancel" 
+      },
       {
         text: "Sign Out",
         style: "destructive",
         onPress: async () => {
+          console.log("Signing out...");
           try {
             await signOut();
             // Clear any form data
@@ -158,6 +165,7 @@ export default function ProfileScreen() {
             setPhone("");
             setIsSignUp(false);
             setShowPassword(false);
+            showToast("success", "Signed out successfully");
           } catch (error) {
             console.error("Sign out error:", error);
             showToast("error", "Failed to sign out. Please try again.");

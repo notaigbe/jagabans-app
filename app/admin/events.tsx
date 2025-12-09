@@ -9,7 +9,6 @@ import {
   Platform,
   TextInput,
   Image,
-  Alert,
   Share,
   ActivityIndicator,
 } from "react-native";
@@ -21,6 +20,8 @@ import { Event } from "@/types";
 import { eventService } from "@/services/supabaseService";
 import * as Haptics from "expo-haptics";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Dialog from "@/components/Dialog";
+import Toast from "@/components/Toast";
 
 export default function AdminEventManagement() {
   const router = useRouter();
@@ -42,6 +43,30 @@ export default function AdminEventManagement() {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+
+  // Dialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogConfig, setDialogConfig] = useState({
+    title: '',
+    message: '',
+    buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>
+  });
+
+  // Toast state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
+
+  const showDialog = (title: string, message: string, buttons: Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>) => {
+    setDialogConfig({ title, message, buttons });
+    setDialogVisible(true);
+  };
+
+  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
+    setToastType(type);
+    setToastMessage(message);
+    setToastVisible(true);
+  };
 
   useEffect(() => {
     loadEvents();
@@ -77,7 +102,7 @@ export default function AdminEventManagement() {
       setEvents(allEvents);
     } catch (err) {
       console.error("Failed to load events", err);
-      Alert.alert("Error", "Failed to load events. Please try again.");
+      showToast('error', 'Failed to load events. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -106,11 +131,11 @@ export default function AdminEventManagement() {
     }
 
     if (!formData.title.trim()) {
-      Alert.alert("Error", "Event title is required");
+      showToast('error', 'Event title is required');
       return;
     }
     if (!formData.location.trim()) {
-      Alert.alert("Error", "Event location is required");
+      showToast('error', 'Event location is required');
       return;
     }
 
@@ -138,17 +163,17 @@ export default function AdminEventManagement() {
       resetForm();
 
       if (formData.isInviteOnly) {
-        Alert.alert(
+        showDialog(
           "Event Created!",
           "Invite Only event created successfully. Use the share button to send invitations.",
-          [{ text: "OK" }]
+          [{ text: "OK", onPress: () => {}, style: 'default' }]
         );
       } else {
-        Alert.alert("Success", "Private Event created successfully");
+        showToast('success', 'Private Event created successfully');
       }
     } catch (err) {
       console.error("Failed to create event", err);
-      Alert.alert("Error", "Failed to create event. Please try again.");
+      showToast('error', 'Failed to create event. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -159,11 +184,11 @@ export default function AdminEventManagement() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    Alert.alert(
+    showDialog(
       "Confirm Delete",
       "Are you sure you want to delete this event? This action cannot be undone.",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Cancel", onPress: () => {}, style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
@@ -173,10 +198,10 @@ export default function AdminEventManagement() {
               if (res.error) throw res.error;
 
               await loadEvents();
-              Alert.alert("Deleted", "Event deleted successfully");
+              showToast('success', 'Event deleted successfully');
             } catch (err) {
               console.error("Failed to delete event", err);
-              Alert.alert("Error", "Failed to delete event. Please try again.");
+              showToast('error', 'Failed to delete event. Please try again.');
             }
           },
         },
@@ -190,7 +215,7 @@ export default function AdminEventManagement() {
     }
 
     if (!event.shareableLink) {
-      Alert.alert("Error", "This event does not have a shareable link.");
+      showToast('error', 'This event does not have a shareable link.');
       return;
     }
 
@@ -212,11 +237,11 @@ Access the event: ${event.shareableLink}`;
       });
 
       if (result.action === Share.sharedAction) {
-        Alert.alert("Success", "Event invitation shared successfully!");
+        showToast('success', 'Event invitation shared successfully!');
       }
     } catch (error) {
       console.error("Error sharing event:", error);
-      Alert.alert("Error", "Failed to share event. Please try again.");
+      showToast('error', 'Failed to share event. Please try again.');
     }
   };
 
@@ -613,6 +638,21 @@ Access the event: ${event.shareableLink}`;
           )}
         </View>
       </ScrollView>
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onHide={() => setToastVisible(false)}
+        currentColors={{ text: colors.text, background: colors.background, primary: colors.primary }}
+      />
+      <Dialog
+        visible={dialogVisible}
+        title={dialogConfig.title}
+        message={dialogConfig.message}
+        buttons={dialogConfig.buttons}
+        onHide={() => setDialogVisible(false)}
+        currentColors={{ text: colors.text, card: colors.card, primary: colors.primary, textSecondary: colors.textSecondary, background: colors.background }}
+      />
     </SafeAreaView>
   );
 }

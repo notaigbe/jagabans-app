@@ -10,7 +10,6 @@ import {
   Platform,
   Image,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 import Toast from '@/components/Toast';
+import Dialog from '@/components/Dialog';
 import { imageService, userService } from '@/services/supabaseService';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -41,10 +41,23 @@ export default function EditProfileScreen() {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
 
+  // Dialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogConfig, setDialogConfig] = useState({
+    title: '',
+    message: '',
+    buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>
+  });
+
   const showToast = (type: 'success' | 'error' | 'info', message: string) => {
     setToastType(type);
     setToastMessage(message);
     setToastVisible(true);
+  };
+
+  const showDialog = (title: string, message: string, buttons: Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>) => {
+    setDialogConfig({ title, message, buttons });
+    setDialogVisible(true);
   };
 
   const handleSave = async () => {
@@ -104,7 +117,9 @@ export default function EditProfileScreen() {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (permissionResult.granted === false) {
-        showToast('error', 'Permission to access camera roll is required');
+        showDialog('Permission Required', 'Permission to access camera roll is required', [
+          { text: 'OK', onPress: () => {}, style: 'default' }
+        ]);
         return;
       }
 
@@ -135,7 +150,9 @@ export default function EditProfileScreen() {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       
       if (permissionResult.granted === false) {
-        showToast('error', 'Permission to access camera is required');
+        showDialog('Permission Required', 'Permission to access camera is required', [
+          { text: 'OK', onPress: () => {}, style: 'default' }
+        ]);
         return;
       }
 
@@ -404,6 +421,14 @@ export default function EditProfileScreen() {
           message={toastMessage}
           type={toastType}
           onHide={() => setToastVisible(false)}
+          currentColors={currentColors}
+        />
+        <Dialog
+          visible={dialogVisible}
+          title={dialogConfig.title}
+          message={dialogConfig.message}
+          buttons={dialogConfig.buttons}
+          onHide={() => setDialogVisible(false)}
           currentColors={currentColors}
         />
       </SafeAreaView>

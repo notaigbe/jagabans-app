@@ -21,6 +21,8 @@ import { MerchItem } from '@/types';
 import { merchService } from '@/services/supabaseService';
 import * as Haptics from 'expo-haptics';
 import { useApp } from '@/contexts/AppContext';
+import Dialog from '@/components/Dialog';
+import Toast from '@/components/Toast';
 
 interface MerchFormData {
   name: string;
@@ -32,7 +34,7 @@ interface MerchFormData {
 
 export default function AdminMerchManagement() {
   const router = useRouter();
-  const { showToast } = useApp();
+  const { showToast: appShowToast } = useApp();
   const [items, setItems] = React.useState<MerchItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [showAddModal, setShowAddModal] = React.useState(false);
@@ -46,6 +48,30 @@ export default function AdminMerchManagement() {
     inStock: true,
   });
   const [submitting, setSubmitting] = React.useState(false);
+
+  // Dialog state
+  const [dialogVisible, setDialogVisible] = React.useState(false);
+  const [dialogConfig, setDialogConfig] = React.useState({
+    title: '',
+    message: '',
+    buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>
+  });
+
+  // Toast state
+  const [toastVisible, setToastVisible] = React.useState(false);
+  const [toastMessage, setToastMessage] = React.useState('');
+  const [toastType, setToastType] = React.useState<'success' | 'error' | 'info'>('success');
+
+  const showDialog = (title: string, message: string, buttons: Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>) => {
+    setDialogConfig({ title, message, buttons });
+    setDialogVisible(true);
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    setToastType(type);
+    setToastMessage(message);
+    setToastVisible(true);
+  };
 
   const fetchMerchItems = useCallback(async () => {
     try {
@@ -206,26 +232,35 @@ export default function AdminMerchManagement() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
 
-    // Simple confirmation (in production, use a proper confirmation dialog)
-    if (!confirm(`Are you sure you want to delete "${itemName}"?`)) {
-      return;
-    }
+    // Show confirmation dialog
+    showDialog(
+      'Confirm Delete',
+      `Are you sure you want to delete "${itemName}"?`,
+      [
+        { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { error } = await merchService.deleteMerchItem(itemId);
+              
+              if (error) {
+                console.error('Error deleting merch item:', error);
+                showToast('Failed to delete merchandise item', 'error');
+                return;
+              }
 
-    try {
-      const { error } = await merchService.deleteMerchItem(itemId);
-      
-      if (error) {
-        console.error('Error deleting merch item:', error);
-        showToast('Failed to delete merchandise item', 'error');
-        return;
-      }
-
-      showToast('Merchandise item deleted successfully!', 'success');
-      await fetchMerchItems();
-    } catch (err) {
-      console.error('Exception deleting merch item:', err);
-      showToast('Failed to delete merchandise item', 'error');
-    }
+              showToast('Merchandise item deleted successfully!', 'success');
+              await fetchMerchItems();
+            } catch (err) {
+              console.error('Exception deleting merch item:', err);
+              showToast('Failed to delete merchandise item', 'error');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderForm = (isEdit: boolean) => (
@@ -466,6 +501,21 @@ export default function AdminMerchManagement() {
           </View>
         </View>
       </Modal>
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onHide={() => setToastVisible(false)}
+        currentColors={{ text: colors.text, background: colors.background, primary: colors.primary }}
+      />
+      <Dialog
+        visible={dialogVisible}
+        title={dialogConfig.title}
+        message={dialogConfig.message}
+        buttons={dialogConfig.buttons}
+        onHide={() => setDialogVisible(false)}
+        currentColors={{ text: colors.text, card: colors.card, primary: colors.primary, textSecondary: colors.textSecondary, background: colors.background }}
+      />
     </SafeAreaView>
   );
 }

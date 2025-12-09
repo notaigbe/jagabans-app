@@ -7,7 +7,6 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  Alert,
   Platform,
   ActivityIndicator,
 } from 'react-native';
@@ -16,6 +15,7 @@ import { useApp } from '@/contexts/AppContext';
 import * as Haptics from 'expo-haptics';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
+import Dialog from '@/components/Dialog';
 
 export default function MerchRedemptionScreen() {
   const router = useRouter();
@@ -23,6 +23,19 @@ export default function MerchRedemptionScreen() {
   const { userProfile, redeemMerch, currentColors, setTabBarVisible } = useApp();
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [pickupNotes, setPickupNotes] = useState('');
+
+  // Dialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogConfig, setDialogConfig] = useState({
+    title: '',
+    message: '',
+    buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>
+  });
+
+  const showDialog = (title: string, message: string, buttons: Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>) => {
+    setDialogConfig({ title, message, buttons });
+    setDialogVisible(true);
+  };
 
   const setTabBarVisibleCallback = useCallback(() => {
     setTabBarVisible(false);
@@ -47,16 +60,19 @@ export default function MerchRedemptionScreen() {
     }
 
     if (!deliveryAddress.trim()) {
-      Alert.alert('Missing Information', 'Please enter a delivery address.');
+      showDialog('Missing Information', 'Please enter a delivery address.', [
+        { text: 'OK', onPress: () => {}, style: 'default' }
+      ]);
       return;
     }
 
     const points = parseInt(pointsCost as string);
     
     if (currentPoints < points) {
-      Alert.alert(
+      showDialog(
         'Insufficient Points',
-        `You need ${points - currentPoints} more points to redeem this item.`
+        `You need ${points - currentPoints} more points to redeem this item.`,
+        [{ text: 'OK', onPress: () => {}, style: 'default' }]
       );
       return;
     }
@@ -73,13 +89,14 @@ export default function MerchRedemptionScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
 
-    Alert.alert(
+    showDialog(
       'Success!',
       `You've redeemed ${merchName}! We'll process your order and contact you soon.`,
       [
         {
           text: 'OK',
           onPress: () => router.back(),
+          style: 'default'
         },
       ]
     );
@@ -350,6 +367,14 @@ export default function MerchRedemptionScreen() {
           </Pressable>
         </View>
       </View>
+      <Dialog
+        visible={dialogVisible}
+        title={dialogConfig.title}
+        message={dialogConfig.message}
+        buttons={dialogConfig.buttons}
+        onHide={() => setDialogVisible(false)}
+        currentColors={currentColors}
+      />
     </SafeAreaView>
   );
 }

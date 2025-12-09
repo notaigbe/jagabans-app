@@ -9,7 +9,6 @@ import {
   Platform,
   TextInput,
   Image,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,6 +20,8 @@ import { menuService, imageService } from "@/services/supabaseService";
 import { MenuItem } from "@/types";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+import Dialog from "@/components/Dialog";
+import Toast from "@/components/Toast";
 
 export default function AdminMenuManagement() {
   const router = useRouter();
@@ -38,6 +39,30 @@ export default function AdminMenuManagement() {
     image: "",
   });
 
+  // Dialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogConfig, setDialogConfig] = useState({
+    title: '',
+    message: '',
+    buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>
+  });
+
+  // Toast state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
+
+  const showDialog = (title: string, message: string, buttons: Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>) => {
+    setDialogConfig({ title, message, buttons });
+    setDialogVisible(true);
+  };
+
+  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
+    setToastType(type);
+    setToastMessage(message);
+    setToastVisible(true);
+  };
+
   const categories: string[] = [
     "All",
     ...Array.from(new Set(items.map((i) => i.category))),
@@ -48,7 +73,9 @@ export default function AdminMenuManagement() {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (permissionResult.granted === false) {
-        Alert.alert("Permission Required", "Please allow access to your photo library");
+        showDialog('Permission Required', 'Please allow access to your photo library', [
+          { text: 'OK', onPress: () => {}, style: 'default' }
+        ]);
         return;
       }
 
@@ -64,7 +91,7 @@ export default function AdminMenuManagement() {
       }
     } catch (error) {
       console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to pick image");
+      showToast('error', 'Failed to pick image');
     }
   };
 
@@ -97,13 +124,13 @@ export default function AdminMenuManagement() {
 
       if (publicUrl) {
         setFormData({ ...formData, image: publicUrl });
-        Alert.alert("Success", "Image uploaded successfully");
+        showToast('success', 'Image uploaded successfully');
       } else {
         throw new Error("Failed to get public URL");
       }
     } catch (error) {
       console.error("Error uploading image:", error);
-      Alert.alert("Error", "Failed to upload image");
+      showToast('error', 'Failed to upload image');
     } finally {
       setUploadingImage(false);
     }
@@ -113,7 +140,7 @@ export default function AdminMenuManagement() {
     console.log("Adding new menu item");
     (async () => {
       if (!formData.name || !formData.price) {
-        Alert.alert("Error", "Please fill in all required fields");
+        showToast('error', 'Please fill in all required fields');
         return;
       }
 
@@ -136,10 +163,10 @@ export default function AdminMenuManagement() {
         if (added) setItems((s) => [added, ...s]);
         setIsAddingItem(false);
         resetForm();
-        Alert.alert("Success", "Menu item added successfully");
+        showToast('success', 'Menu item added successfully');
       } catch (err) {
         console.error("Add menu item failed", err);
-        Alert.alert("Error", "Unable to add menu item");
+        showToast('error', 'Unable to add menu item');
       }
     })();
   };
@@ -166,21 +193,21 @@ export default function AdminMenuManagement() {
         );
         setEditingItemId(null);
         resetForm();
-        Alert.alert("Success", "Menu item updated successfully");
+        showToast('success', 'Menu item updated successfully');
       } catch (err) {
         console.error("Update menu item failed", err);
-        Alert.alert("Error", "Unable to update menu item");
+        showToast('error', 'Unable to update menu item');
       }
     })();
   };
 
   const handleDeleteItem = (itemId: string) => {
     console.log("Deleting menu item:", itemId);
-    Alert.alert(
+    showDialog(
       "Confirm Delete",
       "Are you sure you want to delete this item?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Cancel", onPress: () => {}, style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
@@ -189,10 +216,10 @@ export default function AdminMenuManagement() {
               const res = await menuService.deleteMenuItem(itemId);
               if (res.error) throw res.error;
               setItems((prev) => prev.filter((item) => item.id !== itemId));
-              Alert.alert("Deleted", "Menu item deleted");
+              showToast('success', 'Menu item deleted');
             } catch (err) {
               console.error("Delete failed", err);
-              Alert.alert("Error", "Unable to delete menu item");
+              showToast('error', 'Unable to delete menu item');
             }
           },
         },
@@ -491,6 +518,21 @@ export default function AdminMenuManagement() {
           ))}
         </View>
       </ScrollView>
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onHide={() => setToastVisible(false)}
+        currentColors={{ text: colors.text, background: colors.background, primary: colors.primary }}
+      />
+      <Dialog
+        visible={dialogVisible}
+        title={dialogConfig.title}
+        message={dialogConfig.message}
+        buttons={dialogConfig.buttons}
+        onHide={() => setDialogVisible(false)}
+        currentColors={{ text: colors.text, card: colors.card, primary: colors.primary, textSecondary: colors.textSecondary, background: colors.background }}
+      />
     </SafeAreaView>
   );
 }
