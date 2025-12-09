@@ -209,8 +209,8 @@ export default function HomeScreen() {
               style={styles.notificationButton}
             >
               <IconSymbol
-                ios_icon_name="bell.fill"
-                name="notifications"
+                name={Platform.OS === 'ios' ? "bell.fill" : "notifications"}
+                // name="notifications"
                 size={28}
                 color="#D4AF37"
               />
@@ -230,8 +230,8 @@ export default function HomeScreen() {
       <View style={styles.searchContainer}>
         <View style={styles.searchBarWrapper}>
           <IconSymbol
-            ios_icon_name="magnifyingglass"
-            name="search"
+            name={Platform.OS === 'ios' ? "magnifyingglass" : "search"}
+            // name="search"
             size={20}
             color="#B0B8C1"
             style={styles.searchIcon}
@@ -247,8 +247,8 @@ export default function HomeScreen() {
           {searchQuery.length > 0 && (
             <Pressable onPress={handleClearSearch} style={styles.clearButton}>
               <IconSymbol
-                ios_icon_name="xmark.circle.fill"
-                name="cancel"
+                name={Platform.OS === 'ios' ? "xmark.circle.fill" : "cancel"}
+                // name="cancel"
                 size={20}
                 color="#B0B8C1"
               />
@@ -262,8 +262,8 @@ export default function HomeScreen() {
               style={styles.categoryDropdownButton}
             >
               <IconSymbol
-                ios_icon_name="line.3.horizontal.decrease.circle.fill"
-                name="filter-list"
+                name={Platform.OS === 'ios' ? "line.3.horizontal.decrease.circle.fill" : "filter-list"}
+                // name="filter-list"
                 size={28}
                 color="#F5A623"
               />
@@ -288,8 +288,8 @@ export default function HomeScreen() {
               <Text style={styles.dropdownTitle}>Categories</Text>
               <Pressable onPress={() => setShowCategoryDropdown(false)}>
                 <IconSymbol
-                  ios_icon_name="xmark.circle.fill"
-                  name="cancel"
+                  name={Platform.OS === 'ios' ? "xmark.circle.fill" : "cancel"}
+                  // name="cancel"
                   size={24}
                   color="#B0B8C1"
                 />
@@ -315,8 +315,8 @@ export default function HomeScreen() {
                   </Text>
                   {selectedCategory === category && (
                     <IconSymbol
-                      ios_icon_name="checkmark.circle.fill"
-                      name="check-circle"
+                      name={Platform.OS === 'ios' ? "checkmark.circle.fill" : "check-circle"}
+                      // name="check-circle"
                       size={20}
                       color="#5FE8D0"
                     />
@@ -410,8 +410,8 @@ export default function HomeScreen() {
             {filteredItems.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <IconSymbol
-                  ios_icon_name="magnifyingglass"
-                  name="search"
+                  name={Platform.OS === 'ios' ? "magnifyingglass" : "search"}
+                  // name="search"
                   size={64}
                   color={currentColors.textSecondary}
                 />
@@ -477,8 +477,8 @@ export default function HomeScreen() {
                           }}
                         >
                           <IconSymbol
-                            ios_icon_name="plus"
-                            name="add"
+                            name={Platform.OS === 'ios' ? "plus" : "add"}
+                            // name="add"
                             size={20}
                             color="#5FE8D0"
                           />
