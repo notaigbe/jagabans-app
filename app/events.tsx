@@ -31,6 +31,7 @@ export default function EventsScreen() {
   const [accessedInviteEvents, setAccessedInviteEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [rsvpLoading, setRsvpLoading] = useState<string | null>(null);
+  const [userRSVPs, setUserRSVPs] = useState<Set<string>>(new Set());
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogConfig, setDialogConfig] = useState<{
     title: string;
@@ -54,6 +55,30 @@ export default function EventsScreen() {
   const hideDialog = () => {
     setDialogVisible(false);
   };
+
+  const loadUserRSVPs = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      setUserRSVPs(new Set());
+      return;
+    }
+
+    try {
+      const { data, error } = await eventService.getUserRSVPs(user.id);
+      
+      if (error) {
+        console.error('Error loading user RSVPs:', error);
+        return;
+      }
+
+      if (data) {
+        const rsvpEventIds = new Set(data.map((rsvp: any) => rsvp.event_id));
+        setUserRSVPs(rsvpEventIds);
+        console.log('Loaded user RSVPs:', rsvpEventIds);
+      }
+    } catch (error) {
+      console.error('Error loading user RSVPs:', error);
+    }
+  }, [isAuthenticated, user]);
 
   const loadEvents = useCallback(async () => {
     setLoading(true);
@@ -146,10 +171,11 @@ export default function EventsScreen() {
     }
   }, [showToast]);
 
-  // Load events on mount and when authentication changes
+  // Load events and RSVPs on mount and when authentication changes
   useEffect(() => {
     loadEvents();
-  }, [loadEvents]);
+    loadUserRSVPs();
+  }, [loadEvents, loadUserRSVPs]);
 
   // Handle invite-only event access via URL params
   useEffect(() => {
@@ -180,9 +206,7 @@ export default function EventsScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    const isAlreadyRSVPd = userProfile?.rsvpEvents?.some((rsvp: any) => 
-      rsvp.event_id === event.id || rsvp.eventId === event.id
-    );
+    const isAlreadyRSVPd = userRSVPs.has(event.id);
     
     if (isAlreadyRSVPd) {
       showDialog({
@@ -210,6 +234,7 @@ export default function EventsScreen() {
         {
           text: 'Confirm',
           onPress: async () => {
+            setDialogVisible(false);
             setRsvpLoading(event.id);
             try {
               const { error } = await eventService.rsvpEvent(user.id, event.id);
@@ -229,6 +254,9 @@ export default function EventsScreen() {
                 )
               );
 
+              // Add to user RSVPs
+              setUserRSVPs((prev) => new Set([...prev, event.id]));
+
               showToast(`RSVP confirmed for "${event.title}"!`, 'success');
               
               // Reload user profile to update RSVP list
@@ -236,9 +264,75 @@ export default function EventsScreen() {
               
               // Reload events to get updated data from server
               await loadEvents();
+              await loadUserRSVPs();
             } catch (error) {
               console.error('Error during RSVP:', error);
               showToast('Failed to RSVP. Please try again.', 'error');
+            } finally {
+              setRsvpLoading(null);
+            }
+          },
+        },
+      ],
+    });
+  };
+
+  const handleCancelRSVP = async (event: Event) => {
+    if (!isAuthenticated || !user) {
+      return;
+    }
+
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    showDialog({
+      title: 'Cancel Reservation',
+      message: `Are you sure you want to cancel your reservation for ${event.title}?`,
+      buttons: [
+        { text: 'Keep Reservation', onPress: () => {}, style: 'cancel' },
+        {
+          text: 'Cancel Reservation',
+          style: 'destructive',
+          onPress: async () => {
+            setDialogVisible(false);
+            setRsvpLoading(event.id);
+            try {
+              const { error } = await eventService.cancelRSVP(user.id, event.id);
+              
+              if (error) {
+                console.error('Cancel RSVP error:', error);
+                showToast('Failed to cancel reservation. Please try again.', 'error');
+                return;
+              }
+
+              // Update local state optimistically
+              setVisibleEvents((prevEvents) =>
+                prevEvents.map((e) =>
+                  e.id === event.id
+                    ? { ...e, availableSpots: Math.min(e.capacity, e.availableSpots + 1) }
+                    : e
+                )
+              );
+
+              // Remove from user RSVPs
+              setUserRSVPs((prev) => {
+                const newSet = new Set(prev);
+                newSet.delete(event.id);
+                return newSet;
+              });
+
+              showToast(`Reservation cancelled for "${event.title}"`, 'success');
+              
+              // Reload user profile to update RSVP list
+              await loadUserProfile();
+              
+              // Reload events to get updated data from server
+              await loadEvents();
+              await loadUserRSVPs();
+            } catch (error) {
+              console.error('Error during cancel RSVP:', error);
+              showToast('Failed to cancel reservation. Please try again.', 'error');
             } finally {
               setRsvpLoading(null);
             }
@@ -373,9 +467,7 @@ export default function EventsScreen() {
               )}
 
               {allVisibleEvents.map((event) => {
-                const isRSVPd = userProfile?.rsvpEvents?.some((rsvp: any) => 
-                  rsvp.event_id === event.id || rsvp.eventId === event.id
-                );
+                const isRSVPd = userRSVPs.has(event.id);
                 const isRSVPing = rsvpLoading === event.id;
                 const isFull = event.availableSpots <= 0;
 
@@ -393,6 +485,17 @@ export default function EventsScreen() {
                         style={styles.eventImage}
                       />
                       <View style={styles.badgeContainer}>
+                        {isRSVPd && (
+                          <LinearGradient
+                            colors={[currentColors.primary, currentColors.highlight]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.badge}
+                          >
+                            <IconSymbol name="checkmark.circle.fill" size={12} color={currentColors.background} />
+                            <Text style={[styles.badgeText, { color: currentColors.background }]}>Reserved</Text>
+                          </LinearGradient>
+                        )}
                         {event.isPrivate && !event.isInviteOnly && (
                           <LinearGradient
                             colors={[currentColors.secondary, currentColors.highlight]}
@@ -450,21 +553,27 @@ export default function EventsScreen() {
 
                       <View style={styles.buttonRow}>
                         <LinearGradient
-                          colors={isRSVPd ? [currentColors.primary, currentColors.highlight] : isFull ? [currentColors.textSecondary, currentColors.textSecondary] : [currentColors.secondary, currentColors.highlight]}
+                          colors={
+                            isRSVPd 
+                              ? ['#DC2626', '#B91C1C'] // Red gradient for cancel
+                              : isFull 
+                              ? [currentColors.textSecondary, currentColors.textSecondary] 
+                              : [currentColors.secondary, currentColors.highlight]
+                          }
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 0 }}
                           style={styles.rsvpButton}
                         >
                           <Pressable
                             style={styles.rsvpButtonInner}
-                            onPress={() => handleRSVP(event)}
-                            disabled={isFull || isRSVPing || isRSVPd}
+                            onPress={() => isRSVPd ? handleCancelRSVP(event) : handleRSVP(event)}
+                            disabled={(!isRSVPd && isFull) || isRSVPing}
                           >
                             {isRSVPing ? (
                               <ActivityIndicator size="small" color={currentColors.background} />
                             ) : (
                               <Text style={[styles.rsvpButtonText, { color: currentColors.background }]}>
-                                {isRSVPd ? 'RSVP Confirmed' : isFull ? 'Event Full' : 'RSVP Now'}
+                                {isRSVPd ? 'Cancel Reservation' : isFull ? 'Event Full' : 'RSVP Now'}
                               </Text>
                             )}
                           </Pressable>
@@ -614,6 +723,8 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: 'row',
     gap: 8,
+    flexWrap: 'wrap',
+    maxWidth: '80%',
   },
   badge: {
     flexDirection: 'row',

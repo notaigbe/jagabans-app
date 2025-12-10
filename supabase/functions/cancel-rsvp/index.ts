@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
 
 const corsHeaders = {
@@ -6,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-console.log('RSVP Event function started');
+console.log('Cancel RSVP function started');
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -41,9 +42,9 @@ Deno.serve(async (req) => {
     const { eventId } = await req.json();
     if (!eventId) throw new Error('Event ID is required');
 
-    console.log('Processing RSVP for event:', eventId, 'user:', user.id);
+    console.log('Processing RSVP cancellation for event:', eventId, 'user:', user.id);
 
-    // Check existing RSVP
+    // Check if RSVP exists
     const { data: existingRsvp, error: checkError } = await supabaseClient
       .from('event_rsvps')
       .select('id')
@@ -54,9 +55,9 @@ Deno.serve(async (req) => {
     console.log('Existing RSVP check:', { existingRsvp, checkError });
 
     if (checkError) throw new Error('Failed to check existing RSVP');
-    if (existingRsvp) {
+    if (!existingRsvp) {
       return new Response(
-        JSON.stringify({ error: "You have already RSVP'd to this event" }),
+        JSON.stringify({ error: 'No RSVP found for this event' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -64,33 +65,36 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get current event state BEFORE update
+    // Get current event state
     const { data: eventBefore, error: eventBeforeError } = await supabaseClient
       .from('events')
       .select('id, available_spots, capacity')
       .eq('id', eventId)
       .single();
 
-    console.log('Event before update:', { eventBefore, eventBeforeError });
+    console.log('Event before cancellation:', { eventBefore, eventBeforeError });
 
     if (eventBeforeError || !eventBefore) {
       throw new Error('Event not found');
     }
 
-    if (eventBefore.available_spots <= 0) {
-      return new Response(
-        JSON.stringify({ error: 'No spots available for this event' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+    // Delete the RSVP first
+    console.log('Deleting RSVP...');
+    const { error: deleteError } = await supabaseClient
+      .from('event_rsvps')
+      .delete()
+      .eq('id', existingRsvp.id);
+
+    console.log('RSVP delete result:', { deleteError });
+
+    if (deleteError) {
+      throw new Error('Failed to cancel RSVP');
     }
 
-    // Try the RPC function first
-    console.log('Attempting RPC decrement...');
+    // Try the RPC function first to increment spots
+    console.log('Attempting RPC increment...');
     const { data: rpcResult, error: rpcError } = await supabaseClient.rpc(
-      'decrement_available_spots',
+      'increment_available_spots',
       { event_id: eventId }
     );
 
@@ -103,22 +107,29 @@ Deno.serve(async (req) => {
       // RPC function doesn't exist, fall back to manual update
       console.log('RPC failed, using manual update method');
       
-      const newSpots = eventBefore.available_spots - 1;
+      const newSpots = Math.min(eventBefore.available_spots + 1, eventBefore.capacity);
       const { data: manualUpdate, error: manualError } = await supabaseClient
         .from('events')
         .update({ available_spots: newSpots })
         .eq('id', eventId)
-        .eq('available_spots', eventBefore.available_spots) // Optimistic lock
         .select('available_spots')
         .single();
 
       console.log('Manual update result:', { manualUpdate, manualError });
 
       if (manualError || !manualUpdate) {
+        // Rollback: re-insert the RSVP
+        await supabaseClient
+          .from('event_rsvps')
+          .insert({
+            event_id: eventId,
+            user_id: user.id,
+          });
+        
         return new Response(
-          JSON.stringify({ error: 'Failed to reserve spot. Please try again.' }),
+          JSON.stringify({ error: 'Failed to update available spots. Please try again.' }),
           {
-            status: 409,
+            status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           }
         );
@@ -132,38 +143,7 @@ Deno.serve(async (req) => {
       availableSpots = updatedEvent?.available_spots;
     }
 
-    console.log('Spots decremented successfully. New available spots:', availableSpots);
-
-    // Insert RSVP
-    console.log('Inserting RSVP...');
-    const { data: rsvp, error: rsvpError } = await supabaseClient
-      .from('event_rsvps')
-      .insert({
-        event_id: eventId,
-        user_id: user.id,
-      })
-      .select()
-      .single();
-
-    console.log('RSVP insert result:', { rsvp, rsvpError });
-
-    if (rsvpError) {
-      console.error('RSVP insert failed, rolling back...');
-      
-      // Rollback
-      if (rpcError) {
-        // Was manual update, rollback manually
-        await supabaseClient
-          .from('events')
-          .update({ available_spots: eventBefore.available_spots })
-          .eq('id', eventId);
-      } else {
-        // Was RPC, use RPC rollback
-        await supabaseClient.rpc('increment_available_spots', { event_id: eventId });
-      }
-
-      throw new Error('Failed to create RSVP');
-    }
+    console.log('Spots incremented successfully. New available spots:', availableSpots);
 
     // Verify the update actually happened
     const { data: eventAfter } = await supabaseClient
@@ -172,12 +152,11 @@ Deno.serve(async (req) => {
       .eq('id', eventId)
       .single();
 
-    console.log('Event after RSVP:', eventAfter);
+    console.log('Event after cancellation:', eventAfter);
 
     return new Response(
       JSON.stringify({
         success: true,
-        rsvp,
         availableSpots: availableSpots ?? eventAfter?.available_spots,
         debug: {
           before: eventBefore.available_spots,
