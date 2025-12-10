@@ -40,24 +40,24 @@ export default function Toast({
   const getIconColor = () => {
     switch (type) {
       case 'success':
-        return '#4CAF50';
+        return '#4caf9eff';
       case 'error':
         return '#EF5350';
       case 'info':
         return currentColors.primary || '#2196F3';
       default:
-        return '#4CAF50';
+        return '#4caf9eff';
     }
   };
 
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return '#4CAF50';
+        return '#4caf9eec';
       case 'error':
-        return '#EF5350';
+        return '#ef8250e8';
       case 'info':
-        return currentColors.primary || '#2196F3';
+        return currentColors.primary || '#2195f3ec';
       default:
         return '#4CAF50';
     }

@@ -26,7 +26,7 @@ export default function CartScreen() {
   const [itemToRemove, setItemToRemove] = useState<string | null>(null);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.08;
+  const tax = subtotal * 0.0975;
   const total = subtotal + tax;
 
   const handleQuantityChange = (itemId: string, change: number) => {
@@ -172,7 +172,7 @@ export default function CartScreen() {
                   <Text style={[styles.summaryValue, { color: currentColors.text }]}>${subtotal.toFixed(2)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Tax (8%)</Text>
+                  <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Tax (9.75%)</Text>
                   <Text style={[styles.summaryValue, { color: currentColors.text }]}>${tax.toFixed(2)}</Text>
                 </View>
                 <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: currentColors.border }]}>

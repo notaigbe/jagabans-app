@@ -129,11 +129,11 @@ export default function OrderHistoryScreen() {
                           })}
                         </Text>
                       </View>
+                      
+                    </View>
                       <View style={[styles.statusBadge, { backgroundColor: getStatusBadgeColor(order.status) }]}>
                         <Text style={[styles.statusText, { color: currentColors.background }]}>{order.status}</Text>
                       </View>
-                    </View>
-
                     <View style={[styles.orderDivider, { backgroundColor: currentColors.border }]} />
 
                     <View style={styles.orderItems}>
@@ -295,8 +295,9 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 0,
-    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.25)',
+    borderRadius: 16,
+    // boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.25)',
+    alignItems: 'center',
     elevation: 4,
   },
   statusText: {
