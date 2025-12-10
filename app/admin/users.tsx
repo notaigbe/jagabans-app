@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -16,7 +15,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '@/app/integrations/supabase/client';
-import { userService } from '@/services/supabaseService';
+import { userService, eventService } from '@/services/supabaseService';
 import { useApp } from '@/contexts/AppContext';
 import Dialog from '@/components/Dialog';
 import Toast from '@/components/Toast';
@@ -34,12 +33,26 @@ interface User {
   userRole: 'user' | 'admin' | 'super_admin';
 }
 
+interface UserRSVP {
+  id: string;
+  event_id: string;
+  event: {
+    id: string;
+    title: string;
+    date: string;
+  };
+}
+
 export default function AdminUserManagement() {
   const router = useRouter();
   const { userProfile } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userRSVPs, setUserRSVPs] = useState<UserRSVP[]>([]);
+  const [loadingRSVPs, setLoadingRSVPs] = useState(false);
+  const [bannedEvents, setBannedEvents] = useState<Set<string>>(new Set());
 
   // Dialog state
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -123,6 +136,153 @@ export default function AdminUserManagement() {
     fetchUsers();
   }, [fetchUsers]);
 
+  const loadUserRSVPs = async (userId: string) => {
+    try {
+      setLoadingRSVPs(true);
+      const { data, error } = await eventService.getUserRSVPs(userId);
+      
+      if (error) {
+        console.error('Error loading user RSVPs:', error);
+        showToast('error', 'Failed to load user RSVPs');
+        return;
+      }
+
+      setUserRSVPs(data || []);
+
+      // Load banned events for this user
+      const { data: bans, error: bansError } = await eventService.getUserEventBans(userId);
+      if (!bansError && bans) {
+        setBannedEvents(new Set(bans.map((ban: any) => ban.event_id)));
+      }
+    } catch (error) {
+      console.error('Error loading user RSVPs:', error);
+      showToast('error', 'Failed to load user RSVPs');
+    } finally {
+      setLoadingRSVPs(false);
+    }
+  };
+
+  const handleViewUserDetails = async (user: User) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectedUser(user);
+    await loadUserRSVPs(user.id);
+  };
+
+  const handleCancelUserRSVP = async (userId: string, eventId: string, eventTitle: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    showDialog(
+      'Cancel User RSVP',
+      `Are you sure you want to cancel this user's reservation for "${eventTitle}"? They will be notified.`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: () => {} },
+        {
+          text: 'Confirm',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { error } = await eventService.adminCancelRSVP(userId, eventId);
+
+              if (error) {
+                showToast('error', 'Failed to cancel RSVP');
+                return;
+              }
+
+              showToast('success', 'RSVP cancelled successfully. User has been notified.');
+              
+              // Reload RSVPs
+              if (selectedUser) {
+                await loadUserRSVPs(selectedUser.id);
+              }
+            } catch (error) {
+              console.error('Error cancelling RSVP:', error);
+              showToast('error', 'Failed to cancel RSVP');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleBanUserFromEvent = async (userId: string, eventId: string, eventTitle: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    showDialog(
+      'Ban User from Event',
+      `Are you sure you want to ban this user from "${eventTitle}"? They will not be able to RSVP to this event.`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: () => {} },
+        {
+          text: 'Ban User',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { error } = await eventService.banUserFromEvent(userId, eventId, 'Banned by admin');
+
+              if (error) {
+                showToast('error', 'Failed to ban user from event');
+                return;
+              }
+
+              showToast('success', 'User has been banned from this event');
+              
+              // Reload RSVPs and bans
+              if (selectedUser) {
+                await loadUserRSVPs(selectedUser.id);
+              }
+            } catch (error) {
+              console.error('Error banning user:', error);
+              showToast('error', 'Failed to ban user from event');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleUnbanUserFromEvent = async (userId: string, eventId: string, eventTitle: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    showDialog(
+      'Unban User from Event',
+      `Are you sure you want to unban this user from "${eventTitle}"?`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: () => {} },
+        {
+          text: 'Unban User',
+          onPress: async () => {
+            try {
+              const { error } = await eventService.unbanUserFromEvent(userId, eventId);
+
+              if (error) {
+                showToast('error', 'Failed to unban user from event');
+                return;
+              }
+
+              showToast('success', 'User has been unbanned from this event');
+              
+              // Reload RSVPs and bans
+              if (selectedUser) {
+                await loadUserRSVPs(selectedUser.id);
+              }
+            } catch (error) {
+              console.error('Error unbanning user:', error);
+              showToast('error', 'Failed to unban user from event');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handlePromoteToAdmin = async (userId: string, userName: string) => {
     try {
       if (Platform.OS !== 'web') {
@@ -199,6 +359,129 @@ export default function AdminUserManagement() {
   // Calculate active users (only regular users)
   const activeRegularUsers = users.filter((u) => u.active && u.userRole === 'user').length;
 
+  if (selectedUser) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => {
+              if (Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              setSelectedUser(null);
+              setUserRSVPs([]);
+              setBannedEvents(new Set());
+            }}
+          >
+            <IconSymbol name="arrow-back" size={24} color={colors.text} />
+          </Pressable>
+          <Text style={styles.title}>{selectedUser.name}</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.detailsContainer}>
+            <View style={styles.detailCard}>
+              <Text style={styles.detailLabel}>Email</Text>
+              <Text style={styles.detailValue}>{selectedUser.email}</Text>
+            </View>
+            <View style={styles.detailCard}>
+              <Text style={styles.detailLabel}>Phone</Text>
+              <Text style={styles.detailValue}>{selectedUser.phone}</Text>
+            </View>
+            <View style={styles.detailCard}>
+              <Text style={styles.detailLabel}>Points</Text>
+              <Text style={styles.detailValue}>{selectedUser.points}</Text>
+            </View>
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Event RSVPs</Text>
+          </View>
+
+          {loadingRSVPs ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : userRSVPs.length === 0 ? (
+            <View style={styles.emptyState}>
+              <IconSymbol name="event" size={48} color={colors.textSecondary} />
+              <Text style={styles.emptyText}>No event RSVPs</Text>
+            </View>
+          ) : (
+            <View style={styles.rsvpList}>
+              {userRSVPs.map((rsvp) => {
+                const isBanned = bannedEvents.has(rsvp.event_id);
+                return (
+                  <View key={rsvp.id} style={styles.rsvpCard}>
+                    <View style={styles.rsvpInfo}>
+                      <Text style={styles.rsvpTitle}>{rsvp.event.title}</Text>
+                      <Text style={styles.rsvpDate}>
+                        {new Date(rsvp.event.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </Text>
+                      {isBanned && (
+                        <View style={styles.bannedBadge}>
+                          <Text style={styles.bannedBadgeText}>User is banned from this event</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.rsvpActions}>
+                      <Pressable
+                        style={[styles.actionBtn, styles.cancelBtn]}
+                        onPress={() => handleCancelUserRSVP(selectedUser.id, rsvp.event_id, rsvp.event.title)}
+                      >
+                        <IconSymbol name="close" size={16} color="#FF6B6B" />
+                        <Text style={styles.cancelBtnText}>Cancel</Text>
+                      </Pressable>
+                      {isBanned ? (
+                        <Pressable
+                          style={[styles.actionBtn, styles.unbanBtn]}
+                          onPress={() => handleUnbanUserFromEvent(selectedUser.id, rsvp.event_id, rsvp.event.title)}
+                        >
+                          <IconSymbol name="check" size={16} color="#4CAF50" />
+                          <Text style={styles.unbanBtnText}>Unban</Text>
+                        </Pressable>
+                      ) : (
+                        <Pressable
+                          style={[styles.actionBtn, styles.banBtn]}
+                          onPress={() => handleBanUserFromEvent(selectedUser.id, rsvp.event_id, rsvp.event.title)}
+                        >
+                          <IconSymbol name="block" size={16} color="#FF6B6B" />
+                          <Text style={styles.banBtnText}>Ban</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+
+        <Toast
+          visible={toastVisible}
+          message={toastMessage}
+          type={toastType}
+          onHide={() => setToastVisible(false)}
+          currentColors={{ text: colors.text, background: colors.background, primary: colors.primary }}
+        />
+        <Dialog
+          visible={dialogVisible}
+          title={dialogConfig.title}
+          message={dialogConfig.message}
+          buttons={dialogConfig.buttons}
+          onHide={() => setDialogVisible(false)}
+          currentColors={{ text: colors.text, card: colors.card, primary: colors.primary, textSecondary: colors.textSecondary, background: colors.background }}
+        />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -262,7 +545,11 @@ export default function AdminUserManagement() {
         ) : (
           <View style={styles.usersContainer}>
           {filteredUsers.map((user) => (
-            <View key={user.id} style={styles.userCard}>
+            <Pressable
+              key={user.id}
+              style={styles.userCard}
+              onPress={() => handleViewUserDetails(user)}
+            >
               <View style={styles.userHeader}>
                 <View style={[
                   styles.userAvatar,
@@ -331,7 +618,8 @@ export default function AdminUserManagement() {
                         styles.actionButton,
                         user.userRole === 'admin' && styles.revokeButton,
                       ]}
-                      onPress={() => {
+                      onPress={(e) => {
+                        e.stopPropagation();
                         if (user.userRole === 'admin') {
                           handleRevokeAdmin(user.id, user.name);
                         } else {
@@ -356,7 +644,7 @@ export default function AdminUserManagement() {
                   )}
                 </View>
               </View>
-            </View>
+            </Pressable>
           ))}
 
           {filteredUsers.length === 0 && (
@@ -609,5 +897,113 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     marginTop: 16,
+  },
+  detailsContainer: {
+    padding: 16,
+    gap: 12,
+  },
+  detailCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  detailValue: {
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '600',
+  },
+  sectionHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  rsvpList: {
+    padding: 16,
+    gap: 12,
+  },
+  rsvpCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  rsvpInfo: {
+    marginBottom: 12,
+  },
+  rsvpTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  rsvpDate: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  bannedBadge: {
+    backgroundColor: '#FF6B6B20',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  bannedBadgeText: {
+    fontSize: 12,
+    color: '#FF6B6B',
+    fontWeight: '600',
+  },
+  rsvpActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  cancelBtn: {
+    backgroundColor: '#FF6B6B20',
+    borderColor: '#FF6B6B',
+  },
+  cancelBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FF6B6B',
+  },
+  banBtn: {
+    backgroundColor: '#FF6B6B20',
+    borderColor: '#FF6B6B',
+  },
+  banBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FF6B6B',
+  },
+  unbanBtn: {
+    backgroundColor: '#4CAF5020',
+    borderColor: '#4CAF50',
+  },
+  unbanBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4CAF50',
   },
 });

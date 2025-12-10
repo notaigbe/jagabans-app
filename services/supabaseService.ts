@@ -1,4 +1,3 @@
-
 import { supabase, SUPABASE_URL } from '@/app/integrations/supabase/client';
 import type { Database } from '@/app/integrations/supabase/types';
 import { 
@@ -1144,6 +1143,122 @@ export const eventService = {
       return { data: result, error: null };
     } catch (error) {
       console.error('Cancel RSVP error:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Admin cancel user's RSVP to an event
+   */
+  async adminCancelRSVP(userId: string, eventId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/admin-cancel-rsvp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ userId, eventId }),
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+
+      return { data: result, error: null };
+    } catch (error) {
+      console.error('Admin cancel RSVP error:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Get user's event bans
+   */
+  async getUserEventBans(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('event_bans')
+        .select('event_id')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Get user event bans error:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Ban user from event (Admin)
+   */
+  async banUserFromEvent(userId: string, eventId: string, reason?: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { data, error } = await (supabase as any)
+        .from('event_bans')
+        .insert({
+          user_id: userId,
+          event_id: eventId,
+          banned_by: session.user.id,
+          reason: reason || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Ban user from event error:', error);
+      return { data: null, error };
+    }
+  },
+
+  /**
+   * Unban user from event (Admin)
+   */
+  async unbanUserFromEvent(userId: string, eventId: string) {
+    try {
+      const { error } = await supabase
+        .from('event_bans')
+        .delete()
+        .eq('user_id', userId)
+        .eq('event_id', eventId);
+
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      console.error('Unban user from event error:', error);
+      return { error };
+    }
+  },
+
+  /**
+   * Get all RSVPs for an event (Admin)
+   */
+  async getEventRSVPs(eventId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('event_rsvps')
+        .select(`
+          *,
+          user:user_profiles (id, name, email, phone)
+        `)
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Get event RSVPs error:', error);
       return { data: null, error };
     }
   },

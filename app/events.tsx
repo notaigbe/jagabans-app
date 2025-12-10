@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -32,6 +31,7 @@ export default function EventsScreen() {
   const [loading, setLoading] = useState(true);
   const [rsvpLoading, setRsvpLoading] = useState<string | null>(null);
   const [userRSVPs, setUserRSVPs] = useState<Set<string>>(new Set());
+  const [bannedEventIds, setBannedEventIds] = useState<Set<string>>(new Set());
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogConfig, setDialogConfig] = useState<{
     title: string;
@@ -59,6 +59,7 @@ export default function EventsScreen() {
   const loadUserRSVPs = useCallback(async () => {
     if (!isAuthenticated || !user) {
       setUserRSVPs(new Set());
+      setBannedEventIds(new Set());
       return;
     }
 
@@ -74,6 +75,14 @@ export default function EventsScreen() {
         const rsvpEventIds = new Set(data.map((rsvp: any) => rsvp.event_id));
         setUserRSVPs(rsvpEventIds);
         console.log('Loaded user RSVPs:', rsvpEventIds);
+      }
+
+      // Load banned events
+      const { data: bans, error: bansError } = await eventService.getUserEventBans(user.id);
+      if (!bansError && bans) {
+        const bannedIds = new Set(bans.map((ban: any) => ban.event_id));
+        setBannedEventIds(bannedIds);
+        console.log('Loaded banned events:', bannedIds);
       }
     } catch (error) {
       console.error('Error loading user RSVPs:', error);
@@ -198,6 +207,16 @@ export default function EventsScreen() {
             },
           },
         ],
+      });
+      return;
+    }
+
+    // Check if user is banned from this event
+    if (bannedEventIds.has(event.id)) {
+      showDialog({
+        title: 'Access Denied',
+        message: 'You have been banned from this event by an administrator.',
+        buttons: [{ text: 'OK', onPress: () => {}, style: 'cancel' }],
       });
       return;
     }
@@ -470,6 +489,7 @@ export default function EventsScreen() {
                 const isRSVPd = userRSVPs.has(event.id);
                 const isRSVPing = rsvpLoading === event.id;
                 const isFull = event.availableSpots <= 0;
+                const isBanned = bannedEventIds.has(event.id);
 
                 return (
                   <LinearGradient
@@ -494,6 +514,17 @@ export default function EventsScreen() {
                           >
                             <IconSymbol name="checkmark.circle.fill" size={12} color={currentColors.background} />
                             <Text style={[styles.badgeText, { color: currentColors.background }]}>Reserved</Text>
+                          </LinearGradient>
+                        )}
+                        {isBanned && (
+                          <LinearGradient
+                            colors={['#DC2626', '#B91C1C']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.badge}
+                          >
+                            <IconSymbol name="exclamationmark.triangle.fill" size={12} color="#FFFFFF" />
+                            <Text style={[styles.badgeText, { color: '#FFFFFF' }]}>Banned</Text>
                           </LinearGradient>
                         )}
                         {event.isPrivate && !event.isInviteOnly && (
@@ -526,6 +557,15 @@ export default function EventsScreen() {
                         {event.description}
                       </Text>
 
+                      {isBanned && (
+                        <View style={styles.banNotice}>
+                          <IconSymbol name="exclamationmark.triangle.fill" size={20} color="#DC2626" />
+                          <Text style={styles.banNoticeText}>
+                            You have been banned from this event by an administrator and cannot RSVP.
+                          </Text>
+                        </View>
+                      )}
+
                       <View style={styles.eventDetails}>
                         <View style={styles.eventDetail}>
                           <IconSymbol name="calendar" size={16} color={currentColors.secondary} />
@@ -556,7 +596,7 @@ export default function EventsScreen() {
                           colors={
                             isRSVPd 
                               ? ['#DC2626', '#B91C1C'] // Red gradient for cancel
-                              : isFull 
+                              : isFull || isBanned
                               ? [currentColors.textSecondary, currentColors.textSecondary] 
                               : [currentColors.secondary, currentColors.highlight]
                           }
@@ -567,13 +607,13 @@ export default function EventsScreen() {
                           <Pressable
                             style={styles.rsvpButtonInner}
                             onPress={() => isRSVPd ? handleCancelRSVP(event) : handleRSVP(event)}
-                            disabled={(!isRSVPd && isFull) || isRSVPing}
+                            disabled={(!isRSVPd && (isFull || isBanned)) || isRSVPing}
                           >
                             {isRSVPing ? (
                               <ActivityIndicator size="small" color={currentColors.background} />
                             ) : (
                               <Text style={[styles.rsvpButtonText, { color: currentColors.background }]}>
-                                {isRSVPd ? 'Cancel Reservation' : isFull ? 'Event Full' : 'RSVP Now'}
+                                {isRSVPd ? 'Cancel Reservation' : isBanned ? 'Banned from Event' : isFull ? 'Event Full' : 'RSVP Now'}
                               </Text>
                             )}
                           </Pressable>
@@ -753,6 +793,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     lineHeight: 20,
     marginBottom: 16,
+  },
+  banNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FEE2E2',
+    padding: 12,
+    borderRadius: 0,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#DC2626',
+  },
+  banNoticeText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#DC2626',
+    lineHeight: 18,
   },
   eventDetails: {
     gap: 12,
