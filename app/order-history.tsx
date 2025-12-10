@@ -93,13 +93,13 @@ export default function OrderHistoryScreen() {
                     <Text style={[styles.statLabel, { color: currentColors.textSecondary }]}>Total Orders</Text>
                   </View>
                   <View style={[styles.statDivider, { backgroundColor: currentColors.border }]} />
-                  <View style={styles.statItem}>
+                  {/* <View style={styles.statItem}>
                     <Text style={[styles.statValue, { color: currentColors.secondary }]}>
                       ${userProfile?.orders?.reduce((sum, order) => sum + order.total, 0).toFixed(2)}
                     </Text>
                     <Text style={[styles.statLabel, { color: currentColors.textSecondary }]}>Total Spent</Text>
-                  </View>
-                  <View style={[styles.statDivider, { backgroundColor: currentColors.border }]} />
+                  </View> */}
+                  {/* <View style={[styles.statDivider, { backgroundColor: currentColors.border }]} /> */}
                   <View style={styles.statItem}>
                     <Text style={[styles.statValue, { color: currentColors.secondary }]}>
                       {userProfile?.orders?.reduce((sum, order) => sum + order.pointsEarned, 0)}

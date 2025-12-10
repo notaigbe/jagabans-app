@@ -465,10 +465,10 @@ export default function EventsScreen() {
                 <IconSymbol name="star.fill" size={24} color={currentColors.highlight} />
                 <View style={styles.infoTextContainer}>
                   <Text style={[styles.infoText, { color: currentColors.text }]}>
-                    <Text style={{ fontFamily: 'Inter_700Bold' }}>Private Events:</Text> Open to app members only
+                    <Text style={{ fontFamily: 'Inter_700Bold' }}>General Event:</Text> Open to public
                   </Text>
                   <Text style={[styles.infoText, { color: currentColors.text }]}>
-                    <Text style={{ fontFamily: 'Inter_700Bold' }}>General Event:</Text> Open to public
+                    <Text style={{ fontFamily: 'Inter_700Bold' }}>Private Events:</Text> Open to app members only
                   </Text>
                 </View>
               </LinearGradient>
