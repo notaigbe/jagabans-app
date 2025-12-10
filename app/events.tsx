@@ -465,10 +465,10 @@ export default function EventsScreen() {
                 <IconSymbol name="star.fill" size={24} color={currentColors.highlight} />
                 <View style={styles.infoTextContainer}>
                   <Text style={[styles.infoText, { color: currentColors.text }]}>
-                    <Text style={{ fontFamily: 'Inter_700Bold' }}>Private Events:</Text> Open to all app members
+                    <Text style={{ fontFamily: 'Inter_700Bold' }}>Private Events:</Text> Open to app members only
                   </Text>
                   <Text style={[styles.infoText, { color: currentColors.text }]}>
-                    <Text style={{ fontFamily: 'Inter_700Bold' }}>Invite Only:</Text> Accessible via shared link only
+                    <Text style={{ fontFamily: 'Inter_700Bold' }}>General Event:</Text> Open to public
                   </Text>
                 </View>
               </LinearGradient>

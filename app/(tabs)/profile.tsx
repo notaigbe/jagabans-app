@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 16,
     boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.15)',
-    elevation: 4,
+    // elevation: 4,
   },
   menuContent: {
     flex: 1,

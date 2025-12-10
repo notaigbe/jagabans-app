@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   View,
@@ -13,6 +12,7 @@ import { colors } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/contexts/AppContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 export interface TabBarItem {
   name: string;
@@ -61,54 +61,61 @@ export default function FloatingTabBar({
       <View style={styles.tabBarWrapper}>
         {/* Texture overlay */}
         <View style={styles.textureOverlay} />
-        <LinearGradient
-          colors={['rgba(26, 40, 56, 0.93)', 'rgba(26, 40, 56, 0.93)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.tabBar}
+        
+        <BlurView
+          intensity={700}
+          tint="dark"
+          style={styles.blurContainer}
         >
-          {tabs.map((tab) => {
-            const active = isActive(tab.route);
-            const isCartTab = tab.name === 'cart';
-            
-            return (
-              <TouchableOpacity
-                key={tab.name}
-                style={styles.tab}
-                onPress={() => handleTabPress(tab.route)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconContainer}>
-                  <IconSymbol
-                    name={tab.icon as any}
-                    size={24}
-                    color={active ? currentColors.secondary : '#E8E8E8'}
-                  />
-                  {isCartTab && cartItemCount > 0 && (
-                    <LinearGradient
-                      colors={[currentColors.secondary, currentColors.highlight]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.badge}
-                    >
-                      <Text style={[styles.badgeText, { color: currentColors.background }]}>
-                        {cartItemCount > 99 ? '99+' : cartItemCount}
-                      </Text>
-                    </LinearGradient>
-                  )}
-                </View>
-                <Text
-                  style={[
-                    styles.label,
-                    { color: active ? currentColors.secondary : '#E8E8E8' },
-                  ]}
+          <LinearGradient
+            colors={['rgba(26, 48, 56, 0.7)', 'rgba(26, 48, 56, 0.7)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.tabBar}
+          >
+            {tabs.map((tab) => {
+              const active = isActive(tab.route);
+              const isCartTab = tab.name === 'cart';
+              
+              return (
+                <TouchableOpacity
+                  key={tab.name}
+                  style={styles.tab}
+                  onPress={() => handleTabPress(tab.route)}
+                  activeOpacity={0.7}
                 >
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </LinearGradient>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      name={tab.icon as any}
+                      size={24}
+                      color={active ? currentColors.secondary : '#E8E8E8'}
+                    />
+                    {isCartTab && cartItemCount > 0 && (
+                      <LinearGradient
+                        colors={[currentColors.secondary, currentColors.highlight]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.badge}
+                      >
+                        <Text style={[styles.badgeText, { color: currentColors.background }]}>
+                          {cartItemCount > 99 ? '99+' : cartItemCount}
+                        </Text>
+                      </LinearGradient>
+                    )}
+                  </View>
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: active ? currentColors.secondary : '#E8E8E8' },
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </LinearGradient>
+        </BlurView>
       </View>
     </SafeAreaView>
   );
@@ -139,6 +146,9 @@ const styles = StyleSheet.create({
     zIndex: 1,
     pointerEvents: 'none',
   },
+  blurContainer: {
+    overflow: 'hidden',
+  },
   tabBar: {
     flexDirection: 'row',
     paddingVertical: 12,
@@ -148,6 +158,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     boxShadow: '0px -6px 24px rgba(212, 175, 55, 0.4)',
     elevation: 12,
+    backgroundColor: 'transparent',
   },
   tab: {
     flex: 1,
