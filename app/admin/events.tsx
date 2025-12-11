@@ -24,6 +24,8 @@ import Dialog from "@/components/Dialog";
 import Toast from "@/components/Toast";
 import ImagePicker from "@/components/ImagePicker";
 
+const DEFAULT_EVENT_IMAGE = "https://vpunvfkmlmqbfiggqrkn.supabase.co/storage/v1/object/public/assets/events/outdoor-event.jpg";
+
 export default function AdminEventManagement() {
   const router = useRouter();
   const [isAddingEvent, setIsAddingEvent] = useState(false);
@@ -139,13 +141,12 @@ export default function AdminEventManagement() {
       showToast('error', 'Event location is required');
       return;
     }
-    if (!formData.image.trim()) {
-      showToast('error', 'Event image is required');
-      return;
-    }
 
     try {
       setSaving(true);
+
+      // Use default image if no image is provided
+      const eventImage = formData.image.trim() || DEFAULT_EVENT_IMAGE;
 
       const newEventData: Omit<Event, "id" | "attendees"> = {
         title: formData.title.trim(),
@@ -153,7 +154,7 @@ export default function AdminEventManagement() {
         date: formData.date.toISOString(),
         location: formData.location.trim(),
         capacity: parseInt(formData.capacity) || 50,
-        image: formData.image.trim(),
+        image: eventImage,
         isPrivate: formData.isPrivate,
         isInviteOnly: formData.isInviteOnly,
       };
@@ -415,8 +416,9 @@ Access the event: ${event.shareableLink}`;
               onImageSelected={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
               bucket="assets"
               folder="events"
-              label="Event Image *"
+              label="Event Image (optional)"
               disabled={saving}
+              defaultImageUrl={DEFAULT_EVENT_IMAGE}
             />
 
             <View style={styles.eventTypeSection}>
