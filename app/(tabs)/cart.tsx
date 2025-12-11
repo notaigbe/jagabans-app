@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   itemCount: {
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
   },
   emptyContainer: {
     flex: 1,
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   },
   browseButtonText: {
     fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Cormorant_600SemiBold',
   },
   cartList: {
     flex: 1,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 16,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Cormorant_700Bold',
     marginBottom: 8,
   },
   quantityContainer: {
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   },
   quantity: {
     fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Cormorant_600SemiBold',
     minWidth: 24,
     textAlign: 'center',
   },
@@ -384,11 +384,11 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
   },
   summaryValue: {
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Cormorant_600SemiBold',
   },
   totalRow: {
     marginTop: 8,
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     fontSize: 20,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Cormorant_700Bold',
   },
   checkoutButton: {
     borderRadius: 0,
@@ -418,6 +418,6 @@ const styles = StyleSheet.create({
   },
   checkoutButtonText: {
     fontSize: 16,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Cormorant_700Bold',
   },
 });

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,22 @@ import { orderService } from '@/services/supabaseService';
 export default function OrderHistoryScreen() {
   const router = useRouter();
   const { userProfile, currentColors, refreshUserProfile } = useApp();
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+
+  const toggleOrderExpansion = (orderId: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setExpandedOrders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -93,13 +109,6 @@ export default function OrderHistoryScreen() {
                     <Text style={[styles.statLabel, { color: currentColors.textSecondary }]}>Total Orders</Text>
                   </View>
                   <View style={[styles.statDivider, { backgroundColor: currentColors.border }]} />
-                  {/* <View style={styles.statItem}>
-                    <Text style={[styles.statValue, { color: currentColors.secondary }]}>
-                      ${userProfile?.orders?.reduce((sum, order) => sum + order.total, 0).toFixed(2)}
-                    </Text>
-                    <Text style={[styles.statLabel, { color: currentColors.textSecondary }]}>Total Spent</Text>
-                  </View> */}
-                  {/* <View style={[styles.statDivider, { backgroundColor: currentColors.border }]} /> */}
                   <View style={styles.statItem}>
                     <Text style={[styles.statValue, { color: currentColors.secondary }]}>
                       {userProfile?.orders?.reduce((sum, order) => sum + order.pointsEarned, 0)}
@@ -110,71 +119,93 @@ export default function OrderHistoryScreen() {
 
                 <Text style={[styles.sectionTitle, { color: currentColors.text }]}>All Orders</Text>
 
-                {userProfile?.orders?.map((order) => (
-                  <LinearGradient
-                    key={order.id}
-                    colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.orderCard, { borderColor: currentColors.border }]}
-                  >
-                    <View style={styles.orderHeader}>
-                      <View>
-                        <Text style={[styles.orderId, { color: currentColors.text }]}>Order #{order.orderNumber}</Text>
-                        <Text style={[styles.orderDate, { color: currentColors.textSecondary }]}>
-                          {new Date(order.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </Text>
-                      </View>
-                      
-                    </View>
-                      <View style={[styles.statusBadge, { backgroundColor: getStatusBadgeColor(order.status) }]}>
-                        <Text style={[styles.statusText, { color: currentColors.background }]}>{order.status}</Text>
-                      </View>
-                    <View style={[styles.orderDivider, { backgroundColor: currentColors.border }]} />
-
-                    <View style={styles.orderItems}>
-                      {order.items.map((item, index) => (
-                        <View key={`${item.id}-${index}`} style={styles.orderItem}>
-                          <Text style={[styles.itemQuantity, { color: currentColors.textSecondary }]}>{item.quantity}x</Text>
-                          <Text style={[styles.itemName, { color: currentColors.text }]}>{item.name}</Text>
-                          <Text style={[styles.itemPrice, { color: currentColors.text }]}>
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </Text>
+                {userProfile?.orders?.map((order) => {
+                  const isExpanded = expandedOrders.has(order.id);
+                  
+                  return (
+                    <Pressable
+                      key={order.id}
+                      onPress={() => toggleOrderExpansion(order.id)}
+                    >
+                      <LinearGradient
+                        colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.orderCard, { borderColor: currentColors.border }]}
+                      >
+                        {/* Always visible header */}
+                        <View style={styles.orderHeader}>
+                          <View style={styles.orderHeaderLeft}>
+                            <Text style={[styles.orderId, { color: currentColors.text }]}>Order #{order.orderNumber}</Text>
+                            <Text style={[styles.orderDate, { color: currentColors.textSecondary }]}>
+                              {new Date(order.date).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </Text>
+                          </View>
+                          <View style={styles.orderHeaderRight}>
+                            <View style={[styles.statusBadge, { backgroundColor: getStatusBadgeColor(order.status) }]}>
+                              <Text style={[styles.statusText, { color: currentColors.background }]}>{order.status}</Text>
+                            </View>
+                            <IconSymbol 
+                              name={isExpanded ? "chevron.up" : "chevron.down"} 
+                              size={20} 
+                              color={currentColors.textSecondary}
+                              style={styles.expandIcon}
+                            />
+                          </View>
                         </View>
-                      ))}
-                    </View>
 
-                    <View style={[styles.orderDivider, { backgroundColor: currentColors.border }]} />
+                        {/* Collapsible content */}
+                        {isExpanded && (
+                          <>
+                            <View style={[styles.orderDivider, { backgroundColor: currentColors.border }]} />
 
-                    <View style={styles.orderFooter}>
-                      <View style={styles.orderTotalRow}>
-                        <Text style={[styles.orderTotalLabel, { color: currentColors.text }]}>Total</Text>
-                        <Text style={[styles.orderTotal, { color: currentColors.secondary }]}>${order.total.toFixed(2)}</Text>
-                      </View>
-                      <View style={styles.orderPoints}>
-                        <IconSymbol name="star.fill" size={16} color={currentColors.highlight} />
-                        <Text style={[styles.orderPointsText, { color: currentColors.text }]}>
-                          +{order.pointsEarned} points earned
-                        </Text>
-                      </View>
-                    </View>
+                            <View style={styles.orderItems}>
+                              {order.items.map((item, index) => (
+                                <View key={`${item.id}-${index}`} style={styles.orderItem}>
+                                  <Text style={[styles.itemQuantity, { color: currentColors.textSecondary }]}>{item.quantity}x</Text>
+                                  <Text style={[styles.itemName, { color: currentColors.text }]}>{item.name}</Text>
+                                  <Text style={[styles.itemPrice, { color: currentColors.text }]}>
+                                    ${(item.price * item.quantity).toFixed(2)}
+                                  </Text>
+                                </View>
+                              ))}
+                            </View>
 
-                    {order.uberDeliveryId && (
-                      <View style={styles.deliveryTrackingContainer}>
-                        <DeliveryTracking 
-                          order={order} 
-                          onRefresh={refreshUserProfile}
-                        />
-                      </View>
-                    )}
-                  </LinearGradient>
-                ))}
+                            <View style={[styles.orderDivider, { backgroundColor: currentColors.border }]} />
+
+                            <View style={styles.orderFooter}>
+                              <View style={styles.orderTotalRow}>
+                                <Text style={[styles.orderTotalLabel, { color: currentColors.text }]}>Total</Text>
+                                <Text style={[styles.orderTotal, { color: currentColors.secondary }]}>${order.total.toFixed(2)}</Text>
+                              </View>
+                              <View style={styles.orderPoints}>
+                                <IconSymbol name="star.fill" size={16} color={currentColors.highlight} />
+                                <Text style={[styles.orderPointsText, { color: currentColors.text }]}>
+                                  +{order.pointsEarned} points earned
+                                </Text>
+                              </View>
+                            </View>
+
+                            {order.uberDeliveryId && (
+                              <View style={styles.deliveryTrackingContainer}>
+                                <DeliveryTracking 
+                                  order={order} 
+                                  onRefresh={refreshUserProfile}
+                                />
+                              </View>
+                            )}
+                          </>
+                        )}
+                      </LinearGradient>
+                    </Pressable>
+                  );
+                })}
               </>
             )}
           </ScrollView>
@@ -245,7 +276,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     textAlign: 'center',
   },
   statsCard: {
@@ -268,7 +299,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     textAlign: 'center',
   },
   statDivider: {
@@ -292,7 +323,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+  },
+  orderHeaderLeft: {
+    flex: 1,
+  },
+  orderHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   orderId: {
     fontSize: 18,
@@ -301,20 +339,22 @@ const styles = StyleSheet.create({
   },
   orderDate: {
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
   },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    // boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.25)',
     alignItems: 'center',
     elevation: 4,
   },
   statusText: {
     fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Cormorant_600SemiBold',
     textTransform: 'capitalize',
+  },
+  expandIcon: {
+    marginLeft: 4,
   },
   orderDivider: {
     height: 2,
@@ -329,17 +369,17 @@ const styles = StyleSheet.create({
   },
   itemQuantity: {
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Cormorant_600SemiBold',
     width: 40,
   },
   itemName: {
     flex: 1,
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
   },
   itemPrice: {
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Cormorant_600SemiBold',
   },
   orderFooter: {
     gap: 12,
@@ -355,7 +395,7 @@ const styles = StyleSheet.create({
   },
   orderTotal: {
     fontSize: 20,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Cormorant_700Bold',
   },
   orderPoints: {
     flexDirection: 'row',
@@ -364,7 +404,7 @@ const styles = StyleSheet.create({
   },
   orderPointsText: {
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Cormorant_600SemiBold',
   },
   deliveryTrackingContainer: {
     marginTop: 16,

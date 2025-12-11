@@ -210,7 +210,6 @@ export default function HomeScreen() {
             >
               <IconSymbol
                 name={Platform.OS === 'ios' ? "bell.fill" : "notifications"}
-                // name="notifications"
                 size={28}
                 color="#947d33ff"
               />
@@ -231,7 +230,6 @@ export default function HomeScreen() {
         <View style={styles.searchBarWrapper}>
           <IconSymbol
             name={Platform.OS === 'ios' ? "magnifyingglass" : "search"}
-            // name="search"
             size={20}
             color="#B0B8C1"
             style={styles.searchIcon}
@@ -248,7 +246,6 @@ export default function HomeScreen() {
             <Pressable onPress={handleClearSearch} style={styles.clearButton}>
               <IconSymbol
                 name={Platform.OS === 'ios' ? "xmark.circle.fill" : "cancel"}
-                // name="cancel"
                 size={20}
                 color="#B0B8C1"
               />
@@ -263,7 +260,6 @@ export default function HomeScreen() {
             >
               <IconSymbol
                 name={Platform.OS === 'ios' ? "line.3.horizontal.decrease.circle.fill" : "filter-list"}
-                // name="filter-list"
                 size={28}
                 color="#F5A623"
               />
@@ -289,7 +285,6 @@ export default function HomeScreen() {
               <Pressable onPress={() => setShowCategoryDropdown(false)}>
                 <IconSymbol
                   name={Platform.OS === 'ios' ? "xmark.circle.fill" : "cancel"}
-                  // name="cancel"
                   size={24}
                   color="#B0B8C1"
                 />
@@ -316,7 +311,6 @@ export default function HomeScreen() {
                   {selectedCategory === category && (
                     <IconSymbol
                       name={Platform.OS === 'ios' ? "checkmark.circle.fill" : "check-circle"}
-                      // name="check-circle"
                       size={20}
                       color="#5FE8D0"
                     />
@@ -411,7 +405,6 @@ export default function HomeScreen() {
               <View style={styles.emptyContainer}>
                 <IconSymbol
                   name={Platform.OS === 'ios' ? "magnifyingglass" : "search"}
-                  // name="search"
                   size={64}
                   color={currentColors.textSecondary}
                 />
@@ -478,7 +471,6 @@ export default function HomeScreen() {
                         >
                           <IconSymbol
                             name={Platform.OS === 'ios' ? "plus" : "add"}
-                            // name="add"
                             size={20}
                             color="#5FE8D0"
                           />
@@ -518,7 +510,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    // paddingBottom: 10,
   },
   headerSafeArea: {
     width: '100%',
@@ -528,7 +519,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    // paddingTop: 16,
     paddingBottom: 14,
   },
   headerContent: {
@@ -552,7 +542,7 @@ const styles = StyleSheet.create({
   },
   logoSubtext: {
     fontSize: 10,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     letterSpacing: 5,
     marginTop: -2,
     color: '#5FE8D0',
@@ -579,7 +569,7 @@ const styles = StyleSheet.create({
   notificationBadgeText: {
     fontSize: 10,
     fontWeight: 'bold',
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Cormorant_700Bold',
     color: '#0D1A2B',
   },
   searchContainer: {
@@ -606,7 +596,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     color: '#FFFFFF',
     padding: 0,
   },
@@ -665,7 +655,7 @@ const styles = StyleSheet.create({
   },
   dropdownItemText: {
     fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Cormorant_600SemiBold',
     color: '#FFFFFF',
   },
   dropdownItemTextSelected: {
@@ -707,7 +697,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontWeight: "600",
     textAlign: "center",
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Cormorant_600SemiBold',
   },
   loadingContainer: {
     flex: 1,
@@ -718,7 +708,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     color: '#B0B8C1',
   },
   emptyContainer: {
@@ -730,7 +720,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
   },
   menuContainer: {
     paddingHorizontal: 20,
@@ -781,7 +771,7 @@ const styles = StyleSheet.create({
   },
   menuItemDescription: {
     fontSize: 15,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     marginBottom: 18,
     lineHeight: 24,
     color: '#FFFFFF',
@@ -793,7 +783,7 @@ const styles = StyleSheet.create({
   },
   menuItemPrice: {
     fontSize: 24,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Cormorant_700Bold',
     color: '#D4AF37',
   },
   addButton: {
@@ -803,7 +793,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     boxShadow: "0px 4px 12px rgba(44, 36, 10, 0.6)",
-    // elevation: 6,
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#5FE8D0',
