@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   },
   logoSubtext: {
     fontSize: 10,
-    fontFamily: 'LibreBaskerville_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     letterSpacing: 5,
     marginTop: -2,
     color: '#5FE8D0',
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   notificationBadgeText: {
     fontSize: 10,
     fontWeight: 'bold',
-    fontFamily: 'LibreBaskerville_700Bold',
+    fontFamily: 'Cormorant_700Bold',
     color: '#0D1A2B',
   },
   searchContainer: {
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'LibreBaskerville_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     color: '#FFFFFF',
     padding: 0,
   },
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
   },
   dropdownItemText: {
     fontSize: 16,
-    fontFamily: 'LibreBaskerville_700Bold',
+    fontFamily: 'Cormorant_600SemiBold',
     color: '#FFFFFF',
   },
   dropdownItemTextSelected: {
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontWeight: "600",
     textAlign: "center",
-    fontFamily: 'LibreBaskerville_700Bold',
+    fontFamily: 'Cormorant_600SemiBold',
   },
   loadingContainer: {
     flex: 1,
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    fontFamily: 'LibreBaskerville_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     color: '#B0B8C1',
   },
   emptyContainer: {
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    fontFamily: 'LibreBaskerville_400Regular',
+    fontFamily: 'Cormorant_400Regular',
   },
   menuContainer: {
     paddingHorizontal: 20,
@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
   },
   menuItemDescription: {
     fontSize: 15,
-    fontFamily: 'LibreBaskerville_400Regular',
+    fontFamily: 'Cormorant_400Regular',
     marginBottom: 18,
     lineHeight: 24,
     color: '#FFFFFF',
@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
   },
   menuItemPrice: {
     fontSize: 24,
-    fontFamily: 'LibreBaskerville_700Bold',
+    fontFamily: 'Cormorant_700Bold',
     color: '#D4AF37',
   },
   addButton: {

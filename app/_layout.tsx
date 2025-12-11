@@ -18,9 +18,11 @@ import {
   PlayfairDisplay_900Black,
 } from '@expo-google-fonts/playfair-display';
 import {
-  LibreBaskerville_400Regular,
-  LibreBaskerville_700Bold,
-} from '@expo-google-fonts/libre-baskerville';
+  Cormorant_400Regular,
+  Cormorant_500Medium,
+  Cormorant_600SemiBold,
+  Cormorant_700Bold,
+} from '@expo-google-fonts/cormorant';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,8 +36,10 @@ export default function RootLayout() {
     PlayfairDisplay_400Regular,
     PlayfairDisplay_700Bold,
     PlayfairDisplay_900Black,
-    LibreBaskerville_400Regular,
-    LibreBaskerville_700Bold,
+    Cormorant_400Regular,
+    Cormorant_500Medium,
+    Cormorant_600SemiBold,
+    Cormorant_700Bold,
   });
 
   useEffect(() => {
