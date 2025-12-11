@@ -22,6 +22,7 @@ import * as Haptics from "expo-haptics";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Dialog from "@/components/Dialog";
 import Toast from "@/components/Toast";
+import ImagePicker from "@/components/ImagePicker";
 
 export default function AdminEventManagement() {
   const router = useRouter();
@@ -138,6 +139,10 @@ export default function AdminEventManagement() {
       showToast('error', 'Event location is required');
       return;
     }
+    if (!formData.image.trim()) {
+      showToast('error', 'Event image is required');
+      return;
+    }
 
     try {
       setSaving(true);
@@ -148,9 +153,7 @@ export default function AdminEventManagement() {
         date: formData.date.toISOString(),
         location: formData.location.trim(),
         capacity: parseInt(formData.capacity) || 50,
-        image:
-          formData.image.trim() ||
-          "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=800",
+        image: formData.image.trim(),
         isPrivate: formData.isPrivate,
         isInviteOnly: formData.isInviteOnly,
       };
@@ -407,14 +410,13 @@ Access the event: ${event.shareableLink}`;
               editable={!saving}
             />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Image URL (optional)"
-              placeholderTextColor={colors.textSecondary}
-              value={formData.image}
-              onChangeText={(text) => setFormData({ ...formData, image: text })}
-              autoCapitalize="none"
-              editable={!saving}
+            <ImagePicker
+              currentImageUrl={formData.image}
+              onImageSelected={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
+              bucket="merchandise"
+              folder="events"
+              label="Event Image *"
+              disabled={saving}
             />
 
             <View style={styles.eventTypeSection}>

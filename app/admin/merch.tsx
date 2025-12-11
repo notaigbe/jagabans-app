@@ -23,6 +23,7 @@ import * as Haptics from 'expo-haptics';
 import { useApp } from '@/contexts/AppContext';
 import Dialog from '@/components/Dialog';
 import Toast from '@/components/Toast';
+import ImagePicker from '@/components/ImagePicker';
 
 interface MerchFormData {
   name: string;
@@ -157,7 +158,7 @@ export default function AdminMerchManagement() {
       return false;
     }
     if (!formData.image.trim()) {
-      showToast('Please enter an image URL', 'error');
+      showToast('Please select an image', 'error');
       return false;
     }
     return true;
@@ -299,26 +300,14 @@ export default function AdminMerchManagement() {
           keyboardType="numeric"
         />
 
-        <Text style={styles.formLabel}>Image URL *</Text>
-        <TextInput
-          style={styles.input}
-          value={formData.image}
-          onChangeText={(text) => setFormData({ ...formData, image: text })}
-          placeholder="Enter image URL"
-          placeholderTextColor={colors.textSecondary}
-          autoCapitalize="none"
+        <ImagePicker
+          currentImageUrl={formData.image}
+          onImageSelected={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
+          bucket="merchandise"
+          folder="merch"
+          label="Merchandise Image *"
+          disabled={submitting}
         />
-
-        {formData.image.trim() !== '' && (
-          <View style={styles.imagePreviewContainer}>
-            <Text style={styles.formLabel}>Image Preview:</Text>
-            <Image 
-              source={{ uri: formData.image }} 
-              style={styles.imagePreview}
-              resizeMode="cover"
-            />
-          </View>
-        )}
 
         <View style={styles.stockToggleContainer}>
           <Text style={styles.formLabel}>In Stock</Text>
@@ -704,15 +693,6 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 80,
     textAlignVertical: 'top',
-  },
-  imagePreviewContainer: {
-    marginTop: 12,
-  },
-  imagePreview: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    marginTop: 8,
   },
   stockToggleContainer: {
     flexDirection: 'row',
