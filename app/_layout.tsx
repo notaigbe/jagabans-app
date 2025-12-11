@@ -19,16 +19,18 @@ import {
 } from '@expo-google-fonts/playfair-display';
 import {
   LibertinusSans_400Regular,
-  LibertinusSans_600SemiBold,
+  // LibertinusSans_600SemiBold,
   LibertinusSans_700Bold,
 } from '@expo-google-fonts/libertinus-sans';
+
+import { Inter_400Regular, Inter_700Bold  } from '@expo-google-fonts/inter'
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Amarna: require('../assets/fonts/Amarna-Regular.ttf'),
   });
 
   const [googleFontsLoaded] = useGoogleFonts({
@@ -36,8 +38,10 @@ export default function RootLayout() {
     PlayfairDisplay_700Bold,
     PlayfairDisplay_900Black,
     LibertinusSans_400Regular,
-    LibertinusSans_600SemiBold,
+    // LibertinusSans_600SemiBold,
     LibertinusSans_700Bold,
+    Inter_400Regular,
+    Inter_700Bold,
   });
 
   useEffect(() => {

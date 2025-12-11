@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   },
   logoSubtext: {
     fontSize: 10,
-    fontFamily: 'Cormorant_400Regular',
+    fontFamily: 'LibertinusSans_400Regular',
     letterSpacing: 5,
     marginTop: -2,
     color: '#5FE8D0',
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   notificationBadgeText: {
     fontSize: 10,
     fontWeight: 'bold',
-    fontFamily: 'Cormorant_700Bold',
+    fontFamily: 'LibertinusSans_700Bold',
     color: '#0D1A2B',
   },
   searchContainer: {
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Cormorant_400Regular',
+    fontFamily: 'LibertinusSans_400Regular',
     color: '#FFFFFF',
     padding: 0,
   },
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
   },
   dropdownItemText: {
     fontSize: 16,
-    fontFamily: 'Cormorant_600SemiBold',
+    fontFamily: 'LibertinusSans_700Bold',
     color: '#FFFFFF',
   },
   dropdownItemTextSelected: {
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontWeight: "600",
     textAlign: "center",
-    fontFamily: 'Cormorant_600SemiBold',
+    fontFamily: 'LibertinusSans_700Bold',
   },
   loadingContainer: {
     flex: 1,
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    fontFamily: 'Cormorant_400Regular',
+    fontFamily: 'LibertinusSans_400Regular',
     color: '#B0B8C1',
   },
   emptyContainer: {
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    fontFamily: 'Cormorant_400Regular',
+    fontFamily: 'LibertinusSans_400Regular',
   },
   menuContainer: {
     paddingHorizontal: 20,
@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
   },
   menuItemDescription: {
     fontSize: 15,
-    fontFamily: 'Cormorant_400Regular',
+    fontFamily: 'LibertinusSans_400Regular',
     marginBottom: 18,
     lineHeight: 24,
     color: '#FFFFFF',
@@ -782,8 +782,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   menuItemPrice: {
-    fontSize: 24,
-    fontFamily: 'Cormorant_700Bold',
+    fontSize: 36,
+    fontFamily: 'LibertinusSans_700Bold',
     color: '#D4AF37',
   },
   addButton: {
