@@ -269,7 +269,10 @@ export default function AdminMerchManagement() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.formContainer}
     >
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.formScrollContent}
+      >
         <Text style={styles.formLabel}>Name *</Text>
         <TextInput
           style={styles.input}
@@ -654,7 +657,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     maxHeight: '90%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-    overflow: 'scroll',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -673,6 +675,9 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   formContainer: {
+    flex: 1,
+  },
+  formScrollContent: {
     padding: 20,
   },
   formLabel: {

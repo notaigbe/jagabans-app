@@ -336,6 +336,7 @@ export default function AdminDashboard() {
                     onChangeText={setUsername}
                     autoCapitalize="none"
                     keyboardType="email-address"
+                    editable={!loading}
                   />
                 </View>
 
@@ -349,8 +350,9 @@ export default function AdminDashboard() {
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
+                    editable={!loading}
                   />
-                  <Pressable onPress={togglePasswordVisibility} style={styles.eyeIconButton}>
+                  <Pressable onPress={togglePasswordVisibility} style={styles.eyeIconButton} disabled={loading}>
                     <IconSymbol 
                       name={showPassword ? "visibility-off" : "visibility"} 
                       size={20} 
@@ -362,15 +364,20 @@ export default function AdminDashboard() {
                 <Pressable
                   style={({ pressed }) => [
                     styles.loginButton,
-                    pressed && styles.loginButtonPressed,
+                    pressed && !loading && styles.loginButtonPressed,
                     loading && styles.loginButtonDisabled,
                   ]}
                   onPress={handleLogin}
                   disabled={loading}
                 >
-                  <Text style={styles.loginButtonText}>
-                    {loading ? "Signing In..." : "Sign In"}
-                  </Text>
+                  {loading ? (
+                    <View style={styles.loginButtonContent}>
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                      <Text style={styles.loginButtonText}>Signing In...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.loginButtonText}>Sign In</Text>
+                  )}
                 </Pressable>
 
                 <Pressable
@@ -656,7 +663,12 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   loginButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.7,
+  },
+  loginButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   loginButtonText: {
     color: "#FFFFFF",
