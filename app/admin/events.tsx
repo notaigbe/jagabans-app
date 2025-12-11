@@ -414,7 +414,7 @@ Access the event: ${event.shareableLink}`;
             <ImagePicker
               currentImageUrl={formData.image}
               onImageSelected={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
-              bucket="merchandise"
+              bucket="assets"
               folder="events"
               label="Event Image (optional)"
               disabled={saving}

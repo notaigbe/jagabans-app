@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -14,6 +13,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import { imageService } from '@/services/supabaseService';
 import * as Haptics from 'expo-haptics';
+import { File } from 'expo-file-system';
 
 interface ImagePickerProps {
   currentImageUrl?: string;
@@ -22,7 +22,6 @@ interface ImagePickerProps {
   folder: string;
   label?: string;
   disabled?: boolean;
-  defaultImageUrl?: string;
 }
 
 export default function ImagePicker({
@@ -32,10 +31,9 @@ export default function ImagePicker({
   folder,
   label = 'Image',
   disabled = false,
-  defaultImageUrl,
 }: ImagePickerProps) {
   const [uploading, setUploading] = useState(false);
-  const [localImageUri, setLocalImageUri] = useState<string | undefined>(currentImageUrl || defaultImageUrl);
+  const [localImageUri, setLocalImageUri] = useState<string | undefined>(currentImageUrl);
 
   const pickImage = async () => {
     if (disabled) return;
@@ -73,73 +71,51 @@ export default function ImagePicker({
   };
 
   const uploadImage = async (uri: string) => {
-    try {
-      setUploading(true);
+  try {
+    setUploading(true);
 
-      // Generate unique filename
-      const timestamp = Date.now();
-      const randomString = Math.random().toString(36).substring(2, 15);
-      const fileExtension = uri.split('.').pop() || 'jpg';
-      const fileName = `${folder}/${timestamp}-${randomString}.${fileExtension}`;
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const fileExtension = uri.split('.').pop() || 'jpg';
+    const fileName = `${folder}/${timestamp}-${randomString}.${fileExtension}`;
 
-      // Fetch the image as a blob
-      const response = await fetch(uri);
-      const blob = await response.blob();
+    // Use the new File API
+    const file = new File(uri);
+    
+    // Read the file as bytes (returns Uint8Array)
+    const bytes = await file.bytes();
+    
+    // Convert Uint8Array to ArrayBuffer
+    const arrayBuffer = bytes.buffer;
 
-      // Upload to Supabase Storage
-      const { data, error } = await imageService.uploadImage(
-        bucket,
-        fileName,
-        blob,
-        { contentType: blob.type, upsert: true }
-      );
+    const { data, error } = await imageService.uploadImage(
+      bucket,
+      fileName,
+      arrayBuffer, // Pass ArrayBuffer directly
+      { contentType: `image/${fileExtension}`, upsert: true }
+    );
 
-      if (error) {
-        console.error('Upload error:', error);
-        throw error;
-      }
+    if (error) throw error;
 
-      // Get public URL
-      const publicUrl = imageService.getPublicUrl(bucket, fileName);
-      
-      if (publicUrl) {
-        onImageSelected(publicUrl);
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-      } else {
-        throw new Error('Failed to get public URL');
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
-      setLocalImageUri(currentImageUrl || defaultImageUrl);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const useDefaultImage = () => {
-    if (disabled || !defaultImageUrl) return;
+    const publicUrl = imageService.getPublicUrl(bucket, fileName);
+    onImageSelected(publicUrl);
 
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
 
-    setLocalImageUri(defaultImageUrl);
-    onImageSelected(defaultImageUrl);
-  };
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    alert('Failed to upload image. Please try again.');
+    setLocalImageUri(currentImageUrl);
+  } finally {
+    setUploading(false);
+  }
+};
 
   return (
     <View style={styles.container}>
-      <View style={styles.labelContainer}>
-        <Text style={styles.label}>{label}</Text>
-        {defaultImageUrl && !localImageUri && (
-          <Pressable onPress={useDefaultImage} disabled={disabled}>
-            <Text style={styles.useDefaultText}>Use Default</Text>
-          </Pressable>
-        )}
-      </View>
+      <Text style={styles.label}>{label}</Text>
       
       <Pressable
         style={[styles.imageContainer, disabled && styles.disabled]}
@@ -152,9 +128,6 @@ export default function ImagePicker({
           <View style={styles.placeholder}>
             <IconSymbol name="image" size={48} color={colors.textSecondary} />
             <Text style={styles.placeholderText}>Tap to select image</Text>
-            {defaultImageUrl && (
-              <Text style={styles.placeholderSubtext}>or use default image</Text>
-            )}
           </View>
         )}
         
@@ -184,21 +157,11 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
   },
-  labelContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
   label: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
-  },
-  useDefaultText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
+    marginBottom: 8,
   },
   imageContainer: {
     width: '100%',
@@ -227,11 +190,6 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 14,
     color: colors.textSecondary,
-  },
-  placeholderSubtext: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
   },
   uploadingOverlay: {
     ...StyleSheet.absoluteFillObject,

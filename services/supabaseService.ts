@@ -99,8 +99,13 @@ export const authService = {
    */
   async signOut() {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      const { data, error } = await supabase.auth.getSession();
+
+      if (!data.session) {
+        console.warn("⚠ No session found — already signed out");
+        return;
+      }
+      await supabase.auth.signOut();
       return { error: null };
     } catch (error) {
       console.error('Sign out error:', error);
