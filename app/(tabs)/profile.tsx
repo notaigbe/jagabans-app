@@ -53,29 +53,38 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     const fetchProfileImage = async () => {
-      if (userProfile?.profileImage) {
-        setImageLoading(true);
-        try {
-          // Check if it's already a full URL
-          if (userProfile.profileImage.startsWith("http")) {
-            setProfileImageUrl(userProfile.profileImage);
-          } else {
-            // Fetch from Supabase storage
-            const { data } = supabase.storage
-              .from("profile/avatars")
-              .getPublicUrl(userProfile.profileImage);
-            if (data?.publicUrl) {
-              setProfileImageUrl(data.publicUrl);
-            }
-          }
-        } catch (error) {
-          console.error("Failed to load profile image:", error);
-          showToast("error", "Could not load profile picture");
-        } finally {
-          setImageLoading(false);
-        }
-      }
-    };
+  if (!userProfile?.profileImage) return;
+
+  setImageLoading(true);
+
+  try {
+    const path = userProfile.profileImage; 
+    let url = "";
+
+    // If the saved value is already a full URL
+    if (path.startsWith("http")) {
+      url = path;
+    } else {
+      // Generate signed URL for private bucket
+      const { data, error } = await supabase.storage
+        .from("profile")
+        .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 days
+
+      if (error) throw error;
+
+      url = data.signedUrl;
+    }
+
+    setProfileImageUrl(url);
+  } catch (err) {
+    console.error("Failed to load profile image:", err);
+    showToast("error", "Could not load profile picture");
+  } finally {
+    setImageLoading(false);
+  }
+};
+
+
 
     if (isAuthenticated) {
       fetchProfileImage();

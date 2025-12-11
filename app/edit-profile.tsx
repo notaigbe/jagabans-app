@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -22,6 +21,7 @@ import Dialog from '@/components/Dialog';
 import { imageService, userService } from '@/services/supabaseService';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
+import { supabase } from './integrations/supabase/client';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -31,7 +31,8 @@ export default function EditProfileScreen() {
   const [name, setName] = useState(userProfile?.name || '');
   const [email, setEmail] = useState(userProfile?.email || '');
   const [phone, setPhone] = useState(userProfile?.phone || '');
-  const [profileImage, setProfileImage] = useState<string | null>(userProfile?.profileImage || null);
+  const [profileImagePath, setProfileImagePath] = useState<string | null>(userProfile?.profileImage || null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -48,6 +49,23 @@ export default function EditProfileScreen() {
     message: '',
     buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>
   });
+
+  // Load signed URL on mount if profile image exists
+  useEffect(() => {
+    if (userProfile?.profileImage) {
+      handleGetImageUrl(userProfile.profileImage);
+    }
+  }, []);
+
+  const handleGetImageUrl = async (path: string) => {
+    const { data: urlData } = await supabase.storage
+      .from("profile")
+      .createSignedUrl(path, 60 * 60);
+
+    setProfileImageUrl(urlData?.signedUrl || null);
+    
+    return urlData?.signedUrl || null;
+  };
 
   const showToast = (type: 'success' | 'error' | 'info', message: string) => {
     setToastType(type);
@@ -77,12 +95,15 @@ export default function EditProfileScreen() {
 
     setSaving(true);
     try {
-      // Update profile in backend
+      // Determine which image path to save
+      const imagePathToSave = profileImagePath || userProfile?.profileImage;
+      
+      // Update profile in backend - save the path, not the signed URL
       const { data, error } = await userService.updateUserProfile(user.id, {
         name,
         email,
         phone,
-        profileImage: profileImage || undefined,
+        profileImage: imagePathToSave || undefined,
       });
 
       if (error) {
@@ -125,7 +146,7 @@ export default function EditProfileScreen() {
 
       // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -183,7 +204,7 @@ export default function EditProfileScreen() {
       // Generate unique filename
       const fileExt = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const filePath = `${fileName}`;
       console.log('Uploading image:', filePath);
 
       // For React Native, we need to use ArrayBuffer instead of Blob
@@ -213,17 +234,15 @@ export default function EditProfileScreen() {
 
       console.log('Upload successful:', data);
 
-      // For private bucket, we'll store the path and generate signed URLs when needed
-      // Store the full path (not a signed URL since those expire)
-      const imageUrl = filePath; // Store path, not URL
+      // Store the path and get signed URL for preview
+      setProfileImagePath(filePath);
+      await handleGetImageUrl(filePath);
       
-      console.log('Image path stored:', imageUrl);
+      console.log('Image path stored:', filePath);
 
-      // Update local state
-      setProfileImage(imageUrl);
       showToast('success', 'Image uploaded successfully');
       
-      // Note: The image URL will be saved to the database when user clicks Save
+      // Note: The image path will be saved to the database when user clicks Save
     } catch (error: any) {
       console.error('Upload error:', error);
       showToast('error', `Failed to upload image: ${error.message || 'Unknown error'}`);
@@ -284,13 +303,13 @@ export default function EditProfileScreen() {
                   <View style={[styles.imagePlaceholder, { backgroundColor: currentColors.secondary + '20' }]}>
                     <ActivityIndicator size="large" color={currentColors.secondary} />
                   </View>
-                ) : profileImage ? (
+                ) : profileImageUrl ? (
                   <Image 
-                    source={{ uri: profileImage }} 
+                    source={{ uri: profileImageUrl }} 
                     style={styles.profileImage}
                     onError={() => {
-                      console.error('Failed to load image:', profileImage);
-                      setProfileImage(null);
+                      console.error('Failed to load image:', profileImageUrl);
+                      setProfileImageUrl(null);
                       showToast('error', 'Failed to load image');
                     }}
                   />
@@ -514,7 +533,7 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 120,
     height: 120,
-    borderRadius: 0,
+    borderRadius: 64,
   },
   imagePlaceholder: {
     width: 120,

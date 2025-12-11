@@ -150,7 +150,7 @@ export default function AdminEventManagement() {
         capacity: parseInt(formData.capacity) || 50,
         image:
           formData.image.trim() ||
-          "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=800",
+          "https://vpunvfkmlmqbfiggqrkn.supabase.co/storage/v1/object/public/assets/events/outdoor-event.jpg",
         isPrivate: formData.isPrivate,
         isInviteOnly: formData.isInviteOnly,
       };
