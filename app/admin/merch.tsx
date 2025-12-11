@@ -304,7 +304,7 @@ export default function AdminMerchManagement() {
           currentImageUrl={formData.image}
           onImageSelected={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
           bucket="merchandise"
-          folder="merch"
+          folder="items"
           label="Merchandise Image *"
           disabled={submitting}
         />
@@ -654,6 +654,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     maxHeight: '90%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+    overflow: 'scroll',
   },
   modalHeader: {
     flexDirection: 'row',

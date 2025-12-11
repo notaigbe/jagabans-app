@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -14,6 +13,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import { imageService } from '@/services/supabaseService';
 import * as Haptics from 'expo-haptics';
+import { File } from 'expo-file-system';
 
 interface ImagePickerProps {
   currentImageUrl?: string;
@@ -71,51 +71,47 @@ export default function ImagePicker({
   };
 
   const uploadImage = async (uri: string) => {
-    try {
-      setUploading(true);
+  try {
+    setUploading(true);
 
-      // Generate unique filename
-      const timestamp = Date.now();
-      const randomString = Math.random().toString(36).substring(2, 15);
-      const fileExtension = uri.split('.').pop() || 'jpg';
-      const fileName = `${folder}/${timestamp}-${randomString}.${fileExtension}`;
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const fileExtension = uri.split('.').pop() || 'jpg';
+    const fileName = `${folder}/${timestamp}-${randomString}.${fileExtension}`;
 
-      // Fetch the image as a blob
-      const response = await fetch(uri);
-      const blob = await response.blob();
+    // Use the new File API
+    const file = new File(uri);
+    
+    // Read the file as bytes (returns Uint8Array)
+    const bytes = await file.bytes();
+    
+    // Convert Uint8Array to ArrayBuffer
+    const arrayBuffer = bytes.buffer;
 
-      // Upload to Supabase Storage
-      const { data, error } = await imageService.uploadImage(
-        bucket,
-        fileName,
-        blob,
-        { contentType: blob.type, upsert: true }
-      );
+    const { data, error } = await imageService.uploadImage(
+      bucket,
+      fileName,
+      arrayBuffer, // Pass ArrayBuffer directly
+      { contentType: `image/${fileExtension}`, upsert: true }
+    );
 
-      if (error) {
-        console.error('Upload error:', error);
-        throw error;
-      }
+    if (error) throw error;
 
-      // Get public URL
-      const publicUrl = imageService.getPublicUrl(bucket, fileName);
-      
-      if (publicUrl) {
-        onImageSelected(publicUrl);
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-      } else {
-        throw new Error('Failed to get public URL');
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
-      setLocalImageUri(currentImageUrl);
-    } finally {
-      setUploading(false);
+    const publicUrl = imageService.getPublicUrl(bucket, fileName);
+    onImageSelected(publicUrl);
+
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  };
+
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    alert('Failed to upload image. Please try again.');
+    setLocalImageUri(currentImageUrl);
+  } finally {
+    setUploading(false);
+  }
+};
 
   return (
     <View style={styles.container}>
