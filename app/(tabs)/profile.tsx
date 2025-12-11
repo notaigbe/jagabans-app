@@ -601,41 +601,44 @@ export default function ProfileScreen() {
               </Pressable>
             </LinearGradient>
 
-            <LinearGradient
-              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.menuItem}
-            >
-              <Pressable
-                style={styles.menuItemInner}
-                onPress={() => handleMenuPress("/payment-methods")}
+            {/* Only show Payment Methods on mobile */}
+            {Platform.OS !== 'web' && (
+              <LinearGradient
+                colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.menuItem}
               >
-                <View
-                  style={[styles.menuIcon, { backgroundColor: "#4ECDC4" + "20" }]}
+                <Pressable
+                  style={styles.menuItemInner}
+                  onPress={() => handleMenuPress("/payment-methods")}
                 >
-                  <IconSymbol name="credit-card" size={24} color="#4ECDC4" />
-                </View>
-                <View style={styles.menuContent}>
-                  <Text style={[styles.menuTitle, { color: currentColors.text }]}>
-                    Payment Methods
-                  </Text>
-                  <Text
-                    style={[
-                      styles.menuSubtitle,
-                      { color: currentColors.textSecondary },
-                    ]}
+                  <View
+                    style={[styles.menuIcon, { backgroundColor: "#4ECDC4" + "20" }]}
                   >
-                    {userProfile?.paymentMethods?.length || 0} cards
-                  </Text>
-                </View>
-                <IconSymbol
-                  name="chevron-right"
-                  size={24}
-                  color={currentColors.textSecondary}
-                />
-              </Pressable>
-            </LinearGradient>
+                    <IconSymbol name="credit-card" size={24} color="#4ECDC4" />
+                  </View>
+                  <View style={styles.menuContent}>
+                    <Text style={[styles.menuTitle, { color: currentColors.text }]}>
+                      Payment Methods
+                    </Text>
+                    <Text
+                      style={[
+                        styles.menuSubtitle,
+                        { color: currentColors.textSecondary },
+                      ]}
+                    >
+                      {userProfile?.paymentMethods?.length || 0} cards
+                    </Text>
+                  </View>
+                  <IconSymbol
+                    name="chevron-right"
+                    size={24}
+                    color={currentColors.textSecondary}
+                  />
+                </Pressable>
+              </LinearGradient>
+            )}
 
             <LinearGradient
               colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
