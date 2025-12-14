@@ -84,8 +84,8 @@ const STRIPE_PUBLISHABLE_KEY = 'pk_test_51SbDvPKZwIF4J9pKEK6dHIGLWdMtwlgkTwzChNt
 // CORRECT LOGIC: 100 points = $1
 // This means: 1 point = $0.01
 const POINTS_TO_DOLLAR_RATE = 0.01; // 1 point = $0.01, so 100 points = $1
-const DISCOUNT_PERCENTAGE = 0.10; // 10% discount
-const POINTS_REWARD_PERCENTAGE = 0.10; // 10% of order as points
+const DISCOUNT_PERCENTAGE = 0.15; // 15% discount
+const POINTS_REWARD_PERCENTAGE = 0.05; // 5% of order as points
 
 // ============================================================================
 // CHECKOUT CONTENT COMPONENT
@@ -139,7 +139,7 @@ function CheckoutContent() {
   const availablePoints = userProfile?.points || 0;
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
-  // Apply 10% discount before tax
+  // Apply 15% discount before tax
   const discount = subtotal * DISCOUNT_PERCENTAGE;
   const subtotalAfterDiscount = subtotal - discount;
   
@@ -157,9 +157,9 @@ function CheckoutContent() {
   // Total after all discounts and tax
   const total = subtotalAfterDiscount + tax - pointsDiscount;
   
-  // Points to earn: 10% of order total (after discount, before tax)
+  // Points to earn: 15% of order total (after discount, before tax)
   // CORRECTED: Award points based on 100 points = $1
-  // For $100 order, user gets 10% = $10 value = 1000 points
+  // For $100 order, user gets 5% = $5 value = 500 points
   const pointsToEarn = Math.floor((subtotalAfterDiscount * POINTS_REWARD_PERCENTAGE) / POINTS_TO_DOLLAR_RATE);
 
   // ============================================================================
@@ -969,7 +969,7 @@ function CheckoutContent() {
             >
               <IconSymbol name="info" size={20} color={currentColors.primary} />
               <Text style={styles.infoText}>
-                Secure checkout powered by Stripe. Your payment information is encrypted and protected. Enjoy 10% off your order!
+                Secure checkout powered by Stripe. Your payment information is encrypted and protected. Enjoy 15% off your order!
               </Text>
             </LinearGradient>
 
@@ -1164,7 +1164,7 @@ function CheckoutContent() {
               />
             </View>
 
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <LinearGradient
                 colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
                 start={{ x: 0, y: 0 }}
@@ -1198,7 +1198,7 @@ function CheckoutContent() {
                   </View>
                 </Pressable>
               </LinearGradient>
-            </View>
+            </View> */}
 
             <LinearGradient
               colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
@@ -1213,7 +1213,7 @@ function CheckoutContent() {
               </View>
               <View style={styles.summaryRow}>
                 <Text style={[styles.summaryLabel, { color: currentColors.secondary }]}>
-                  Discount (10%)
+                  Discount (15%)
                 </Text>
                 <Text style={[styles.summaryValue, { color: currentColors.secondary }]}>
                   -${discount.toFixed(2)}
