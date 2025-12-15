@@ -68,7 +68,7 @@ export default function FloatingTabBar({
           style={styles.blurContainer}
         >
           <LinearGradient
-            colors={['rgba(26, 48, 56, 0.7)', 'rgba(26, 48, 56, 0.7)']}
+            colors={['rgba(26, 48, 56, 1)', 'rgba(26, 48, 56, 1)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.tabBar}
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(26, 48, 56, 1)',
   },
   tabBarWrapper: {
     position: 'relative',
