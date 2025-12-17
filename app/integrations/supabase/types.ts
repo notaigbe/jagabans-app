@@ -92,7 +92,7 @@ export interface Database {
       orders: {
         Row: {
           id: string
-          user_id: string
+          user_id: string | null
           total: number
           points_earned: number
           status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
@@ -115,7 +115,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          user_id: string
+          user_id?: string | null
           total: number
           points_earned?: number
           status?: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
@@ -138,7 +138,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          user_id?: string
+          user_id?: string | null
           total?: number
           points_earned?: number
           status?: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
@@ -192,7 +192,7 @@ export interface Database {
       stripe_payments: {
         Row: {
           id: string
-          user_id: string
+          user_id: string | null
           order_id: string | null
           stripe_payment_intent_id: string
           amount: number
@@ -207,7 +207,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          user_id: string
+          user_id?: string | null
           order_id?: string | null
           stripe_payment_intent_id: string
           amount: number
@@ -222,7 +222,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          user_id?: string
+          user_id?: string | null
           order_id?: string | null
           stripe_payment_intent_id?: string
           amount?: number
@@ -283,7 +283,7 @@ export interface Database {
       square_payments: {
         Row: {
           id: string
-          user_id: string
+          user_id: string | null
           order_id: string | null
           square_payment_id: string
           square_order_id: string | null
@@ -299,7 +299,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          user_id: string
+          user_id?: string | null
           order_id?: string | null
           square_payment_id: string
           square_order_id?: string | null
@@ -315,7 +315,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          user_id?: string
+          user_id?: string | null
           order_id?: string | null
           square_payment_id?: string
           square_order_id?: string | null
@@ -380,7 +380,7 @@ export interface Database {
       gift_cards: {
         Row: {
           id: string
-          sender_id: string
+          sender_id: string | null
           recipient_id: string | null
           recipient_email: string | null
           recipient_name: string | null
@@ -393,7 +393,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          sender_id: string
+          sender_id?: string | null
           recipient_id?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
@@ -406,7 +406,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          sender_id?: string
+          sender_id?: string | null
           recipient_id?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
@@ -453,7 +453,7 @@ export interface Database {
       merch_redemptions: {
         Row: {
           id: string
-          user_id: string
+          user_id: string | null
           merch_item_id: string | null
           merch_name: string
           points_cost: number
@@ -465,7 +465,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          user_id: string
+          user_id?: string | null
           merch_item_id?: string | null
           merch_name: string
           points_cost: number
@@ -477,7 +477,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          user_id?: string
+          user_id?: string | null
           merch_item_id?: string | null
           merch_name?: string
           points_cost?: number
@@ -705,6 +705,29 @@ export interface Database {
           created_at?: string | null
           status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no-show' | null
           table_number?: string | null
+        }
+      }
+      account_deletion_audit: {
+        Row: {
+          id: string
+          user_id: string
+          deleted_at: string
+          reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          deleted_at?: string
+          reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          deleted_at?: string
+          reason?: string | null
+          created_at?: string
         }
       }
     }
