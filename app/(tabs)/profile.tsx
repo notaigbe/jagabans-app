@@ -728,6 +728,42 @@ export default function ProfileScreen() {
               </Pressable>
             </LinearGradient>
 
+            <LinearGradient
+              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.menuItem}
+            >
+              <Pressable
+                style={styles.menuItemInner}
+                onPress={handleSignOut}
+              >
+                <View
+                  style={[styles.menuIcon, { backgroundColor: "#FF8E53" + "20" }]}
+                >
+                  <IconSymbol name="logout" size={24} color="#FF8E53" />
+                </View>
+                <View style={styles.menuContent}>
+                  <Text style={[styles.menuTitle, { color: "#FF8E53" }]}>
+                    Sign Out
+                  </Text>
+                  <Text
+                    style={[
+                      styles.menuSubtitle,
+                      { color: currentColors.textSecondary },
+                    ]}
+                  >
+                    Sign out of your account
+                  </Text>
+                </View>
+                <IconSymbol
+                  name="chevron.right"
+                  size={24}
+                  color={currentColors.textSecondary}
+                />
+              </Pressable>
+            </LinearGradient>
+
             {/* Delete Account Option */}
             <LinearGradient
               colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
@@ -755,42 +791,6 @@ export default function ProfileScreen() {
                     ]}
                   >
                     Permanently delete your account
-                  </Text>
-                </View>
-                <IconSymbol
-                  name="chevron.right"
-                  size={24}
-                  color={currentColors.textSecondary}
-                />
-              </Pressable>
-            </LinearGradient>
-
-            <LinearGradient
-              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.menuItem}
-            >
-              <Pressable
-                style={styles.menuItemInner}
-                onPress={handleSignOut}
-              >
-                <View
-                  style={[styles.menuIcon, { backgroundColor: "#FF8E53" + "20" }]}
-                >
-                  <IconSymbol name="logout" size={24} color="#FF8E53" />
-                </View>
-                <View style={styles.menuContent}>
-                  <Text style={[styles.menuTitle, { color: "#FF8E53" }]}>
-                    Sign Out
-                  </Text>
-                  <Text
-                    style={[
-                      styles.menuSubtitle,
-                      { color: currentColors.textSecondary },
-                    ]}
-                  >
-                    Sign out of your account
                   </Text>
                 </View>
                 <IconSymbol

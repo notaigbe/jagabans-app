@@ -177,6 +177,7 @@ const MAPPING = ({
   "person.crop.circle": "account-circle",
   "lock": "lock",
   "person.badge.shield.checkmark": "admin-panel-settings",
+  "person.crop.circle.badge.xmark": "person-off",
 
   // Sharing & Export
   "square.and.arrow.up": "share",
