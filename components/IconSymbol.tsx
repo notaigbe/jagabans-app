@@ -61,6 +61,7 @@ const MAPPING = ({
   "chart.pie": "pie-chart",
   "chart.bar.doc.horizontal": "bar-chart",
   "table.furniture": "table-restaurant",
+  "shield.checkmark.fill": "verified-user",
 
   // Actions & Controls
   "plus": "add",

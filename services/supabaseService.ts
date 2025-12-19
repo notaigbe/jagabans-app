@@ -32,7 +32,7 @@ export const authService = {
         email,
         password,
         options: {
-          emailRedirectTo: 'https://natively.dev/email-confirmed',
+          emailRedirectTo: 'https://jagabansla.com/email-confirmed',
           data: {
             name,
             phone,

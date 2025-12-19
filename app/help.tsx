@@ -136,12 +136,12 @@ export default function HelpScreen() {
     const url = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
     
     try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
+      // const supported = await Linking.canOpenURL(url);
+      // if (supported) {
         await Linking.openURL(url);
-      } else {
-        showLocalToast('Could not open email app', 'error');
-      }
+      // } else {
+      //   showLocalToast('Could not open email app', 'error');
+      // }
     } catch (error) {
       console.error('Error opening email:', error);
       showLocalToast('Could not open email app', 'error');

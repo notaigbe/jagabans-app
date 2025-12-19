@@ -816,11 +816,11 @@ export default function ProfileScreen() {
                 <View
                   style={[styles.menuIcon, { backgroundColor: "#FF9800" + "20" }]}
                 >
-                  <IconSymbol name="arrow.right.square" size={24} color="#FF9800" />
+                  <IconSymbol name="logout" size={24} color="#FF9800" />
                 </View>
                 <View style={styles.menuContent}>
                   <Text style={[styles.menuTitle, { color: currentColors.text }]}>
-                    Logout
+                    Sign Out
                   </Text>
                   <Text
                     style={[
