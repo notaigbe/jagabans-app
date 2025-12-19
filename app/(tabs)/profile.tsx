@@ -801,6 +801,43 @@ export default function ProfileScreen() {
                 />
               </Pressable>
             </LinearGradient>
+
+            {/* Logout Option */}
+            <LinearGradient
+              colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.menuItem}
+            >
+              <Pressable
+                style={styles.menuItemInner}
+                onPress={handleSignOut}
+              >
+                <View
+                  style={[styles.menuIcon, { backgroundColor: "#FF9800" + "20" }]}
+                >
+                  <IconSymbol name="arrow.right.square" size={24} color="#FF9800" />
+                </View>
+                <View style={styles.menuContent}>
+                  <Text style={[styles.menuTitle, { color: currentColors.text }]}>
+                    Logout
+                  </Text>
+                  <Text
+                    style={[
+                      styles.menuSubtitle,
+                      { color: currentColors.textSecondary },
+                    ]}
+                  >
+                    Sign out of your account
+                  </Text>
+                </View>
+                <IconSymbol
+                  name="chevron.right"
+                  size={24}
+                  color={currentColors.textSecondary}
+                />
+              </Pressable>
+            </LinearGradient>
           </View>
         </ScrollView>
         <Toast
