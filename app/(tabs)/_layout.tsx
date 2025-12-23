@@ -20,6 +20,12 @@ export default function TabLayout() {
       label: 'Cart',
     },
     {
+      name: 'discover',
+      route: '/(tabs)/discover',
+      icon: 'photo.on.rectangle',
+      label: 'Discover',
+    },
+    {
       name: 'merch',
       route: '/(tabs)/merch',
       icon: 'bag.fill',
@@ -50,6 +56,7 @@ export default function TabLayout() {
       >
         <Stack.Screen name="(home)" />
         <Stack.Screen name="cart" />
+        <Stack.Screen name="discover" />
         <Stack.Screen name="merch" />
         {/* <Stack.Screen name="giftcards" /> */}
         <Stack.Screen name="profile" />

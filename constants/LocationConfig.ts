@@ -10,6 +10,13 @@ export const RESTAURANT_LOCATION = {
 // Geofence radius in meters (e.g., 100 meters = ~328 feet)
 export const GEOFENCE_RADIUS_METERS = 100;
 
+// Alias for consistency with social features
+export const JAGABANS_LOCATION = {
+  latitude: RESTAURANT_LOCATION.latitude,
+  longitude: RESTAURANT_LOCATION.longitude,
+  radius: GEOFENCE_RADIUS_METERS,
+};
+
 // Function to calculate distance between two coordinates (Haversine formula)
 export function calculateDistance(
   lat1: number,

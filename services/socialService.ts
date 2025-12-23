@@ -101,18 +101,41 @@ export const socialService = {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUserId = session?.user?.id;
 
-      const { data, error } = await supabase
+      // First get posts
+      const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select(`
-          *,
-          user:user_profiles!posts_user_id_fkey (id, name, profile_image)
-        `)
+        .select('*')
         .eq('is_hidden', false)
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      if (error) throw error;
+      if (postsError) throw postsError;
+      if (!postsData || postsData.length === 0) {
+        return { data: [], error: null };
+      }
+
+      // Get user profiles for all posts
+      const userIds = [...new Set(postsData.map((p: any) => p.user_id))];
+      const { data: usersData, error: usersError } = await supabase
+        .from('user_profiles')
+        .select('user_id, name, profile_image')
+        .in('user_id', userIds);
+
+      if (usersError) {
+        console.error('Error fetching user profiles:', usersError);
+      }
+
+      // Create a map of user profiles
+      const usersMap = new Map();
+      usersData?.forEach((user: any) => {
+        usersMap.set(user.user_id, user);
+      });
+
+      const data = postsData.map((post: any) => ({
+        ...post,
+        user: usersMap.get(post.user_id),
+      }));
 
       // Check if current user has liked each post
       if (currentUserId && data) {
@@ -141,7 +164,7 @@ export const socialService = {
             createdAt: post.created_at,
             updatedAt: post.updated_at,
             user: post.user ? {
-              id: post.user.id,
+              id: post.user.user_id,
               name: post.user.name,
               profileImage: post.user.profile_image,
             } : undefined,
@@ -152,7 +175,7 @@ export const socialService = {
       }
 
       return {
-        data: data?.map((post: any) => ({
+        data: data.map((post: any) => ({
           id: post.id,
           userId: post.user_id,
           imageUrl: post.image_url,
@@ -167,7 +190,7 @@ export const socialService = {
           createdAt: post.created_at,
           updatedAt: post.updated_at,
           user: post.user ? {
-            id: post.user.id,
+            id: post.user.user_id,
             name: post.user.name,
             profileImage: post.user.profile_image,
           } : undefined,
@@ -186,17 +209,35 @@ export const socialService = {
    */
   async getUserPosts(userId: string) {
     try {
-      const { data, error } = await supabase
+      // Get posts
+      const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select(`
-          *,
-          user:user_profiles!posts_user_id_fkey (id, name, profile_image)
-        `)
+        .select('*')
         .eq('user_id', userId)
         .eq('is_hidden', false)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (postsError) throw postsError;
+      if (!postsData || postsData.length === 0) {
+        return { data: [], error: null };
+      }
+
+      // Get user profile
+      const { data: userData, error: userError } = await supabase
+        .from('user_profiles')
+        .select('user_id, name, profile_image')
+        .eq('user_id', userId)
+        .single();
+
+      if (userError) {
+        console.error('Error fetching user profile:', userError);
+      }
+
+      const data = postsData.map((post: any) => ({
+        ...post,
+        user: userData,
+      }));
+
       return { data, error: null };
     } catch (error) {
       console.error('Get user posts error:', error);
@@ -256,22 +297,41 @@ export const socialService = {
    */
   async getPostComments(postId: string) {
     try {
-      const { data, error } = await supabase
+      // Get comments
+      const { data: commentsData, error: commentsError } = await supabase
         .from('post_comments')
-        .select(`
-          *,
-          user:user_profiles!post_comments_user_id_fkey (id, name, profile_image)
-        `)
+        .select('*')
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (commentsError) throw commentsError;
+      if (!commentsData || commentsData.length === 0) {
+        return { data: [], error: null };
+      }
+
+      // Get user profiles for all comments
+      const userIds = [...new Set(commentsData.map((c: any) => c.user_id))];
+      const { data: usersData, error: usersError } = await supabase
+        .from('user_profiles')
+        .select('user_id, name, profile_image')
+        .in('user_id', userIds);
+
+      if (usersError) {
+        console.error('Error fetching user profiles:', usersError);
+      }
+
+      // Create a map of user profiles
+      const usersMap = new Map();
+      usersData?.forEach((user: any) => {
+        usersMap.set(user.user_id, user);
+      });
 
       // Organize comments into threaded structure
       const commentsMap = new Map<string, Comment>();
       const rootComments: Comment[] = [];
 
-      data?.forEach((comment: any) => {
+      commentsData.forEach((comment: any) => {
+        const user = usersMap.get(comment.user_id);
         const commentObj: Comment = {
           id: comment.id,
           postId: comment.post_id,
@@ -280,10 +340,10 @@ export const socialService = {
           commentText: comment.comment_text,
           createdAt: comment.created_at,
           updatedAt: comment.updated_at,
-          user: comment.user ? {
-            id: comment.user.id,
-            name: comment.user.name,
-            profileImage: comment.user.profile_image,
+          user: user ? {
+            id: user.user_id,
+            name: user.name,
+            profileImage: user.profile_image,
           } : undefined,
           replies: [],
         };
@@ -454,16 +514,50 @@ export const socialService = {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase
+      // Get referrals
+      const { data: referralsData, error: referralsError } = await supabase
         .from('referrals')
-        .select(`
-          *,
-          referred_user:user_profiles!referrals_referred_user_id_fkey (id, name, email)
-        `)
+        .select('*')
         .eq('referrer_user_id', session.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (referralsError) throw referralsError;
+      if (!referralsData || referralsData.length === 0) {
+        return { data: [], error: null };
+      }
+
+      // Get user profiles for referred users
+      const referredUserIds = referralsData
+        .filter((r: any) => r.referred_user_id)
+        .map((r: any) => r.referred_user_id);
+
+      if (referredUserIds.length === 0) {
+        return { 
+          data: referralsData.map((r: any) => ({ ...r, referred_user: null })), 
+          error: null 
+        };
+      }
+
+      const { data: usersData, error: usersError } = await supabase
+        .from('user_profiles')
+        .select('user_id, name, email')
+        .in('user_id', referredUserIds);
+
+      if (usersError) {
+        console.error('Error fetching user profiles:', usersError);
+      }
+
+      // Create a map of user profiles
+      const usersMap = new Map();
+      usersData?.forEach((user: any) => {
+        usersMap.set(user.user_id, user);
+      });
+
+      const data = referralsData.map((referral: any) => ({
+        ...referral,
+        referred_user: referral.referred_user_id ? usersMap.get(referral.referred_user_id) : null,
+      }));
+
       return { data, error: null };
     } catch (error) {
       console.error('Get user referrals error:', error);
