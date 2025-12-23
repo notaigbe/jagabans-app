@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   actionButtonText: {
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: 'Inter_700Bold',
   },
   infoCard: {

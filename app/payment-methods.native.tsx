@@ -82,7 +82,7 @@ export default function PaymentMethodsScreen() {
           id: card.id,
           stripePaymentMethodId: card.stripe_payment_method_id || '',
           cardBrand: card.brand || 'card',
-          last4: card.last4 || '****',
+          last4: card.last4 || '0000',
           expMonth: card.exp_month || 0,
           expYear: card.exp_year || 0,
           isDefault: card.is_default || false,
