@@ -203,7 +203,8 @@ export default function EditProfileScreen() {
     try {
       // Generate unique filename
       const fileExt = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+      // const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+      const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
       console.log('Uploading image:', filePath);
 

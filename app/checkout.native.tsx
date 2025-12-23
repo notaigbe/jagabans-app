@@ -76,7 +76,7 @@ interface StripePayment {
 // ============================================================================
 // STRIPE PUBLISHABLE KEY
 // ============================================================================
-const STRIPE_PUBLISHABLE_KEY = 'pk_test_51SbDvPKZwIF4J9pKEK6dHIGLWdMtwlgkTwzChNtA3BNvVFZY5UkdgpQoas4Tzu9jmYqhKgkVnMAWmtvl0ROvhNwd00kkEUh15y';
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_12345';
 
 // ============================================================================
 // POINTS SYSTEM CONSTANTS
