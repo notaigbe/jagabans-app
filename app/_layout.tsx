@@ -191,6 +191,41 @@ export default function RootLayout() {
                 headerShown: false,
               }} 
             />
+            <Stack.Screen 
+              name="reservations" 
+              options={{ 
+                presentation: 'modal',
+                headerShown: false,
+              }} 
+            />
+            <Stack.Screen 
+              name="invite-friend" 
+              options={{ 
+                presentation: 'modal',
+                headerShown: false,
+              }} 
+            />
+            <Stack.Screen 
+              name="help" 
+              options={{ 
+                presentation: 'modal',
+                headerShown: false,
+              }} 
+            />
+            <Stack.Screen 
+              name="delete-account" 
+              options={{ 
+                presentation: 'modal',
+                headerShown: false,
+              }} 
+            />
+            <Stack.Screen 
+              name="create-post" 
+              options={{ 
+                presentation: 'modal',
+                headerShown: false,
+              }} 
+            />
           </Stack>
           <StatusBar style="light" />
           <Toast />

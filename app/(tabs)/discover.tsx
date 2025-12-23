@@ -18,7 +18,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { socialService, Post } from '@/services/socialService';
 import { IconSymbol } from '@/components/IconSymbol';
-import {* as Haptics} from 'expo-haptics';
+import * as Haptics from 'expo-haptics';
 
 export default function DiscoverScreen() {
   const router = useRouter();
