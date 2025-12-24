@@ -76,7 +76,7 @@ interface StripePayment {
 // ============================================================================
 // STRIPE PUBLISHABLE KEY
 // ============================================================================
-const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_12345';
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwdW52ZmttbG1xYmZpZ2dxcmtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0OTI0MTEsImV4cCI6MjA3ODA2ODQxMX0.i7E7C7FTJH8wYCAyUlxDG347u-V93TqF7uqGO6y2rO0';
 
 // ============================================================================
 // POINTS SYSTEM CONSTANTS
@@ -976,7 +976,7 @@ function CheckoutContent() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Order Type</Text>
               <View style={styles.orderTypeSelector}>
-                {/* <LinearGradient
+                <LinearGradient
                   colors={orderType === 'delivery' 
                     ? [currentColors.secondary, currentColors.highlight]
                     : [currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]
@@ -1012,7 +1012,7 @@ function CheckoutContent() {
                       Delivery
                     </Text>
                   </Pressable>
-                </LinearGradient> */}
+                </LinearGradient>
 
                 <LinearGradient
                   colors={orderType === 'pickup' 
