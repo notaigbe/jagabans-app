@@ -190,7 +190,7 @@ export default function DiscoverScreen() {
                       style={styles.avatar}
                     >
                       <IconSymbol
-                        name="person.fill"
+                        name="person"
                         size={20}
                         color={currentColors.background}
                       />

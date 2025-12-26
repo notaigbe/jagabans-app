@@ -230,6 +230,13 @@ export default function RootLayout() {
                 headerShown: false,
               }} 
             />
+          <Stack.Screen 
+              name="post-detail" 
+              options={{ 
+                presentation: 'modal',
+                headerShown: false,
+              }} 
+            />
           </Stack>
           <StatusBar style="light" />
           <Toast />
