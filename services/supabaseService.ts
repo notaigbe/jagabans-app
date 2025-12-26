@@ -48,6 +48,7 @@ export const authService = {
           .from('user_profiles')
           .insert({
             id: data.user.id,
+            user_id: data.user.id,
             name,
             email,
             phone: phone || '',
