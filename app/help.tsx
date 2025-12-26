@@ -539,7 +539,7 @@ export default function HelpScreen() {
             <Text
               style={[styles.appInfoText, { color: currentColors.textSecondary }]}
             >
-              Version 1.0.0
+              Version 1.2.1
             </Text>
           </View>
         </ScrollView>

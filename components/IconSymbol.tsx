@@ -106,6 +106,7 @@ const MAPPING = ({
   "photo": "image-outlined",
   "camera.fill": "camera-alt",
   "camera": "camera-alt",
+  "camera.rotate": "flip-camera-ios",
   "video.fill": "videocam",
   "video": "videocam-off",
   "music.note": "music-note",
