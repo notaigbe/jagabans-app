@@ -16,7 +16,17 @@ serve(async (req) => {
   try {
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeSecretKey) {
-      throw new Error('STRIPE_SECRET_KEY not configured');
+      console.error('STRIPE_SECRET_KEY not configured');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Payment system configuration error',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
     }
 
     const stripe = new Stripe(stripeSecretKey, {
@@ -30,14 +40,33 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'No authorization header',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        }
+      );
     }
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      console.error('User authentication error:', userError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Unauthorized',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        }
+      );
     }
 
     // Get user profile for name and email
@@ -48,7 +77,17 @@ serve(async (req) => {
       .single();
 
     if (profileError || !profile) {
-      throw new Error('User profile not found');
+      console.error('User profile not found:', profileError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'User profile not found',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404,
+        }
+      );
     }
 
     // Check if user has any existing payment methods with stripe_customer_id
@@ -66,27 +105,55 @@ serve(async (req) => {
     if (!customerId) {
       console.log('Creating new Stripe customer for user:', user.id);
       
-      const customer = await stripe.customers.create({
-        email: profile.email,
-        name: profile.name,
-        metadata: {
-          userId: user.id,
-        },
-      });
+      try {
+        const customer = await stripe.customers.create({
+          email: profile.email,
+          name: profile.name,
+          metadata: {
+            userId: user.id,
+          },
+        });
 
-      customerId = customer.id;
-      console.log('Stripe customer created:', customerId);
+        customerId = customer.id;
+        console.log('Stripe customer created:', customerId);
+      } catch (stripeError: any) {
+        console.error('Error creating Stripe customer:', stripeError);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Failed to create customer: ${stripeError.message}`,
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          }
+        );
+      }
     } else {
       console.log('Using existing Stripe customer:', customerId);
     }
 
     // Create setup intent
-    const setupIntent = await stripe.setupIntents.create({
-      customer: customerId,
-      payment_method_types: ['card'],
-    });
-
-    console.log('SetupIntent created:', setupIntent.id);
+    let setupIntent;
+    try {
+      setupIntent = await stripe.setupIntents.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+      });
+      console.log('SetupIntent created:', setupIntent.id);
+    } catch (stripeError: any) {
+      console.error('Error creating setup intent:', stripeError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Failed to create setup intent: ${stripeError.message}`,
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({
@@ -99,16 +166,16 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
-    console.error('Error creating setup intent:', error);
+  } catch (error: any) {
+    console.error('Unexpected error in create-setup-intent:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Failed to create setup intent',
+        error: error.message || 'An unexpected error occurred',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       }
     );
   }

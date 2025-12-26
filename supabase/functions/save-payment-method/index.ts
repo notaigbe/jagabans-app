@@ -16,7 +16,17 @@ serve(async (req) => {
   try {
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeSecretKey) {
-      throw new Error('STRIPE_SECRET_KEY not configured');
+      console.error('STRIPE_SECRET_KEY not configured');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Payment system configuration error',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
     }
 
     const stripe = new Stripe(stripeSecretKey, {
@@ -30,44 +40,110 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'No authorization header',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        }
+      );
     }
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      console.error('User authentication error:', userError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Unauthorized',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        }
+      );
     }
 
     const { paymentMethodId, setAsDefault } = await req.json();
 
     if (!paymentMethodId) {
-      throw new Error('Payment method ID is required');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Payment method ID is required',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
 
+    console.log('Retrieving payment method from Stripe:', paymentMethodId);
+
     // Get payment method details from Stripe
-    const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+    let paymentMethod;
+    try {
+      paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+    } catch (stripeError: any) {
+      console.error('Stripe error retrieving payment method:', stripeError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Failed to retrieve payment method: ${stripeError.message}`,
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
 
     if (!paymentMethod.customer) {
-      throw new Error('Payment method must be attached to a customer');
+      console.error('Payment method not attached to customer');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Payment method must be attached to a customer',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
 
     const customerId = paymentMethod.customer as string;
+    console.log('Payment method customer:', customerId);
 
     // If setAsDefault, update customer's default payment method
     if (setAsDefault) {
-      await stripe.customers.update(customerId, {
-        invoice_settings: {
-          default_payment_method: paymentMethodId,
-        },
-      });
+      try {
+        await stripe.customers.update(customerId, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId,
+          },
+        });
+        console.log('Updated default payment method in Stripe');
+      } catch (stripeError: any) {
+        console.error('Error updating default payment method in Stripe:', stripeError);
+        // Continue anyway - we'll still save it to the database
+      }
 
       // Set all existing payment methods to non-default
-      await supabase
+      const { error: updateError } = await supabase
         .from('payment_methods')
         .update({ is_default: false })
         .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('Error updating existing payment methods:', updateError);
+      }
     }
 
     // Save payment method to database
@@ -88,8 +164,17 @@ serve(async (req) => {
       });
 
     if (insertError) {
-      console.error('Error saving payment method:', insertError);
-      throw new Error('Failed to save payment method');
+      console.error('Error saving payment method to database:', insertError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Failed to save payment method: ${insertError.message}`,
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
     }
 
     console.log('Payment method saved successfully:', paymentMethodId);
@@ -104,16 +189,16 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
-    console.error('Error saving payment method:', error);
+  } catch (error: any) {
+    console.error('Unexpected error in save-payment-method:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Failed to save payment method',
+        error: error.message || 'An unexpected error occurred',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       }
     );
   }
