@@ -129,7 +129,7 @@ export default function CreatePostScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -161,7 +161,7 @@ export default function CreatePostScreen() {
       
       console.log('Image blob created, size:', blob.size, 'type:', blob.type);
 
-      // Generate unique filename
+      // Generate unique filename with proper extension
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}/post_${Date.now()}.${fileExt}`;
 
