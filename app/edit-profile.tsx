@@ -205,7 +205,7 @@ export default function EditProfileScreen() {
       const fileExt = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
       // const fileName = `${user.id}_${Date.now()}.${fileExt}`;
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const filePath = `${user.id}/${fileName}`;
       console.log('Uploading image:', filePath);
 
     const response = await fetch(asset.uri);
