@@ -10,6 +10,7 @@ import {
   Platform,
   TextInput,
   KeyboardAvoidingView,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -25,7 +26,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { currentColors, userProfile, showToast } = useApp();
+  const { currentColors, userProfile, showToast, loadUserProfile } = useApp();
   const { isAuthenticated, signIn, signUp, signOut } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -35,6 +36,7 @@ export default function ProfileScreen() {
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   // Toast state
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -91,6 +93,22 @@ export default function ProfileScreen() {
       fetchProfileImage();
     }
   }, [userProfile?.profileImage, isAuthenticated]);
+
+  const handleRefresh = async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setRefreshing(true);
+    try {
+      await loadUserProfile();
+      showLocalToast('success', 'Profile refreshed');
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      showLocalToast('error', 'Failed to refresh profile');
+    } finally {
+      setRefreshing(false);
+    }
+  };
   
   const showLocalToast = (type: "success" | "error" | "info", message: string) => {
     setToastType(type);
@@ -557,6 +575,14 @@ export default function ProfileScreen() {
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={currentColors.secondary}
+              colors={[currentColors.secondary]}
+            />
+          }
         >
           {/* Profile Header with Gradient */}
           <LinearGradient
