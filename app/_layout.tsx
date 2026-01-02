@@ -105,7 +105,7 @@ export default function RootLayout() {
       <AppProvider>
         <ThemeProvider value={DarkTheme}>
           <StripeProvider
-              publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+              publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY! || "pk_live_51SaVNBEpxgw216dfngaO9r3erOFV7XFC4zvvwMd97HuPpWpvCy26sCwWITZHhmtAv6iZLT35RGITrIxBoTF1v9AI007NGoktyP"}
             >
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
