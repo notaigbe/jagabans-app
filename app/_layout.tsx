@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from 'react-native';
+import { useNavigationContainerRef } from 'expo-router';
 import { AppProvider } from '@/contexts/AppContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import Toast from '@/components/Toast';
@@ -100,6 +101,24 @@ export default function RootLayout() {
     return null;
   }
 
+  // Deeplink configuration
+  const linking = {
+    prefixes: ['jagabansla://', 'https://jagabansla.com'],
+    config: {
+      screens: {
+        'post-detail': 'post/:postId',
+        '(tabs)': {
+          screens: {
+            discover: 'discover',
+            profile: 'profile',
+            cart: 'cart',
+            home: 'home',
+          },
+        },
+      },
+    },
+  };
+
   return (
     <AuthProvider>
       <AppProvider>
@@ -107,7 +126,7 @@ export default function RootLayout() {
           <StripeProvider
               publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY! || "pk_live_51SaVNBEpxgw216dfngaO9r3erOFV7XFC4zvvwMd97HuPpWpvCy26sCwWITZHhmtAv6iZLT35RGITrIxBoTF1v9AI007NGoktyP"}
             >
-          <Stack>
+          <Stack linking={linking}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="admin" options={{ headerShown: false }} />
             <Stack.Screen name="website" options={{ headerShown: false }} />
