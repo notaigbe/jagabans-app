@@ -76,7 +76,7 @@ interface StripePayment {
 // ============================================================================
 // STRIPE PUBLISHABLE KEY
 // ============================================================================
-const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwdW52ZmttbG1xYmZpZ2dxcmtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0OTI0MTEsImV4cCI6MjA3ODA2ODQxMX0.i7E7C7FTJH8wYCAyUlxDG347u-V93TqF7uqGO6y2rO0';
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_live_51SaVNBEpxgw216dfngaO9r3erOFV7XFC4zvvwMd97HuPpWpvCy26sCwWITZHhmtAv6iZLT35RGITrIxBoTF1v9AI007NGoktyP';
 
 // ============================================================================
 // POINTS SYSTEM CONSTANTS
