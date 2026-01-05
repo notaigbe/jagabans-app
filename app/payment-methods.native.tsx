@@ -49,7 +49,7 @@ export default function PaymentMethodsScreen() {
   const [dialogConfig, setDialogConfig] = useState({
     title: '',
     message: '',
-    buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>
+    buttons: [] as { text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }[]
   });
 
   const showToast = (type: 'success' | 'error' | 'info', message: string) => {
@@ -58,7 +58,7 @@ export default function PaymentMethodsScreen() {
     setToastVisible(true);
   };
 
-  const showDialog = (title: string, message: string, buttons: Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>) => {
+  const showDialog = (title: string, message: string, buttons: { text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }[]) => {
     setDialogConfig({ title, message, buttons });
     setDialogVisible(true);
   };
@@ -104,7 +104,7 @@ export default function PaymentMethodsScreen() {
     } finally {
       setLoading(false);
     }
-  }, [userProfile]);
+  }, [userProfile, stripe]);
 
   useEffect(() => {
     if (userProfile) {
@@ -112,7 +112,7 @@ export default function PaymentMethodsScreen() {
     }
   }, [userProfile, loadStoredCards]);
 
-  const handleAddCard = async () => {
+  const handleAddCard = useCallback(async () => {
     if (!cardComplete) {
       showToast('error', 'Please enter complete card details');
       return;
@@ -234,7 +234,7 @@ export default function PaymentMethodsScreen() {
     } finally {
       setProcessing(false);
     }
-  };
+  }, [cardComplete, stripe, storedCards.length, loadStoredCards]);
 
   const handleSetDefault = async (paymentMethodId: string) => {
     if (Platform.OS !== 'web') {

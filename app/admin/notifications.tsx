@@ -37,7 +37,7 @@ export default function AdminNotifications() {
   const [dialogConfig, setDialogConfig] = useState({
     title: '',
     message: '',
-    buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>
+    buttons: [] as { text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }[]
   });
 
   // Toast state
@@ -45,7 +45,7 @@ export default function AdminNotifications() {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
 
-  const showDialog = (title: string, message: string, buttons: Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>) => {
+  const showDialog = (title: string, message: string, buttons: { text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }[]) => {
     setDialogConfig({ title, message, buttons });
     setDialogVisible(true);
   };

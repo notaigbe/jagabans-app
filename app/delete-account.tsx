@@ -42,7 +42,7 @@ export default function DeleteAccountScreen() {
   const [dialogConfig, setDialogConfig] = useState({
     title: '',
     message: '',
-    buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>
+    buttons: [] as { text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }[]
   });
 
   const showToast = (type: 'success' | 'error' | 'info', message: string) => {
@@ -51,7 +51,7 @@ export default function DeleteAccountScreen() {
     setToastVisible(true);
   };
 
-  const showDialog = (title: string, message: string, buttons: Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>) => {
+  const showDialog = (title: string, message: string, buttons: { text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }[]) => {
     setDialogConfig({ title, message, buttons });
     setDialogVisible(true);
   };

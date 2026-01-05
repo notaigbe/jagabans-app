@@ -50,17 +50,7 @@ export default function OrderConfirmationScreen() {
     return () => setTabBarVisible(true);
   }, [setTabBarVisible]);
 
-  useEffect(() => {
-    if (!orderId) {
-      setError('No order ID provided');
-      setLoading(false);
-      return;
-    }
-
-    fetchOrderDetails();
-  }, [orderId]);
-
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -105,7 +95,17 @@ export default function OrderConfirmationScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId, loadUserProfile]);
+
+  useEffect(() => {
+    if (!orderId) {
+      setError('No order ID provided');
+      setLoading(false);
+      return;
+    }
+
+    fetchOrderDetails();
+  }, [orderId, fetchOrderDetails]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

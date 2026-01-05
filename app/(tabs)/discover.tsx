@@ -65,7 +65,7 @@ export default function DiscoverScreen() {
 
   useEffect(() => {
     loadPosts(true);
-  }, []);
+  }, [loadPosts]);
 
   const handleRefresh = () => {
     setRefreshing(true);

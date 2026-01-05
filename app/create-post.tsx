@@ -52,19 +52,19 @@ export default function CreatePostScreen() {
     setToastVisible(true);
   };
 
-  useEffect(() => {
-    requestPermissions();
-    fetchIpLocation();
-  }, []);
-
-  const requestPermissions = async () => {
+  const requestPermissions = React.useCallback(async () => {
     const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
     const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
 
     if (cameraStatus !== 'granted' || locationStatus !== 'granted') {
       showToast('Camera and location permissions are required', 'error');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    requestPermissions();
+    fetchIpLocation();
+  }, [requestPermissions]);
 
   const fetchIpLocation = async () => {
     try {

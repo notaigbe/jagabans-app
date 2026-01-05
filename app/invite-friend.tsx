@@ -30,14 +30,7 @@ export default function InviteFriendScreen() {
   const [loading, setLoading] = useState(true);
   const [loadingReferrals, setLoadingReferrals] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadReferralCode();
-      loadReferrals();
-    }
-  }, [isAuthenticated]);
-
-  const loadReferralCode = async () => {
+  const loadReferralCode = React.useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await socialService.getUserReferralCode();
@@ -53,7 +46,14 @@ export default function InviteFriendScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadReferralCode();
+      loadReferrals();
+    }
+  }, [isAuthenticated, loadReferralCode]);
 
   const loadReferrals = async () => {
     setLoadingReferrals(true);
