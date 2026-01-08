@@ -147,12 +147,30 @@ serve(async (req) => {
         // Get order details to check if it's a delivery order
         const { data: orderData, error: orderFetchError } = await supabase
           .from('orders')
-          .select('delivery_address, total, points_earned')
+          .select(`
+            *,
+            order_items (
+              name,
+              price,
+              quantity
+            )
+          `)
           .eq('id', orderId)
           .single();
 
         if (orderFetchError) {
           console.error('Error fetching order:', orderFetchError);
+        }
+
+        // Get user profile for email
+        const { data: userProfile, error: userFetchError } = await supabase
+          .from('user_profiles')
+          .select('name, email, phone')
+          .eq('id', userId)
+          .single();
+
+        if (userFetchError) {
+          console.error('Error fetching user profile:', userFetchError);
         }
 
         // Update orders table
@@ -214,6 +232,59 @@ serve(async (req) => {
           console.error('Error creating notification:', notificationError);
         } else {
           console.log('✓ Notification created');
+        }
+
+        // Send order confirmation email to admin recipients
+        if (orderData && userProfile) {
+          console.log('Sending order confirmation email to admins...');
+          
+          try {
+            // Calculate subtotal (before discount and tax)
+            const subtotal = orderData.order_items?.reduce((sum: number, item: any) => 
+              sum + (item.price * item.quantity), 0) || 0;
+            
+            // Calculate tax from total (assuming 9.75% tax rate)
+            const taxRate = 0.0975;
+            const tax = orderData.total * (taxRate / (1 + taxRate));
+            
+            const emailData = {
+              orderId: orderData.id,
+              customerName: userProfile.name,
+              customerEmail: userProfile.email,
+              customerPhone: userProfile.phone,
+              items: orderData.order_items?.map((item: any) => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+              })) || [],
+              subtotal: subtotal,
+              tax: tax,
+              total: orderData.total,
+              deliveryAddress: orderData.delivery_address,
+              pickupNotes: orderData.pickup_notes,
+              orderType: orderData.delivery_address ? 'delivery' : 'pickup',
+              timestamp: new Date().toISOString(),
+            };
+
+            // Call the send-order-confirmation-email Edge Function
+            const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-order-confirmation-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify(emailData),
+            });
+
+            if (emailResponse.ok) {
+              console.log('✓ Order confirmation email sent to admins');
+            } else {
+              const errorText = await emailResponse.text();
+              console.error('Failed to send order confirmation email:', errorText);
+            }
+          } catch (emailError) {
+            console.error('Error sending order confirmation email:', emailError);
+          }
         }
 
         // Schedule Uber Direct delivery for 10 minutes later (only for delivery orders)
