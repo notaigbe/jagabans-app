@@ -47,7 +47,14 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { orderId, amount, currency = 'usd', metadata = {} } = await req.json();
+    const { 
+      orderId, 
+      amount, 
+      currency = 'usd', 
+      customerId,
+      setupFutureUsage,
+      metadata = {} 
+    } = await req.json();
 
     if (!orderId || !amount) {
       throw new Error('Missing required fields: orderId and amount');
@@ -58,7 +65,7 @@ serve(async (req) => {
       throw new Error('Invalid amount');
     }
 
-    console.log('Creating PaymentIntent for order:', orderId, 'amount:', amount);
+    console.log('Creating PaymentIntent for order:', orderId, 'amount:', amount, 'customer:', customerId);
 
     // Get user profile for customer info
     const { data: profile } = await supabase
@@ -67,12 +74,13 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    // Create Stripe PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Create payment intent configuration
+    const paymentIntentConfig: any = {
       amount: Math.round(amount), // Ensure it's an integer
       currency: currency.toLowerCase(),
       automatic_payment_methods: {
         enabled: true,
+        allow_redirects: 'never', // Disable redirects for better UX
       },
       metadata: {
         orderId,
@@ -81,9 +89,32 @@ serve(async (req) => {
       },
       description: `Order #${orderId}`,
       receipt_email: profile?.email || undefined,
-    });
+    };
+
+    // Add customer if provided
+    if (customerId) {
+      paymentIntentConfig.customer = customerId;
+    }
+
+    // Add setup future usage if requested (for saving payment methods)
+    if (setupFutureUsage) {
+      paymentIntentConfig.setup_future_usage = setupFutureUsage;
+    }
+
+    // Create Stripe PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentConfig);
 
     console.log('PaymentIntent created:', paymentIntent.id);
+
+    // Create ephemeral key for customer (needed for Payment Sheet)
+    let ephemeralKey = null;
+    if (customerId) {
+      ephemeralKey = await stripe.ephemeralKeys.create(
+        { customer: customerId },
+        { apiVersion: '2023-10-16' }
+      );
+      console.log('Ephemeral key created for customer:', customerId);
+    }
 
     // Store initial payment record in Supabase
     const { error: insertError } = await supabase
@@ -116,12 +147,14 @@ serve(async (req) => {
       console.error('Error updating order:', orderUpdateError);
     }
 
-    // Return client secret
+    // Return client secret and ephemeral key
     return new Response(
       JSON.stringify({
         success: true,
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
+        ephemeralKey: ephemeralKey?.secret,
+        customerId: customerId,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
