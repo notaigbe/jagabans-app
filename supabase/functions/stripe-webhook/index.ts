@@ -128,7 +128,7 @@ serve(async (req) => {
 
         console.log('Processing payment success for order:', orderId, 'user:', userId);
 
-        // Update stripe_payments table
+        // Update stripe_payments table - use payment_id instead of stripe_payment_intent_id
         const { error: paymentUpdateError } = await supabase
           .from('stripe_payments')
           .update({
@@ -136,7 +136,7 @@ serve(async (req) => {
             payment_method: paymentIntent.payment_method as string,
             updated_at: new Date().toISOString(),
           })
-          .eq('stripe_payment_intent_id', paymentIntent.id);
+          .eq('payment_id', paymentIntent.id);
 
         if (paymentUpdateError) {
           console.error('Error updating stripe_payments:', paymentUpdateError);
@@ -173,12 +173,17 @@ serve(async (req) => {
           console.error('Error fetching user profile:', userFetchError);
         }
 
-        // Update orders table
+        // CRITICAL FIX: Set cancellation_deadline to 5 minutes from NOW (when payment succeeds)
+        // This ensures the 5-minute window starts when the order is confirmed, not when it was created
+        const cancellationDeadline = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+        // Update orders table with payment success and cancellation deadline
         const { error: orderUpdateError } = await supabase
           .from('orders')
           .update({
             status: 'preparing',
             payment_status: 'succeeded',
+            cancellation_deadline: cancellationDeadline,
             updated_at: new Date().toISOString(),
           })
           .eq('id', orderId);
@@ -186,7 +191,7 @@ serve(async (req) => {
         if (orderUpdateError) {
           console.error('Error updating order:', orderUpdateError);
         } else {
-          console.log('✓ orders table updated');
+          console.log('✓ orders table updated with cancellation_deadline:', cancellationDeadline);
         }
 
         // Award points to user (points_earned is already calculated in checkout)
@@ -347,7 +352,7 @@ serve(async (req) => {
             error_message: errorMessage,
             updated_at: new Date().toISOString(),
           })
-          .eq('stripe_payment_intent_id', paymentIntent.id);
+          .eq('payment_id', paymentIntent.id);
 
         if (paymentUpdateError) {
           console.error('Error updating stripe_payments:', paymentUpdateError);
@@ -355,7 +360,7 @@ serve(async (req) => {
           console.log('✓ stripe_payments table updated');
         }
 
-        // Update orders table
+        // Update orders table - mark as cancelled since payment failed
         const { error: orderUpdateError } = await supabase
           .from('orders')
           .update({
@@ -368,7 +373,7 @@ serve(async (req) => {
         if (orderUpdateError) {
           console.error('Error updating order:', orderUpdateError);
         } else {
-          console.log('✓ orders table updated');
+          console.log('✓ orders table updated - order cancelled due to payment failure');
         }
 
         // Send notification to user
@@ -397,6 +402,7 @@ serve(async (req) => {
         console.log('PaymentIntent canceled:', paymentIntent.id);
 
         const orderId = paymentIntent.metadata.orderId;
+        const userId = paymentIntent.metadata.userId;
 
         if (!orderId) {
           console.error('Missing orderId in metadata');
@@ -412,7 +418,7 @@ serve(async (req) => {
             status: 'canceled',
             updated_at: new Date().toISOString(),
           })
-          .eq('stripe_payment_intent_id', paymentIntent.id);
+          .eq('payment_id', paymentIntent.id);
 
         if (paymentUpdateError) {
           console.error('Error updating stripe_payments:', paymentUpdateError);
@@ -420,7 +426,7 @@ serve(async (req) => {
           console.log('✓ stripe_payments table updated');
         }
 
-        // Update orders table
+        // Update orders table - mark as cancelled since payment was cancelled
         const { error: orderUpdateError } = await supabase
           .from('orders')
           .update({
@@ -433,7 +439,20 @@ serve(async (req) => {
         if (orderUpdateError) {
           console.error('Error updating order:', orderUpdateError);
         } else {
-          console.log('✓ orders table updated');
+          console.log('✓ orders table updated - order cancelled due to payment cancellation');
+        }
+
+        // Send notification to user if userId is available
+        if (userId) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: userId,
+              title: 'Order Cancelled',
+              message: 'Your payment was cancelled. No charges were made.',
+              type: 'order',
+              read: false,
+            });
         }
 
         console.log('✓ Payment canceled and order cancelled');
@@ -451,7 +470,7 @@ serve(async (req) => {
             status: 'processing',
             updated_at: new Date().toISOString(),
           })
-          .eq('stripe_payment_intent_id', paymentIntent.id);
+          .eq('payment_id', paymentIntent.id);
 
         if (paymentUpdateError) {
           console.error('Error updating stripe_payments:', paymentUpdateError);

@@ -19,8 +19,6 @@ import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { supabase } from '@/app/integrations/supabase/client';
 
-const MODIFICATION_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
-
 interface OrderItem {
   id: string;
   name: string;
@@ -40,6 +38,7 @@ interface Order {
   pickup_notes: string | null;
   created_at: string;
   updated_at: string;
+  cancellation_deadline: string | null;
   order_items: OrderItem[];
 }
 
@@ -92,18 +91,29 @@ export default function OrderDetailScreen() {
     if (!order) return;
 
     const interval = setInterval(() => {
-      const elapsed = Date.now() - new Date(order.created_at).getTime();
-      const remaining = Math.max(0, MODIFICATION_WINDOW_MS - elapsed);
-      
-      setTimeRemaining(remaining);
-      setCanModify(
-        remaining > 0 && 
-        order.payment_status === 'succeeded' &&
-        (order.status === 'pending' || order.status === 'preparing')
-      );
+      // CRITICAL FIX: Use cancellation_deadline instead of created_at
+      // The cancellation_deadline is set by the webhook when payment succeeds
+      // This ensures the 5-minute window starts from payment confirmation, not order creation
+      if (order.cancellation_deadline) {
+        const deadline = new Date(order.cancellation_deadline).getTime();
+        const now = Date.now();
+        const remaining = Math.max(0, deadline - now);
+        
+        setTimeRemaining(remaining);
+        setCanModify(
+          remaining > 0 && 
+          order.payment_status === 'succeeded' &&
+          (order.status === 'pending' || order.status === 'preparing')
+        );
 
-      if (remaining === 0) {
-        clearInterval(interval);
+        if (remaining === 0) {
+          clearInterval(interval);
+        }
+      } else {
+        // If no cancellation_deadline is set, the order hasn't been confirmed yet
+        // or it's an old order from before this feature was added
+        setTimeRemaining(0);
+        setCanModify(false);
       }
     }, 1000);
 
@@ -236,7 +246,7 @@ export default function OrderDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: currentColors.background }]}>
         <View style={styles.errorContainer}>
-          <IconSymbol name="error" size={64} color={currentColors.textSecondary} />
+          <IconSymbol ios_icon_name="exclamationmark.triangle" android_material_icon_name="error" size={64} color={currentColors.textSecondary} />
           <Text style={[styles.errorText, { color: currentColors.text }]}>Order not found</Text>
           <Pressable onPress={() => router.back()} style={styles.backToOrdersButton}>
             <Text style={[styles.backToOrdersText, { color: currentColors.primary }]}>Back to Orders</Text>
@@ -269,7 +279,7 @@ export default function OrderDetailScreen() {
               }}
               style={[styles.backButton, { backgroundColor: currentColors.background, borderColor: currentColors.border }]}
             >
-              <IconSymbol name="arrow-back" size={24} color={currentColors.secondary} />
+              <IconSymbol ios_icon_name="arrow.left" android_material_icon_name="arrow-back" size={24} color={currentColors.secondary} />
             </Pressable>
             <Text style={[styles.headerTitle, { color: currentColors.text }]}>Order Details</Text>
             <View style={{ width: 40 }} />
@@ -284,7 +294,7 @@ export default function OrderDetailScreen() {
                 end={{ x: 1, y: 1 }}
                 style={[styles.timerCard, { borderColor: currentColors.border }]}
               >
-                <IconSymbol name="schedule" size={24} color={currentColors.highlight} />
+                <IconSymbol ios_icon_name="clock" android_material_icon_name="schedule" size={24} color={currentColors.highlight} />
                 <View style={styles.timerContent}>
                   <Text style={[styles.timerTitle, { color: currentColors.text }]}>
                     Time to cancel/modify
@@ -388,7 +398,7 @@ export default function OrderDetailScreen() {
               </View>
 
               <View style={styles.pointsRow}>
-                <IconSymbol name="star" size={16} color={currentColors.highlight} />
+                <IconSymbol ios_icon_name="star.fill" android_material_icon_name="star" size={16} color={currentColors.highlight} />
                 <Text style={[styles.pointsText, { color: currentColors.text }]}>
                   +{order.points_earned} points earned
                 </Text>
@@ -412,7 +422,7 @@ export default function OrderDetailScreen() {
                     }}
                     disabled={modifying}
                   >
-                    <IconSymbol name="edit" size={20} color={currentColors.background} />
+                    <IconSymbol ios_icon_name="pencil" android_material_icon_name="edit" size={20} color={currentColors.background} />
                     <Text style={[styles.buttonText, { color: currentColors.background }]}>
                       Modify Order
                     </Text>
@@ -433,7 +443,7 @@ export default function OrderDetailScreen() {
                     }}
                     disabled={cancelling}
                   >
-                    <IconSymbol name="cancel" size={20} color="#FFF" />
+                    <IconSymbol ios_icon_name="xmark.circle" android_material_icon_name="cancel" size={20} color="#FFF" />
                     <Text style={[styles.buttonText, { color: '#FFF' }]}>
                       Cancel Order
                     </Text>
@@ -442,14 +452,14 @@ export default function OrderDetailScreen() {
               </View>
             )}
 
-            {!canModify && order.status !== 'cancelled' && (
+            {!canModify && order.status !== 'cancelled' && order.payment_status === 'succeeded' && (
               <LinearGradient
                 colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.infoCard, { borderColor: currentColors.border }]}
               >
-                <IconSymbol name="info" size={20} color={currentColors.primary} />
+                <IconSymbol ios_icon_name="info.circle" android_material_icon_name="info" size={20} color={currentColors.primary} />
                 <Text style={[styles.infoText, { color: currentColors.text }]}>
                   The 5-minute modification window has expired. Please contact support for any changes.
                 </Text>
