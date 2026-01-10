@@ -1,220 +1,183 @@
 
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
+  Platform,
   ActivityIndicator,
-  TextInput,
 } from 'react-native';
-import Toast from '@/components/Toast';
-import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import React, { useState, useEffect, useCallback } from 'react';
-import Dialog from '@/components/Dialog';
-import * as Haptics from 'expo-haptics';
 import { useApp } from '@/contexts/AppContext';
 import { IconSymbol } from '@/components/IconSymbol';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { DeliveryTracking } from '@/components/DeliveryTracking';
+import Dialog from '@/components/Dialog';
 import { supabase } from '@/app/integrations/supabase/client';
-
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
-
-interface Order {
-  id: string;
-  order_number: number;
-  user_id: string;
-  total: number;
-  points_earned: number;
-  status: string;
-  payment_status: string;
-  delivery_address: string | null;
-  pickup_notes: string | null;
-  created_at: string;
-  updated_at: string;
-  cancellation_deadline: string | null;
-  order_items: OrderItem[];
-}
+import type { Order } from '@/types';
 
 export default function OrderDetailScreen() {
   const router = useRouter();
   const { orderId } = useLocalSearchParams();
-  const { showToast, currentColors, userProfile } = useApp();
-  
+  const { userProfile, currentColors, refreshUserProfile, showToast } = useApp();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [canModify, setCanModify] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [showModifyDialog, setShowModifyDialog] = useState(false);
-  const [modifyNotes, setModifyNotes] = useState('');
-  const [cancelling, setCancelling] = useState(false);
-  const [modifying, setModifying] = useState(false);
-
-  const loadOrderDetails = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // TODO: Backend Integration - Call GET /orders/:orderId endpoint
-      // For now, fetch from Supabase directly
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (*)
-        `)
-        .eq('id', orderId)
-        .single();
-
-      if (error) throw error;
-      
-      setOrder(data as Order);
-    } catch (error) {
-      console.error('Error loading order:', error);
-      showToast('Failed to load order details', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [orderId, showToast]);
+  const [dialogConfig, setDialogConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    buttons: [] as Array<{ text: string; onPress: () => void; style?: 'default' | 'destructive' | 'cancel' }>,
+  });
 
   useEffect(() => {
     loadOrderDetails();
-  }, [loadOrderDetails]);
+  }, [orderId]);
 
   useEffect(() => {
     if (!order) return;
 
-    const interval = setInterval(() => {
-      // CRITICAL FIX: Use cancellation_deadline instead of created_at
-      // The cancellation_deadline is set by the webhook when payment succeeds
-      // This ensures the 5-minute window starts from payment confirmation, not order creation
-      if (order.cancellation_deadline) {
-        const deadline = new Date(order.cancellation_deadline).getTime();
-        const now = Date.now();
-        const remaining = Math.max(0, deadline - now);
-        
-        setTimeRemaining(remaining);
-        setCanModify(
-          remaining > 0 && 
-          order.payment_status === 'succeeded' &&
-          (order.status === 'pending' || order.status === 'preparing')
-        );
-
-        if (remaining === 0) {
-          clearInterval(interval);
-        }
-      } else {
-        // If no cancellation_deadline is set, the order hasn't been confirmed yet
-        // or it's an old order from before this feature was added
+    const updateTimer = () => {
+      // Get cancellation_deadline from the order
+      const deadline = order.cancellationDeadline;
+      if (!deadline) {
         setTimeRemaining(0);
         setCanModify(false);
+        return;
       }
-    }, 1000);
+
+      const now = new Date().getTime();
+      const deadlineTime = new Date(deadline).getTime();
+      const remaining = Math.max(0, deadlineTime - now);
+
+      setTimeRemaining(remaining);
+      setCanModify(remaining > 0 && order.status !== 'cancelled');
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
   }, [order]);
 
-  const handleCancelOrder = async () => {
+  const loadOrderDetails = async () => {
     try {
-      setCancelling(true);
+      setLoading(true);
       
-      // TODO: Backend Integration - Call POST /orders/:orderId/cancel endpoint
-      // This will handle refund logic via Stripe
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      // Fetch order from database
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
 
-      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/cancel-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ orderId }),
-      });
+      if (error) throw error;
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to cancel order');
+      if (data) {
+        // Transform database order to app Order type
+        const transformedOrder: Order = {
+          id: data.id,
+          orderNumber: data.order_number,
+          items: data.items,
+          total: data.total,
+          pointsEarned: data.points_earned,
+          date: data.created_at,
+          status: data.status,
+          deliveryAddress: data.delivery_address,
+          pickupNotes: data.pickup_notes,
+          paymentId: data.payment_id,
+          uberDeliveryId: data.uber_delivery_id,
+          uberDeliveryStatus: data.uber_delivery_status,
+          uberTrackingUrl: data.uber_tracking_url,
+          doordashDeliveryId: data.doordash_delivery_id,
+          doordashDeliveryStatus: data.doordash_delivery_status,
+          doordashTrackingUrl: data.doordash_tracking_url,
+          deliveryProvider: data.delivery_provider,
+          cancellationDeadline: data.cancellation_deadline,
+        };
+        setOrder(transformedOrder);
       }
-
-      showToast('Order cancelled successfully. Refund will be processed within 5-7 business days.', 'success');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
-      // Reload order to show updated status
-      await loadOrderDetails();
-      
-      setTimeout(() => {
-        router.back();
-      }, 2000);
-    } catch (error: any) {
-      console.error('Error cancelling order:', error);
-      showToast(error.message || 'Failed to cancel order', 'error');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } catch (error) {
+      console.error('Error loading order details:', error);
+      showToast('Failed to load order details', 'error');
     } finally {
-      setCancelling(false);
-      setShowCancelDialog(false);
+      setLoading(false);
     }
   };
 
-  const handleModifyOrder = async () => {
-    if (!modifyNotes.trim()) {
-      showToast('Please enter modification details', 'error');
-      return;
-    }
-
-    try {
-      setModifying(true);
-      
-      // TODO: Backend Integration - Call POST /orders/:orderId/modify endpoint
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/modify-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ 
-          orderId,
-          notes: modifyNotes,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to modify order');
-      }
-
-      showToast('Modification request submitted successfully', 'success');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setShowModifyDialog(false);
-      setModifyNotes('');
-      
-      // Reload order to show updated status
-      await loadOrderDetails();
-    } catch (error: any) {
-      console.error('Error modifying order:', error);
-      showToast(error.message || 'Failed to modify order', 'error');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setModifying(false);
-    }
-  };
-
-  const formatTime = (ms: number) => {
+  const formatTimeRemaining = (ms: number): string => {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const getStatusColor = (status: string) => {
+  const handleCancelOrder = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    setDialogConfig({
+      visible: true,
+      title: 'Cancel Order',
+      message: 'Are you sure you want to cancel this order? This action cannot be undone.',
+      buttons: [
+        {
+          text: 'No, Keep Order',
+          onPress: () => setDialogConfig(prev => ({ ...prev, visible: false })),
+          style: 'cancel',
+        },
+        {
+          text: 'Yes, Cancel Order',
+          onPress: async () => {
+            setDialogConfig(prev => ({ ...prev, visible: false }));
+            await confirmCancelOrder();
+          },
+          style: 'destructive',
+        },
+      ],
+    });
+  };
+
+  const confirmCancelOrder = async () => {
+    try {
+      if (!order) return;
+
+      // Update order status to cancelled
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      // Refund points to user
+      const { error: pointsError } = await supabase.rpc('add_points_to_user', {
+        user_id: userProfile?.id,
+        points_to_add: order.pointsEarned,
+      });
+
+      if (pointsError) {
+        console.error('Error refunding points:', pointsError);
+      }
+
+      showToast('Order cancelled successfully', 'success');
+      await refreshUserProfile();
+      await loadOrderDetails();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      showToast('Failed to cancel order', 'error');
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'pending':
         return currentColors.highlight;
@@ -233,29 +196,43 @@ export default function OrderDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: currentColors.background }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={currentColors.primary} />
-          <Text style={[styles.loadingText, { color: currentColors.text }]}>Loading order details...</Text>
-        </View>
-      </SafeAreaView>
+      <LinearGradient
+        colors={[currentColors.gradientStart || currentColors.background, currentColors.gradientMid || currentColors.background, currentColors.gradientEnd || currentColors.background]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.gradientContainer}
+      >
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={currentColors.primary} />
+            <Text style={[styles.loadingText, { color: currentColors.text }]}>Loading order details...</Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   if (!order) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: currentColors.background }]}>
-        <View style={styles.errorContainer}>
-          <IconSymbol name="exclamationmark.triangle" 
-          // android_material_icon_name="error" 
-          size={64} 
-          color={currentColors.textSecondary} />
-          <Text style={[styles.errorText, { color: currentColors.text }]}>Order not found</Text>
-          <Pressable onPress={() => router.back()} style={styles.backToOrdersButton}>
-            <Text style={[styles.backToOrdersText, { color: currentColors.primary }]}>Back to Orders</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
+      <LinearGradient
+        colors={[currentColors.gradientStart || currentColors.background, currentColors.gradientMid || currentColors.background, currentColors.gradientEnd || currentColors.background]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.gradientContainer}
+      >
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <View style={styles.errorContainer}>
+            <IconSymbol ios_icon_name="exclamationmark.triangle" android_material_icon_name="error" size={80} color={currentColors.textSecondary} />
+            <Text style={[styles.errorText, { color: currentColors.text }]}>Order not found</Text>
+            <Pressable
+              onPress={() => router.back()}
+              style={[styles.backToHistoryButton, { backgroundColor: currentColors.primary }]}
+            >
+              <Text style={[styles.backToHistoryText, { color: currentColors.background }]}>Back to Order History</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
@@ -277,286 +254,177 @@ export default function OrderDetailScreen() {
           >
             <Pressable
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (Platform.OS !== 'web') {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
                 router.back();
               }}
               style={[styles.backButton, { backgroundColor: currentColors.background, borderColor: currentColors.border }]}
             >
-              <IconSymbol 
-              name="arrow.left" 
-              // android_material_icon_name="arrow-back" 
-              size={24} 
-              color={currentColors.secondary} />
+              <IconSymbol ios_icon_name="arrow.left" android_material_icon_name="arrow-back" size={24} color={currentColors.secondary} />
             </Pressable>
             <Text style={[styles.headerTitle, { color: currentColors.text }]}>Order Details</Text>
             <View style={{ width: 40 }} />
           </LinearGradient>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {/* Timer Card */}
-            {canModify && (
-              <LinearGradient
-                colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.timerCard, { borderColor: currentColors.border }]}
-              >
-                <IconSymbol 
-                name="clock" 
-                // android_material_icon_name="schedule" 
-                size={24} 
-                color={currentColors.highlight} />
-                <View style={styles.timerContent}>
-                  <Text style={[styles.timerTitle, { color: currentColors.text }]}>
-                    Time to cancel/modify
-                  </Text>
-                  <Text style={[styles.timerValue, { color: currentColors.highlight }]}>
-                    {formatTime(timeRemaining)}
-                  </Text>
-                </View>
-              </LinearGradient>
-            )}
-
-            {/* Order Info Card */}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Order Header Card */}
             <LinearGradient
               colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={[styles.orderCard, { borderColor: currentColors.border }]}
+              style={[styles.card, { borderColor: currentColors.border }]}
             >
-              <View style={styles.orderRow}>
-                <Text style={[styles.orderLabel, { color: currentColors.textSecondary }]}>Order Number</Text>
-                <Text style={[styles.orderValue, { color: currentColors.text }]}>#{order.order_number}</Text>
-              </View>
-              
-              <View style={styles.orderRow}>
-                <Text style={[styles.orderLabel, { color: currentColors.textSecondary }]}>Status</Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
-                  <Text style={[styles.statusText, { color: currentColors.background }]}>
-                    {order.status}
+              <View style={styles.orderHeaderRow}>
+                <View>
+                  <Text style={[styles.orderNumber, { color: currentColors.text }]}>Order #{order.orderNumber}</Text>
+                  <Text style={[styles.orderDate, { color: currentColors.textSecondary }]}>
+                    {new Date(order.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </Text>
                 </View>
-              </View>
-              
-              <View style={styles.orderRow}>
-                <Text style={[styles.orderLabel, { color: currentColors.textSecondary }]}>Payment Status</Text>
-                <Text style={[styles.orderValue, { color: currentColors.text, textTransform: 'capitalize' }]}>
-                  {order.payment_status}
-                </Text>
-              </View>
-
-              <View style={styles.orderRow}>
-                <Text style={[styles.orderLabel, { color: currentColors.textSecondary }]}>Order Date</Text>
-                <Text style={[styles.orderValue, { color: currentColors.text }]}>
-                  {new Date(order.created_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </Text>
-              </View>
-
-              {order.delivery_address && (
-                <View style={styles.orderRow}>
-                  <Text style={[styles.orderLabel, { color: currentColors.textSecondary }]}>Delivery Address</Text>
-                  <Text style={[styles.orderValue, { color: currentColors.text }]}>
-                    {order.delivery_address}
-                  </Text>
+                <View style={[styles.statusBadge, { backgroundColor: getStatusBadgeColor(order.status) }]}>
+                  <Text style={[styles.statusText, { color: currentColors.background }]}>{order.status}</Text>
                 </View>
-              )}
-
-              {order.pickup_notes && (
-                <View style={styles.orderRow}>
-                  <Text style={[styles.orderLabel, { color: currentColors.textSecondary }]}>Notes</Text>
-                  <Text style={[styles.orderValue, { color: currentColors.text }]}>
-                    {order.pickup_notes}
-                  </Text>
-                </View>
-              )}
+              </View>
             </LinearGradient>
+
+            {/* Modification Timer */}
+            {canModify && timeRemaining > 0 && (
+              <LinearGradient
+                colors={['#FEF3C7', '#FDE68A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.timerCard, { borderColor: '#F59E0B' }]}
+              >
+                <IconSymbol ios_icon_name="clock" android_material_icon_name="schedule" size={24} color="#92400E" />
+                <View style={styles.timerContent}>
+                  <Text style={styles.timerTitle}>Time to modify or cancel</Text>
+                  <Text style={styles.timerValue}>{formatTimeRemaining(timeRemaining)}</Text>
+                </View>
+              </LinearGradient>
+            )}
 
             {/* Order Items */}
             <LinearGradient
               colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={[styles.orderCard, { borderColor: currentColors.border }]}
+              style={[styles.card, { borderColor: currentColors.border }]}
             >
               <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Order Items</Text>
-              {order.order_items.map((item, index) => (
-                <View key={item.id} style={styles.itemRow}>
-                  <Text style={[styles.itemQuantity, { color: currentColors.textSecondary }]}>
-                    {item.quantity}x
-                  </Text>
-                  <Text style={[styles.itemName, { color: currentColors.text }]}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.itemPrice, { color: currentColors.text }]}>
-                    ${(item.price * item.quantity).toFixed(2)}
-                  </Text>
-                </View>
-              ))}
-              
+              <View style={styles.itemsList}>
+                {order.items.map((item, index) => (
+                  <View key={`${item.id}-${index}`} style={styles.orderItem}>
+                    <Text style={[styles.itemQuantity, { color: currentColors.textSecondary }]}>{item.quantity}x</Text>
+                    <View style={styles.itemDetails}>
+                      <Text style={[styles.itemName, { color: currentColors.text }]}>{item.name}</Text>
+                      <Text style={[styles.itemDescription, { color: currentColors.textSecondary }]} numberOfLines={1}>
+                        {item.description}
+                      </Text>
+                    </View>
+                    <Text style={[styles.itemPrice, { color: currentColors.text }]}>
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
               <View style={[styles.divider, { backgroundColor: currentColors.border }]} />
-              
+
               <View style={styles.totalRow}>
                 <Text style={[styles.totalLabel, { color: currentColors.text }]}>Total</Text>
-                <Text style={[styles.totalValue, { color: currentColors.secondary }]}>
-                  ${order.total.toFixed(2)}
-                </Text>
+                <Text style={[styles.totalValue, { color: currentColors.secondary }]}>${order.total.toFixed(2)}</Text>
               </View>
 
               <View style={styles.pointsRow}>
-                <IconSymbol 
-                name="star.fill" 
-                // android_material_icon_name="star" 
-                size={16} 
-                color={currentColors.highlight} />
+                <IconSymbol ios_icon_name="star.fill" android_material_icon_name="star" size={20} color={currentColors.highlight} />
                 <Text style={[styles.pointsText, { color: currentColors.text }]}>
-                  +{order.points_earned} points earned
+                  +{order.pointsEarned} points earned
                 </Text>
               </View>
             </LinearGradient>
 
-            {/* Action Buttons */}
-            {canModify && (
-              <View style={styles.actionButtons}>
-                <LinearGradient
-                  colors={[currentColors.primary, currentColors.secondary]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.button}
-                >
-                  <Pressable
-                    style={styles.buttonInner}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      setShowModifyDialog(true);
-                    }}
-                    disabled={modifying}
-                  >
-                    <IconSymbol 
-                    name="pencil" 
-                    // android_material_icon_name="edit" 
-                    size={20} 
-                    color={currentColors.background} />
-                    <Text style={[styles.buttonText, { color: currentColors.background }]}>
-                      Modify Order
-                    </Text>
-                  </Pressable>
-                </LinearGradient>
-
-                <LinearGradient
-                  colors={['#EF4444', '#DC2626']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.button}
-                >
-                  <Pressable
-                    style={styles.buttonInner}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      setShowCancelDialog(true);
-                    }}
-                    disabled={cancelling}
-                  >
-                    <IconSymbol 
-                    name="xmark.circle" 
-                    // android_material_icon_name="cancel" 
-                    size={20} 
-                    color="#FFF" />
-                    <Text style={[styles.buttonText, { color: '#FFF' }]}>
-                      Cancel Order
-                    </Text>
-                  </Pressable>
-                </LinearGradient>
-              </View>
-            )}
-
-            {!canModify && order.status !== 'cancelled' && order.payment_status === 'succeeded' && (
+            {/* Delivery Information */}
+            {order.deliveryAddress && (
               <LinearGradient
                 colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[styles.infoCard, { borderColor: currentColors.border }]}
+                style={[styles.card, { borderColor: currentColors.border }]}
               >
-                <IconSymbol 
-                name="info.circle" 
-                // android_material_icon_name="info" 
-                size={20} 
-                color={currentColors.primary} />
-                <Text style={[styles.infoText, { color: currentColors.text }]}>
-                  The 5-minute modification window has expired. Please contact support for any changes.
-                </Text>
+                <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Delivery Address</Text>
+                <View style={styles.addressRow}>
+                  <IconSymbol ios_icon_name="location.fill" android_material_icon_name="location-on" size={20} color={currentColors.secondary} />
+                  <Text style={[styles.addressText, { color: currentColors.text }]}>{order.deliveryAddress}</Text>
+                </View>
+              </LinearGradient>
+            )}
+
+            {/* Pickup Notes */}
+            {order.pickupNotes && (
+              <LinearGradient
+                colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.card, { borderColor: currentColors.border }]}
+              >
+                <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Pickup Notes</Text>
+                <Text style={[styles.notesText, { color: currentColors.textSecondary }]}>{order.pickupNotes}</Text>
+              </LinearGradient>
+            )}
+
+            {/* Delivery Tracking */}
+            {(order.uberDeliveryId || order.doordashDeliveryId) && (
+              <LinearGradient
+                colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.card, { borderColor: currentColors.border }]}
+              >
+                <Text style={[styles.sectionTitle, { color: currentColors.text }]}>Delivery Tracking</Text>
+                <DeliveryTracking order={order} onRefresh={loadOrderDetails} />
+              </LinearGradient>
+            )}
+
+            {/* Action Buttons */}
+            {canModify && order.status !== 'cancelled' && (
+              <LinearGradient
+                colors={['#FEE2E2', '#FECACA']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.cancelButton}
+              >
+                <Pressable
+                  style={styles.cancelButtonInner}
+                  onPress={handleCancelOrder}
+                >
+                  <IconSymbol ios_icon_name="xmark.circle" android_material_icon_name="cancel" size={20} color="#991B1B" />
+                  <Text style={styles.cancelButtonText}>Cancel Order</Text>
+                </Pressable>
               </LinearGradient>
             )}
           </ScrollView>
         </View>
 
-        {/* Cancel Dialog */}
+        {/* Dialog - No children prop, only the accepted props */}
         <Dialog
-          visible={showCancelDialog}
-          title="Cancel Order"
-          message="Are you sure you want to cancel this order? A full refund will be processed to your original payment method within 5-7 business days."
-          buttons={[
-            {
-              text: 'No, Keep Order',
-              onPress: () => setShowCancelDialog(false),
-              style: 'cancel',
-            },
-            {
-              text: cancelling ? 'Cancelling...' : 'Yes, Cancel Order',
-              onPress: handleCancelOrder,
-              style: 'destructive',
-            },
-          ]}
-          onHide={() => setShowCancelDialog(false)}
+          visible={dialogConfig.visible}
+          title={dialogConfig.title}
+          message={dialogConfig.message}
+          buttons={dialogConfig.buttons}
+          onHide={() => setDialogConfig(prev => ({ ...prev, visible: false }))}
+          currentColors={currentColors}
         />
-
-        {/* Modify Dialog */}
-        <Dialog
-          visible={showModifyDialog}
-          title="Modify Order"
-          message="Please describe the changes you'd like to make to your order:"
-          buttons={[
-            {
-              text: 'Cancel',
-              onPress: () => {
-                setShowModifyDialog(false);
-                setModifyNotes('');
-              },
-              style: 'cancel',
-            },
-            {
-              text: modifying ? 'Submitting...' : 'Submit Request',
-              onPress: handleModifyOrder,
-              style: 'default',
-            },
-          ]}
-          onHide={() => {
-            setShowModifyDialog(false);
-            setModifyNotes('');
-          }}
-        >
-          <TextInput
-            style={[styles.input, { 
-              backgroundColor: currentColors.background,
-              color: currentColors.text,
-              borderColor: currentColors.border,
-            }]}
-            placeholder="e.g., Add extra sauce, change delivery address, remove an item..."
-            placeholderTextColor={currentColors.textSecondary}
-            value={modifyNotes}
-            onChangeText={setModifyNotes}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </Dialog>
-
-        <Toast />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -572,43 +440,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-    padding: 40,
-  },
-  errorText: {
-    fontSize: 20,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    textAlign: 'center',
-  },
-  backToOrdersButton: {
-    marginTop: 16,
-    padding: 12,
-  },
-  backToOrdersText: {
-    fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 24,
     borderBottomWidth: 2,
+    boxShadow: '0px 6px 20px rgba(74, 215, 194, 0.3)',
+    elevation: 8,
   },
   backButton: {
     width: 40,
@@ -617,88 +457,145 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
+    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.25)',
+    elevation: 4,
   },
   headerTitle: {
+    fontSize: 32,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: 'Cormorant_400Regular',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    gap: 20,
+  },
+  errorText: {
     fontSize: 24,
     fontFamily: 'PlayfairDisplay_700Bold',
   },
-  content: {
-    flex: 1,
+  backToHistoryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  backToHistoryText: {
+    fontSize: 16,
+    fontFamily: 'Cormorant_600SemiBold',
+  },
+  card: {
+    borderRadius: 0,
     padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.3)',
+    elevation: 8,
+  },
+  orderHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  orderNumber: {
+    fontSize: 24,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    marginBottom: 4,
+  },
+  orderDate: {
+    fontSize: 14,
+    fontFamily: 'Cormorant_400Regular',
+  },
+  statusBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    elevation: 4,
+  },
+  statusText: {
+    fontSize: 14,
+    fontFamily: 'Cormorant_600SemiBold',
+    textTransform: 'capitalize',
   },
   timerCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 0,
     marginBottom: 16,
-    gap: 12,
+    borderRadius: 12,
     borderWidth: 2,
+    gap: 12,
   },
   timerContent: {
     flex: 1,
   },
   timerTitle: {
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_600SemiBold',
+    color: '#92400E',
     marginBottom: 4,
   },
   timerValue: {
     fontSize: 24,
-    fontFamily: 'Inter_700Bold',
-  },
-  orderCard: {
-    padding: 20,
-    borderRadius: 0,
-    marginBottom: 16,
-    borderWidth: 2,
-  },
-  orderRow: {
-    marginBottom: 16,
-  },
-  orderLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    marginBottom: 4,
-  },
-  orderValue: {
-    fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  statusText: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    textTransform: 'capitalize',
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: '#92400E',
   },
   sectionTitle: {
     fontSize: 18,
     fontFamily: 'PlayfairDisplay_700Bold',
     marginBottom: 16,
   },
-  itemRow: {
+  itemsList: {
+    gap: 16,
+  },
+  orderItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    gap: 12,
   },
   itemQuantity: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    fontFamily: 'Cormorant_600SemiBold',
     width: 40,
   },
-  itemName: {
+  itemDetails: {
     flex: 1,
+  },
+  itemName: {
+    fontSize: 16,
+    fontFamily: 'Cormorant_600SemiBold',
+    marginBottom: 4,
+  },
+  itemDescription: {
     fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Cormorant_400Regular',
   },
   itemPrice: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    fontFamily: 'Cormorant_700Bold',
   },
   divider: {
     height: 2,
@@ -715,58 +612,50 @@ const styles = StyleSheet.create({
     fontFamily: 'PlayfairDisplay_700Bold',
   },
   totalValue: {
-    fontSize: 20,
-    fontFamily: 'Inter_700Bold',
+    fontSize: 24,
+    fontFamily: 'Cormorant_700Bold',
   },
   pointsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-  },
-  pointsText: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  actionButtons: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  button: {
-    borderRadius: 0,
-  },
-  buttonInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
     gap: 8,
   },
-  buttonText: {
+  pointsText: {
     fontSize: 16,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Cormorant_600SemiBold',
   },
-  infoCard: {
+  addressRow: {
     flexDirection: 'row',
-    padding: 16,
-    borderRadius: 0,
+    alignItems: 'flex-start',
     gap: 12,
-    borderWidth: 2,
-    marginBottom: 20,
   },
-  infoText: {
+  addressText: {
     flex: 1,
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    lineHeight: 20,
+    fontSize: 16,
+    fontFamily: 'Cormorant_400Regular',
+    lineHeight: 24,
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
-    minHeight: 100,
-    textAlignVertical: 'top',
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
+  notesText: {
+    fontSize: 16,
+    fontFamily: 'Cormorant_400Regular',
+    lineHeight: 24,
+  },
+  cancelButton: {
+    borderRadius: 0,
+    marginTop: 8,
+    boxShadow: '0px 8px 24px rgba(239, 68, 68, 0.3)',
+    elevation: 8,
+  },
+  cancelButtonInner: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontFamily: 'Cormorant_700Bold',
+    color: '#991B1B',
   },
 });
