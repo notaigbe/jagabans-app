@@ -46,6 +46,8 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    console.log('Creating payment intent for user:', user.id);
+
     // Parse request body
     const { 
       orderId, 
@@ -74,6 +76,8 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
+    console.log('User profile:', profile);
+
     // Create payment intent configuration
     const paymentIntentConfig: any = {
       amount: Math.round(amount), // Ensure it's an integer
@@ -93,27 +97,39 @@ serve(async (req) => {
 
     // Add customer if provided
     if (customerId) {
+      console.log('Adding customer to payment intent:', customerId);
       paymentIntentConfig.customer = customerId;
     }
 
     // Add setup future usage if requested (for saving payment methods)
     if (setupFutureUsage) {
+      console.log('Setting up future usage:', setupFutureUsage);
       paymentIntentConfig.setup_future_usage = setupFutureUsage;
     }
 
     // Create Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentConfig);
 
-    console.log('PaymentIntent created:', paymentIntent.id);
+    console.log('✓ PaymentIntent created:', paymentIntent.id);
 
-    // Create ephemeral key for customer (needed for Payment Sheet)
-    let ephemeralKey = null;
+    // Create ephemeral key for customer (needed for Payment Sheet to show saved cards)
+    let ephemeralKeySecret = null;
     if (customerId) {
-      ephemeralKey = await stripe.ephemeralKeys.create(
-        { customer: customerId },
-        { apiVersion: '2023-10-16' }
-      );
-      console.log('Ephemeral key created for customer:', customerId);
+      try {
+        console.log('Creating ephemeral key for customer:', customerId);
+        const ephemeralKey = await stripe.ephemeralKeys.create(
+          { customer: customerId },
+          { apiVersion: '2023-10-16' }
+        );
+        ephemeralKeySecret = ephemeralKey.secret;
+        console.log('✓ Ephemeral key created successfully');
+      } catch (ephemeralError) {
+        console.error('Error creating ephemeral key:', ephemeralError);
+        // Don't throw - payment intent was created successfully
+        // But log the error so we know saved cards won't work
+      }
+    } else {
+      console.warn('⚠️ No customer ID provided - saved cards will not be available');
     }
 
     // Store initial payment record in Supabase
@@ -148,14 +164,18 @@ serve(async (req) => {
     }
 
     // Return client secret and ephemeral key
+    const response = {
+      success: true,
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      customerId: customerId,
+      ephemeralKey: ephemeralKeySecret, // This is the key for showing saved cards
+    };
+
+    console.log('✓ Returning response with ephemeral key:', ephemeralKeySecret ? 'present' : 'missing');
+
     return new Response(
-      JSON.stringify({
-        success: true,
-        clientSecret: paymentIntent.client_secret,
-        paymentIntentId: paymentIntent.id,
-        ephemeralKey: ephemeralKey?.secret,
-        customerId: customerId,
-      }),
+      JSON.stringify(response),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
