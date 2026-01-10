@@ -346,14 +346,25 @@ function CheckoutContent() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      // Get or create Stripe customer
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not found');
+
+      console.log('Current user ID:', user.id);
+
+      // Get or create Stripe customer - FIXED: Use auth.users id, not profile id
       const { data: customerData, error: customerError } = await supabase
         .from('user_profiles')
         .select('stripe_customer_id')
-        .eq('user_id', userProfile?.id)
+        .eq('user_id', user.id)
         .single();
 
+      if (customerError) {
+        console.error('Error fetching customer data:', customerError);
+      }
+
       let customerId = customerData?.stripe_customer_id;
+      console.log('Existing Stripe customer ID:', customerId);
 
       // If no customer ID exists, create one
       if (!customerId) {
@@ -365,12 +376,14 @@ function CheckoutContent() {
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            email: userProfile?.email,
+            email: userProfile?.email || user.email,
             name: userProfile?.name,
           }),
         });
 
         if (!createCustomerResponse.ok) {
+          const errorText = await createCustomerResponse.text();
+          console.error('Failed to create Stripe customer:', errorText);
           throw new Error('Failed to create Stripe customer');
         }
 
@@ -380,6 +393,7 @@ function CheckoutContent() {
       }
 
       // Create payment intent with setup for future usage
+      console.log('Creating payment intent with customer:', customerId);
       const response = await fetch(`${SUPABASE_URL}/functions/v1/create-payment-intent`, {
         method: 'POST',
         headers: {
@@ -405,8 +419,10 @@ function CheckoutContent() {
         throw new Error('Failed to create payment intent');
       }
 
-      const { clientSecret, ephemeralKey, paymentIntentId } = await response.json();
+      const { clientSecret, ephemeralKey, paymentIntentId, customerId: returnedCustomerId } = await response.json();
       console.log('Payment intent created:', paymentIntentId);
+      console.log('Ephemeral key received:', ephemeralKey ? 'Yes' : 'No');
+      console.log('Customer ID from response:', returnedCustomerId);
 
       // Update the order with the payment_id
       const { error: updateError } = await supabase
@@ -422,16 +438,14 @@ function CheckoutContent() {
       console.log('Order updated with payment_id:', paymentIntentId);
 
       // Initialize Payment Sheet with customer and ephemeral key for saved payment methods
-      const { error } = await initPaymentSheet({
+      const initConfig: any = {
         merchantDisplayName: 'Jagabans LA',
         paymentIntentClientSecret: clientSecret,
-        customerId: customerId,
-        customerEphemeralKeySecret: ephemeralKey,
         allowsDelayedPaymentMethods: false,
         returnURL: 'jagabansla://checkout',
         defaultBillingDetails: {
           name: userProfile?.name,
-          email: userProfile?.email,
+          email: userProfile?.email || user.email,
         },
         // Enable Apple Pay and Google Pay
         applePay: {
@@ -442,14 +456,27 @@ function CheckoutContent() {
           testEnv: false, // Set to true for testing
           currencyCode: 'usd',
         },
-      });
+      };
+
+      // CRITICAL FIX: Only add customer and ephemeral key if both are present
+      if (customerId && ephemeralKey) {
+        console.log('✓ Adding customer and ephemeral key to Payment Sheet config');
+        initConfig.customerId = customerId;
+        initConfig.customerEphemeralKeySecret = ephemeralKey;
+      } else {
+        console.warn('⚠️ Customer ID or ephemeral key missing - saved cards will not be available');
+        console.warn('Customer ID:', customerId);
+        console.warn('Ephemeral key:', ephemeralKey ? 'present' : 'missing');
+      }
+
+      const { error } = await initPaymentSheet(initConfig);
 
       if (error) {
         console.error('Error initializing payment sheet:', error);
         throw new Error(error.message);
       }
 
-      console.log('Payment Sheet initialized successfully with multiple payment methods');
+      console.log('✓ Payment Sheet initialized successfully with saved payment methods support');
       setPaymentSheetReady(true);
       return true;
     } catch (error) {
