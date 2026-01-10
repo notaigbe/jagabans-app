@@ -512,7 +512,7 @@ export default function OrderDetailScreen() {
               style: 'destructive',
             },
           ]}
-          onDismiss={() => setShowCancelDialog(false)}
+          onHide={() => setShowCancelDialog(false)}
         />
 
         {/* Modify Dialog */}
@@ -535,7 +535,7 @@ export default function OrderDetailScreen() {
               style: 'default',
             },
           ]}
-          onDismiss={() => {
+          onHide={() => {
             setShowModifyDialog(false);
             setModifyNotes('');
           }}
