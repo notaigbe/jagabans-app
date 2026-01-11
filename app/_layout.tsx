@@ -237,6 +237,13 @@ export default function RootLayout() {
                 headerShown: false,
               }} 
             />
+          <Stack.Screen 
+              name="order-detail" 
+              options={{ 
+                presentation: 'modal',
+                headerShown: false,
+              }} 
+            />
           </Stack>
           <StatusBar style="light" />
           <Toast />

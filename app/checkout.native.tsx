@@ -525,9 +525,12 @@ function CheckoutContent() {
           name: userProfile?.name,
           email: userProfile?.email,
         },
+        customerId: customerId,
+        customerEphemeralKeySecret: ephemeralKey,
         // Enable Apple Pay and Google Pay
         applePay: {
           merchantCountryCode: 'US',
+          merchantIdentifier: 'com.ooosumfoods.jagabansla',
         },
         googlePay: {
           merchantCountryCode: 'US',
