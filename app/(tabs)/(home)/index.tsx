@@ -81,7 +81,7 @@ export default function HomeScreen() {
       try {
         const imageUrl = imageService.getPublicUrl(
           "assets",
-          "logos/jagaban_web_logo_dark.png"
+          "/loogo/peppered-goat-logo.jpg"
         );
         setHeaderImage(imageUrl);
       } catch (error) {
@@ -157,36 +157,13 @@ export default function HomeScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[
-        '#6B4423', // Brown
-        '#8B5A2B', // Lighter brown
-        '#5A4A3A', // Mid brown
-        '#3A3A4A', // Dark grayish blue
-        '#2A2A3A', // Very dark blue
-      ]}
-      locations={[0, 0.25, 0.5, 0.75, 1]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <View
       style={styles.container}
     >
       {/* Header with Gradient and 3% Translucency - Background Only */}
       <View style={styles.headerContainer}>
         {/* Translucent Background Layer */}
-        <LinearGradient
-          colors={[
-            'rgba(13, 26, 43, 0.97)',
-            'rgba(20, 35, 50, 0.97)',
-            'rgba(30, 50, 65, 0.97)',
-            'rgba(45, 70, 85, 0.97)',
-            'rgba(70, 90, 100, 0.97)',
-            'rgba(100, 120, 110, 0.97)',
-            'rgba(150, 140, 90, 0.97)',
-            'rgba(180, 160, 80, 0.97)',
-            'rgba(200, 180, 70, 0.97)',
-          ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+        <View
           style={styles.headerBackground}
         />
         
@@ -198,15 +175,15 @@ export default function HomeScreen() {
                 <Image 
                   source={{ uri: headerImage }} 
                   style={styles.logo}
-                  tintColor="#5FE8D0"
+                  tintColor="#000000"
                 />
               ) : (
                 <View style={styles.logoPlaceholder}>
                   <Text style={styles.logoText}>
-                    Jagabans
+                    The Peppered Goat
                   </Text>
                   <Text style={styles.logoSubtext}>
-                    LOS ANGELES
+                    STUBBORNLY SPICY
                   </Text>
                 </View>
               )}
@@ -218,7 +195,7 @@ export default function HomeScreen() {
               <IconSymbol
                 name={Platform.OS === 'ios' ? "bell.fill" : "notifications"}
                 size={28}
-                color="#947d33ff"
+                color="#000000"
               />
               {unreadCount > 0 && (
                 <View style={styles.notificationBadge}>
@@ -238,13 +215,13 @@ export default function HomeScreen() {
           <IconSymbol
             name={Platform.OS === 'ios' ? "magnifyingglass" : "search"}
             size={20}
-            color="#B0B8C1"
+            color="#999999"
             style={styles.searchIcon}
           />
           <TextInput
             style={styles.searchInput}
             placeholder="Search menu..."
-            placeholderTextColor="#B0B8C1"
+            placeholderTextColor="#999999"
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
@@ -254,7 +231,7 @@ export default function HomeScreen() {
               <IconSymbol
                 name={Platform.OS === 'ios' ? "xmark.circle.fill" : "cancel"}
                 size={20}
-                color="#B0B8C1"
+                color="#999999"
               />
             </Pressable>
           )}
@@ -268,7 +245,7 @@ export default function HomeScreen() {
               <IconSymbol
                 name={Platform.OS === 'ios' ? "line.3.horizontal.decrease.circle.fill" : "filter-list"}
                 size={28}
-                color="#F5A623"
+                color="#000000"
               />
             </Pressable>
           )}
@@ -293,7 +270,7 @@ export default function HomeScreen() {
                 <IconSymbol
                   name={Platform.OS === 'ios' ? "xmark.circle.fill" : "cancel"}
                   size={24}
-                  color="#B0B8C1"
+                  color="#999999"
                 />
               </Pressable>
             </View>
@@ -319,7 +296,7 @@ export default function HomeScreen() {
                     <IconSymbol
                       name={Platform.OS === 'ios' ? "checkmark.circle.fill" : "check-circle"}
                       size={20}
-                      color="#5FE8D0"
+                      color="#000000"
                     />
                   )}
                 </Pressable>
@@ -352,8 +329,8 @@ export default function HomeScreen() {
                 style={[
                   styles.categoryButton,
                   {
-                    backgroundColor: selectedCategory === category ? '#F5A623' : '#1a303aff',
-                    borderColor: selectedCategory === category ? '#F5A623' : '#4AD7C2',
+                    backgroundColor: selectedCategory === category ? '#000000' : '#2A2A2A',
+                    borderColor: selectedCategory === category ? '#E26F5B' : '#3A3A3A',
                     paddingHorizontal: getResponsivePadding(16),
                     paddingVertical: getResponsivePadding(10),
                   },
@@ -364,7 +341,7 @@ export default function HomeScreen() {
                   style={[
                     styles.categoryText,
                     {
-                      color: selectedCategory === category ? '#1A5A3E' : '#FFFFFF',
+                      color: selectedCategory === category ? '#FFFFFF' : '#AAAAAA',
                       fontSize: getResponsiveFontSize(13),
                     },
                   ]}
@@ -379,21 +356,15 @@ export default function HomeScreen() {
           </ScrollView>
     
     {/* Left fade overlay */}
-    <LinearGradient
-      colors={['rgba(13, 26, 43, 0.9)', 'transparent']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.categoryFadeLeft}
+    <View
       pointerEvents="none"
+      style={styles.categoryFadeLeft}
     />
     
     {/* Right fade overlay */}
-    <LinearGradient
-      colors={['transparent', 'rgba(13, 26, 43, 0.9)']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.categoryFadeRight}
+    <View
       pointerEvents="none"
+      style={styles.categoryFadeRight}
     />
   </View>
 )}
@@ -401,7 +372,7 @@ export default function HomeScreen() {
         {/* Menu Items */}
         {loading || menuItems.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#5FE8D0" />
+            <ActivityIndicator size="large" color="#000000" />
             <Text style={styles.loadingText}>
               Loading menu...
             </Text>
@@ -440,20 +411,7 @@ export default function HomeScreen() {
                   <View style={styles.menuItemInfoWrapper}>
                     {/* Texture overlay */}
                     <View style={styles.textureOverlay} />
-                    <LinearGradient
-                      colors={[
-                        'rgba(25, 20, 15, 0.98)',
-                        'rgba(35, 28, 18, 0.98)',
-                        'rgba(45, 35, 20, 0.98)',
-                        'rgba(60, 45, 25, 0.98)',
-                        'rgba(75, 55, 30, 0.98)',
-                        'rgba(90, 65, 35, 0.98)',
-                        'rgba(110, 80, 40, 0.98)',
-                        'rgba(130, 95, 45, 0.98)',
-                        'rgba(150, 110, 50, 0.98)',
-                      ]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
+                    <View
                       style={styles.menuItemInfo}
                     >
                       <Text style={styles.menuItemName}>
@@ -479,11 +437,11 @@ export default function HomeScreen() {
                           <IconSymbol
                             name={Platform.OS === 'ios' ? "plus" : "add"}
                             size={20}
-                            color="#5FE8D0"
+                            color="#000000"
                           />
                         </Pressable>
                       </View>
-                    </LinearGradient>
+                    </View>
                   </View>
                 </Pressable>
               ))
@@ -498,18 +456,20 @@ export default function HomeScreen() {
         onHide={() => setToastVisible(false)}
         currentColors={currentColors}
       />
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#1A1A1A',
   },
   headerContainer: {
     position: 'relative',
-    boxShadow: '0px 4px 20px rgba(212, 175, 55, 0.4)',
-    elevation: 8,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
+    elevation: 4,
+    backgroundColor: '#1A1A1A',
   },
   headerBackground: {
     position: 'absolute',
@@ -517,6 +477,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    backgroundColor: '#1A1A1A',
   },
   headerSafeArea: {
     width: '100%',
@@ -546,14 +507,14 @@ const styles = StyleSheet.create({
     fontFamily: 'PlayfairDisplay_900Black',
     letterSpacing: 3,
     fontStyle: 'italic',
-    color: '#5FE8D0',
+    color: '#FFFFFF',
   },
   logoSubtext: {
     fontSize: 10,
     fontFamily: 'LibertinusSans_400Regular',
     letterSpacing: 5,
     marginTop: -2,
-    color: '#5FE8D0',
+    color: '#FFFFFF',
   },
   notificationButton: {
     position: 'relative',
@@ -572,13 +533,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
-    backgroundColor: '#D4AF37',
+    backgroundColor: '#E26F5B',
   },
   notificationBadgeText: {
     fontSize: 10,
     fontWeight: 'bold',
     fontFamily: 'LibertinusSans_700Bold',
-    color: '#0D1A2B',
+    color: '#FFFFFF',
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -589,17 +550,18 @@ const styles = StyleSheet.create({
   searchBarWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a303aff',
-    borderRadius: 16,
+    backgroundColor: '#2A2A2A',
+    borderRadius: 12,
     borderWidth: 0.2,
-    borderColor: '#4AD7C2',
+    borderColor: '#00BC7D',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.3)',
-    elevation: 4,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
+    elevation: 2,
   },
   searchIcon: {
     marginRight: 12,
+    color: '#888888',
   },
   searchInput: {
     flex: 1,
@@ -624,13 +586,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   dropdownContainer: {
-    backgroundColor: '#1a303aff',
-    borderRadius: 0,
-    borderWidth: 0.5,
-    borderColor: '#4AD7C2',
+    backgroundColor: '#2A2A2A',
+    borderRadius: 8,
+    borderWidth: 0.2,
+    borderColor: '#00BC7D',
     maxHeight: 400,
-    boxShadow: '0px 8px 24px rgba(48, 41, 18, 0.5)',
-    elevation: 8,
+    boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.3)',
+    elevation: 4,
   },
   dropdownHeader: {
     flexDirection: 'row',
@@ -639,12 +601,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#4AD7C2',
+    borderBottomColor: '#3A3A3A',
   },
   dropdownTitle: {
     fontSize: 20,
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#5FE8D0',
+    color: '#FFFFFF',
   },
   dropdownScroll: {
     maxHeight: 320,
@@ -656,18 +618,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(74, 215, 194, 0.2)',
+    borderBottomColor: '#3A3A3A',
   },
   dropdownItemSelected: {
-    backgroundColor: 'rgba(35, 245, 210, 0.15)',
+    backgroundColor: '#3A3A3A',
   },
   dropdownItemText: {
     fontSize: 16,
     fontFamily: 'LibertinusSans_700Bold',
-    color: '#FFFFFF',
+    color: '#AAAAAA',
   },
   dropdownItemTextSelected: {
-    color: '#5FE8D0',
+    color: '#FFFFFF',
+    fontFamily: 'LibertinusSans_700Bold',
   },
   scrollView: {
     flex: 1,
@@ -677,9 +640,9 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     maxHeight: 60,
-    borderTopColor: '#d4af3765',
-    borderTopWidth: 0.2,
-    borderBottomColor: '#d4af3773',
+    // borderTopColor: '#00BC7D',
+    // borderTopWidth: 0.2,
+    borderBottomColor: '#00BC7D',
     borderBottomWidth: 0.2,
   },
   categoriesContent: {
@@ -693,14 +656,17 @@ const styles = StyleSheet.create({
     minWidth: 80,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 0.5,
-    boxShadow: "0px 4px 12px rgba(44, 36, 10, 0.6)",
-    elevation: 6,
+    borderWidth: 1,
+    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
+    elevation: 2,
+    borderColor: '#00BC7D',
+    backgroundColor: '#F5F5F5',
   },
   categoryGradient: {
-    borderRadius: 0,
-    boxShadow: '0px 8px 24px rgba(212, 175, 55, 0.4)',
-    elevation: 8,
+    borderRadius: 8,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 2,
+    backgroundColor: '#000000',
   },
   categoryText: {
     fontWeight: "600",
@@ -717,7 +683,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     fontFamily: 'LibertinusSans_400Regular',
-    color: '#B0B8C1',
+    color: '#AAAAAA',
   },
   emptyContainer: {
     flex: 1,
@@ -738,9 +704,11 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     marginBottom: 28,
     overflow: "hidden",
-    boxShadow: "0px 8px 24px rgba(63, 52, 18, 0.5)",
-    elevation: 8,
-    backgroundColor: '#1a303aff',
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.3)",
+    elevation: 4,
+    backgroundColor: '#2A2A2A',
+    borderWidth: 0.2,
+    borderColor: '#00BC7D',
   },
   imageContainer: {
     width: "100%",
@@ -775,14 +743,14 @@ const styles = StyleSheet.create({
     fontFamily: 'PlayfairDisplay_700Bold',
     marginBottom: 10,
     letterSpacing: 0.5,
-    color: '#D4AF37',
+    color: '#FFFFFF',
   },
   menuItemDescription: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     marginBottom: 18,
     lineHeight: 24,
-    color: '#ffffffcc',
+    color: '#AAAAAA',
     // letterSpacing: 0.01,
   },
   menuItemFooter: {
@@ -793,18 +761,18 @@ const styles = StyleSheet.create({
   menuItemPrice: {
     fontSize: 24,
     fontFamily: 'LibertinusSans_700Bold',
-    color: '#D4AF37',
+    color: '#FFFFFF',
   },
   addButton: {
     width: 44,
     height: 44,
-    borderRadius: 0,
+    borderRadius: 4,
     justifyContent: "center",
     alignItems: "center",
-    boxShadow: "0px 4px 12px rgba(44, 36, 10, 0.6)",
-    backgroundColor: 'transparent',
+    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
+    backgroundColor: '#f8cbb1',
     borderWidth: 1,
-    borderColor: '#5FE8D0',
+    borderColor: '#E26F5B',
   },
   categoriesWrapper: {
     position: 'relative',
@@ -818,6 +786,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 40,
     zIndex: 10,
+    backgroundColor: 'transparent',
+    backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.9), transparent)',
   },
   categoryFadeRight: {
     position: 'absolute',
@@ -826,5 +796,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 40,
     zIndex: 10,
+    backgroundColor: 'transparent',
+    backgroundImage: 'linear-gradient(to left, rgba(255,255,255,0.9), transparent)',
   },
 });

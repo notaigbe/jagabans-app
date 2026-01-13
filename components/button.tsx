@@ -58,14 +58,14 @@ export const Button: React.FC<ButtonProps> = ({
       case "filled":
         return {
           ...baseStyle,
-          backgroundColor: isDark ? zincColors[50] : zincColors[900],
+          backgroundColor: isDark ? '#F5F5F5' : '#000000',
         };
       case "outline":
         return {
           ...baseStyle,
           backgroundColor: "transparent",
-          borderWidth: 1,
-          borderColor: isDark ? zincColors[700] : zincColors[300],
+          borderWidth: 1.5,
+          borderColor: isDark ? '#666666' : '#000000',
         };
       case "ghost":
         return {
@@ -77,15 +77,15 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getTextColor = () => {
     if (disabled) {
-      return isDark ? zincColors[500] : zincColors[400];
+      return isDark ? '#999999' : '#CCCCCC';
     }
 
     switch (variant) {
       case "filled":
-        return isDark ? zincColors[900] : zincColors[50];
+        return isDark ? '#000000' : '#FFFFFF';
       case "outline":
       case "ghost":
-        return appleBlue;
+        return isDark ? '#F5F5F5' : '#000000';
     }
   };
 

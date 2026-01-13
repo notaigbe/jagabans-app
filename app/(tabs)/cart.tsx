@@ -65,26 +65,20 @@ export default function CartScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[currentColors.gradientStart || currentColors.background, currentColors.gradientMid || currentColors.background, currentColors.gradientEnd || currentColors.background]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      style={styles.gradientContainer}
+    <View
+      style={[styles.gradientContainer, { backgroundColor: currentColors.background }]}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.container}>
-          {/* Header with Gradient */}
-          <LinearGradient
-            colors={[currentColors.headerGradientStart || currentColors.card, currentColors.headerGradientEnd || currentColors.card]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.header, { borderBottomColor: currentColors.border }]}
+          {/* Header */}
+          <View
+            style={[styles.header, { backgroundColor: currentColors.card, borderBottomColor: currentColors.border }]}
           >
             <Text style={[styles.headerTitle, { color: currentColors.text }]}>Shopping Cart</Text>
             <Text style={[styles.itemCount, { color: currentColors.textSecondary }]}>
               {cart.length} {cart.length === 1 ? 'item' : 'items'}
             </Text>
-          </LinearGradient>
+          </View>
 
           {cart.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -95,21 +89,14 @@ export default function CartScreen() {
               <Text style={[styles.emptySubtext, { color: currentColors.textSecondary }]}>
                 Add some delicious items to get started!
               </Text>
-              <LinearGradient
-                colors={[currentColors.secondary, currentColors.highlight]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.browseButton}
+              <Pressable
+                style={[styles.browseButton, { backgroundColor: currentColors.primary }]}
+                onPress={() => router.push('/')}
               >
-                <Pressable
-                  style={styles.browseButtonInner}
-                  onPress={() => router.push('/')}
-                >
-                  <Text style={[styles.browseButtonText, { color: currentColors.background }]}>
-                    Browse Menu
-                  </Text>
-                </Pressable>
-              </LinearGradient>
+                <Text style={[styles.browseButtonText, { color: currentColors.background }]}>
+                  Browse Menu
+                </Text>
+              </Pressable>
             </View>
           ) : (
             <>
@@ -126,11 +113,16 @@ export default function CartScreen() {
                     end={{ x: 1, y: 1 }}
                     style={[styles.cartItem, { borderColor: currentColors.border }]}
                   >
-                    <View style={[styles.imageContainer, { borderColor: currentColors.border }]}>
-                      <Image source={{ uri: item.image }} style={styles.itemImage} />
+                    <View style={styles.imageContainer}>
+                      <Image
+                        source={{ uri: item.image }}
+                        style={styles.itemImage}
+                      />
                     </View>
                     <View style={styles.itemDetails}>
-                      <Text style={[styles.itemName, { color: currentColors.text }]}>{item.name}</Text>
+                      <Text style={[styles.itemName, { color: currentColors.text }]}>
+                        {item.name}
+                      </Text>
                       <Text style={[styles.itemPrice, { color: currentColors.secondary }]}>
                         ${item.price.toFixed(2)}
                       </Text>
@@ -160,12 +152,9 @@ export default function CartScreen() {
                 ))}
               </ScrollView>
 
-              {/* Summary with Gradient */}
-              <LinearGradient
-                colors={[currentColors.cardGradientStart || currentColors.card, currentColors.cardGradientEnd || currentColors.card]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.summary, { borderTopColor: currentColors.border }]}
+              {/* Summary */}
+              <View
+                style={[styles.summary, { backgroundColor: currentColors.card, borderTopColor: currentColors.border }]}
               >
                 <View style={styles.summaryRow}>
                   <Text style={[styles.summaryLabel, { color: currentColors.textSecondary }]}>Subtotal</Text>
@@ -177,25 +166,18 @@ export default function CartScreen() {
                 </View>
                 <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: currentColors.border }]}>
                   <Text style={[styles.totalLabel, { color: currentColors.text }]}>Total</Text>
-                  <Text style={[styles.totalValue, { color: currentColors.secondary }]}>${total.toFixed(2)}</Text>
+                  <Text style={[styles.totalValue, { color: currentColors.primary }]}>${total.toFixed(2)}</Text>
                 </View>
-                <LinearGradient
-                  colors={[currentColors.secondary, currentColors.highlight]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.checkoutButton}
+                <Pressable
+                  style={[styles.checkoutButton, { backgroundColor: currentColors.primary }]}
+                  onPress={handleCheckout}
                 >
-                  <Pressable
-                    style={styles.checkoutButtonInner}
-                    onPress={handleCheckout}
-                  >
-                    <Text style={[styles.checkoutButtonText, { color: currentColors.background }]}>
-                      Proceed to Checkout
-                    </Text>
-                    <IconSymbol name="arrow.right" size={20} color={currentColors.background} />
-                  </Pressable>
-                </LinearGradient>
-              </LinearGradient>
+                  <Text style={[styles.checkoutButtonText, { color: '#FFFFFF' }]}>
+                    Proceed to Checkout
+                  </Text>
+                  <IconSymbol name="arrow.right" size={20} color="#FFFFFF" />
+                </Pressable>
+              </View>
             </>
           )}
         </View>
@@ -236,7 +218,7 @@ export default function CartScreen() {
           currentColors={currentColors}
         />
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 

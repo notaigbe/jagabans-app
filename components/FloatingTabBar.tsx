@@ -11,7 +11,6 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/contexts/AppContext';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
 export interface TabBarItem {
@@ -63,14 +62,11 @@ export default function FloatingTabBar({
         <View style={styles.textureOverlay} />
         
         <BlurView
-          intensity={700}
-          tint="dark"
+          intensity={90}
+          tint="light"
           style={styles.blurContainer}
         >
-          <LinearGradient
-            colors={['rgba(26, 48, 56, 1)', 'rgba(26, 48, 56, 1)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+          <View
             style={styles.tabBar}
           >
             {tabs.map((tab) => {
@@ -88,25 +84,22 @@ export default function FloatingTabBar({
                     <IconSymbol
                       name={tab.icon as any}
                       size={24}
-                      color={active ? currentColors.secondary : '#E8E8E8'}
+                      color={active ? '#FFFFFF' : '#888888'}
                     />
                     {isCartTab && cartItemCount > 0 && (
-                      <LinearGradient
-                        colors={[currentColors.secondary, currentColors.highlight]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
+                      <View
                         style={styles.badge}
                       >
-                        <Text style={[styles.badgeText, { color: currentColors.background }]}>
+                        <Text style={[styles.badgeText, { color: '#FFFFFF' }]}>
                           {cartItemCount > 99 ? '99+' : cartItemCount}
                         </Text>
-                      </LinearGradient>
+                      </View>
                     )}
                   </View>
                   <Text
                     style={[
                       styles.label,
-                      { color: active ? currentColors.secondary : '#E8E8E8' },
+                      { color: active ? '#FFFFFF' : '#888888' },
                     ]}
                   >
                     {tab.label}
@@ -114,7 +107,7 @@ export default function FloatingTabBar({
                 </TouchableOpacity>
               );
             })}
-          </LinearGradient>
+          </View>
         </BlurView>
       </View>
     </SafeAreaView>
@@ -127,12 +120,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(26, 48, 56, 1)',
+    backgroundColor: '#2A2A2A',
   },
   tabBarWrapper: {
     position: 'relative',
     width: '100%',
     overflow: 'hidden',
+    borderTopWidth: 0.2,
+    borderTopColor: '#00BC7D',
   },
   textureOverlay: {
     position: 'absolute',
@@ -141,8 +136,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'transparent',
-    opacity: 0.05,
-    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,.1) 2px, rgba(255,255,255,.1) 4px)',
+    opacity: 0.02,
+    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,.02) 2px, rgba(0,0,0,.02) 4px)',
     zIndex: 1,
     pointerEvents: 'none',
   },
@@ -156,9 +151,9 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-around',
     alignItems: 'center',
-    boxShadow: '0px -6px 24px rgba(212, 175, 55, 0.4)',
-    elevation: 12,
-    backgroundColor: 'transparent',
+    boxShadow: '0px -2px 8px rgba(0, 0, 0, 0.3)',
+    elevation: 4,
+    backgroundColor: '#2A2A2A',
   },
   tab: {
     flex: 1,
@@ -183,8 +178,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
-    boxShadow: '0px 4px 12px rgba(212, 175, 55, 0.6)',
-    elevation: 6,
+    boxShadow: '0px 2px 8px rgba(226, 111, 91, 0.4)',
+    elevation: 4,
+    backgroundColor: '#E26F5B',
   },
   badgeText: {
     fontSize: 10,

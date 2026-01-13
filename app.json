@@ -2,33 +2,33 @@
   "expo": {
     "name": "Ooosum Foods LLC",
     "slug": "ooosum-foods-llc",
-    "version": "1.3.6",
+    "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/jagabans-circle.png",
+    "icon": "./assets/images/peppered-goat-logo.jpg",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/jagabans-circle.png",
+      "image": "./assets/images/peppered-goat-logo.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ooosumfoods.jagabansla",
+      "bundleIdentifier": "com.ooosumfoods.thepepperedgoat",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/jagabans-circle.png",
+        "foregroundImage": "./assets/images/peppered-goat-logo.jpg",
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.ooosumfoods.jagabansla"
+      "package": "com.ooosumfoods.thepepperedgoat"
     },
     "web": {
-      "favicon": "./assets/images/jagabans-circle.png",
+      "favicon": "./assets/images/peppered-goat-logo.jpg",
       "bundler": "metro"
     },
     "plugins": [
@@ -37,7 +37,7 @@
         {
           "ios": {
             "entitlements": {
-              "com.apple.developer.in-app-payments": "merchant.com.ooosumfoods.jagabansla"
+              "com.apple.developer.in-app-payments": "merchant.com.ooosumfoods.thepepperedgoat"
             }
           }
         }
@@ -46,14 +46,14 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "jagabansla",
+    "scheme": "thepepperedgoat",
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "94e71267-25cb-411f-88e6-37bafccde801"
+        "projectId": ""
       }
     }
   },

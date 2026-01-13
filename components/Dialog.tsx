@@ -61,11 +61,11 @@ export default function Dialog({
   const getButtonColor = (style?: string) => {
     switch (style) {
       case 'destructive':
-        return '#EF5350';
+        return '#E26F5B';
       case 'cancel':
-        return currentColors.textSecondary;
+        return '#888888';
       default:
-        return currentColors.primary;
+        return '#FFFFFF';
     }
   };
 
@@ -89,15 +89,15 @@ export default function Dialog({
             },
           ]}
         >
-          <View style={[styles.dialog, { backgroundColor: currentColors.card }]}>
+          <View style={[styles.dialog, { backgroundColor: '#2A2A2A' }]}>
             {title && (
-              <Text style={[styles.title, { color: currentColors.text }]}>
+              <Text style={[styles.title, { color: '#FFFFFF' }]}>
                 {title}
               </Text>
             )}
 
             {message && (
-              <Text style={[styles.message, { color: currentColors.textSecondary }]}>
+              <Text style={[styles.message, { color: '#AAAAAA' }]}>
                 {message}
               </Text>
             )}
@@ -150,8 +150,8 @@ const styles = StyleSheet.create({
   dialog: {
     borderRadius: 16,
     overflow: 'hidden',
-    boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.2)',
-    elevation: 10,
+    boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.12)',
+    elevation: 6,
   },
   title: {
     fontSize: 18,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+    borderTopColor: '#E5E5E5',
     overflow: 'hidden',
   },
   button: {
@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
   },
   buttonBorder: {
     borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   buttonText: {
     fontSize: 16,

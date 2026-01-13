@@ -40,26 +40,26 @@ export default function Toast({
   const getIconColor = () => {
     switch (type) {
       case 'success':
-        return '#4caf9eff';
+        return '#00AA00';
       case 'error':
-        return '#EF5350';
+        return '#E26F5B';
       case 'info':
-        return currentColors.primary || '#2196F3';
+        return '#000000';
       default:
-        return '#4caf9eff';
+        return '#00AA00';
     }
   };
 
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return '#4caf9eec';
+        return '#2A2A2A';
       case 'error':
-        return '#ef8250e8';
+        return '#2A2A2A';
       case 'info':
-        return currentColors.primary || '#2195f3ec';
+        return '#2A2A2A';
       default:
-        return '#4CAF50';
+        return '#2A2A2A';
     }
   };
 
@@ -127,11 +127,11 @@ export default function Toast({
         styles.content, 
         { 
           backgroundColor: getBackgroundColor(),
-          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.25)',
+          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
         }
       ]}>
-        <IconSymbol name={getIconName()} size={24} color="#FFFFFF" />
-        <Text style={styles.message} numberOfLines={2}>
+        <IconSymbol name={getIconName()} size={24} color={getIconColor()} />
+        <Text style={[styles.message, { color: '#FFFFFF' }]} numberOfLines={2}>
           {message}
         </Text>
       </View>

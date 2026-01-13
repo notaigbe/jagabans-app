@@ -1,5 +1,17 @@
-const tintColorLight = "#0a7ea4";
-const tintColorDark = "#fff";
+// The Peppered Goat Brand Colors - Inspired by logo minimalist aesthetic
+const tintColorLight = "#000000"; // Black
+const tintColorDark = "#FFF8F3"; // Cream
+
+// Minimalist black, dark gray, and cream palette
+export const pepperGoatColors = {
+  primary: "#000000", // Black
+  secondary: "#3A3A3A", // Dark gray
+  accent: "#FFF8F3", // Cream
+  dark: "#1A1A1A", // Near-black
+  light: "#2A2A2A", // Dark gray
+  coral: "#E26F5B", // Warm accent for success/positive states
+  teal: "#00BC7D", // Cool accent for secondary/info states
+};
 
 export const zincColors = {
   50: "#fafafa",
@@ -15,41 +27,43 @@ export const zincColors = {
   950: "#09090b",
 };
 
-export const appleBlue = "#007AFF";
-export const appleRed = "#FF3B30";
+export const appleBlue = "#000000";
+export const appleRed = "#E26F5B"; // Warm coral accent
+export const appleGreen = "#00BC7D"; // Cool teal accent
 
-export const borderColor = "#A1A1AA80";
-export const appleGreen = "#34C759";
+export const borderColor = "#D4D4D880";
 export const Colors = {
   light: {
-    text: "#11181C",
-    background: "#fff",
+    text: "#FFFFFF",
+    background: "#1A1A1A",
     tint: tintColorLight,
-    icon: "#687076",
-    tabIconDefault: "#687076",
+    icon: "#E0E0E0",
+    tabIconDefault: "#E0E0E0",
     tabIconSelected: tintColorLight,
-    textSecondary: "#687076",
+    textSecondary: "#AAAAAA",
     primary: tintColorLight,
-    secondary: "#a1a1aa",
-    accent: "#0a7ea4",
-    card: "#f5f5f5",
-    highlight: "#fffbeb",
-    border: "#e4e4e7",
+    secondary: "#3A3A3A",
+    accent: "#FFF8F3",
+    card: "#2A2A2A",
+    cardText: "#FFFFFF",
+    highlight: "#3A3A3A",
+    border: "#00BC7D",
   },
   dark: {
-    text: "#ECEDEE",
-    background: "#151718",
+    text: "#FFFFFF",
+    background: "#000000",
     tint: tintColorDark,
-    icon: "#9BA1A6",
-    tabIconDefault: "#9BA1A6",
+    icon: "#E0E0E0",
+    tabIconDefault: "#E0E0E0",
     tabIconSelected: tintColorDark,
-    textSecondary: "#9BA1A6",
-    primary: "#007AFF",
-    secondary: "#52525b",
-    accent: "#34C759",
-    card: "#27272a",
-    highlight: "#1f2937",
-    border: "#3f3f46",
+    textSecondary: "#B0B0B0",
+    primary: "#000000",
+    secondary: "#1A1A1A",
+    accent: "#FFF8F3",
+    card: "#2A2A2A",
+    cardText: "#FFFFFF",
+    highlight: "#333333",
+    border: "#00BC7D",
   },
 };
 
